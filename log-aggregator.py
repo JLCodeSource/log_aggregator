@@ -120,15 +120,6 @@ def multiToSingleLine(logfile, target):
             file.write("{log}\n".format(log=log))
 
 
-def enrichLog(logfile, target, node):
-    prepend = node + '\t| '
-
-    for line in fileinput.input([os.path.join(target, logfile)],
-                                inplace=True):
-        sys.stdout.write("{prepend}{line}".format(
-            prepend=prepend, line=line))
-
-
 def convertLogtoCSV(logfile, target):
     header = ["severity", "jvm",
               "datetime", "source", "type", "message"]
@@ -160,7 +151,6 @@ def main():
         # Work on log files in logsout
         for logfile in os.listdir(logsout):
             multiToSingleLine(logfile, logsout)
-            #enrichLog(logfile, logsout, node)
             reader = convertLogtoCSV(logfile, logsout)
 
             for dict in reader:
