@@ -1,5 +1,5 @@
+
 import os
-from pickle import FALSE
 import zipfile
 import fileinput
 import sys
@@ -95,14 +95,28 @@ def extractLog(file: str, target: str, extension: str):
     os.rmdir(tmplogsout)
 
 
-def multiToSingleLine(logfile, target):
-    data = open(os.path.join(target, logfile)).read().split("\n")
-    for i, line in enumerate(data):
-        if not line.startswith(("INFO", "WARN", "ERROR")):
-            data[i-1] = data[i-1]+line
-            data.pop(i)
+def lineStartMatch(match, string):
+    """Returns true if the beginning of the string matches match"""
+    return bool(re.match(match, string))
 
-    print(data)
+
+def yield_matches(full_log):
+    log = []
+    for line in full_log.split("\n"):
+        if lineStartMatch("INFO|WARN|ERROR", line):  # if line matches start
+            if len(log) > 0:  # if there's already a log
+                yield "; ".join(log)  # yield the log
+                log = []  # and set the log back to nothing
+        log.append(line.strip())  # add current line to log (list)
+
+
+def multiToSingleLine(logfile, target):
+    data = open(os.path.join(target, logfile)).read()
+
+    logs = list(yield_matches(data))
+
+    for i, log in enumerate(logs):
+        print("Match {}:\n{}\n".format(i+1, log))
 
 
 def enrichLog(logfile, target, node):
@@ -115,7 +129,7 @@ def enrichLog(logfile, target, node):
 
 
 def convertLogtoCSV(logfile, target):
-    header = ["node", "severity", "jvm",
+    header = ["severity", "jvm",
               "datetime", "source", "type", "message"]
     with open(os.path.join(target, logfile), "r") as file:
         reader = csv.DictReader(file, delimiter="|", fieldnames=header)
@@ -145,13 +159,15 @@ def main():
         # Work on log files in logsout
         for logfile in os.listdir(logsout):
             multiToSingleLine(logfile, logsout)
-            enrichLog(logfile, logsout, node)
+            #enrichLog(logfile, logsout, node)
             reader = convertLogtoCSV(logfile, logsout)
 
             for dict in reader:
                 for k, v in dict.items():
                     if dict[k]:
                         dict[k] = v.strip()
+
+                dict["node"] = node
 
                 timestamp = datetime.strptime(
                     dict["datetime"], "%Y/%m/%d %H:%M:%S")
