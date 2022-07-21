@@ -11,13 +11,15 @@ def lineStartMatch(match, string):
     return bool(re.match(match, string))
 
 
-def yield_matches(full_log):
+def yield_matches(full_log: list[str]):
     log = []
     for line in full_log.split("\n"):
         if lineStartMatch("INFO|WARN|ERROR", line):  # if line matches start
             if len(log) > 0:  # if there's already a log
                 yield "; ".join(log)  # yield the log
                 log = []  # and set the log back to nothing
+        if not len(line.split("|")) == 6:
+            print(len(line.split("|")))
         log.append(line.strip())  # add current line to log (list)
 
 
