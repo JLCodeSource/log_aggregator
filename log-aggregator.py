@@ -115,8 +115,9 @@ def multiToSingleLine(logfile, target):
 
     logs = list(yield_matches(data))
 
-    for i, log in enumerate(logs):
-        print("Match {}:\n{}\n".format(i+1, log))
+    with open(os.path.join(target, logfile), "w") as file:
+        for log in logs:
+            file.write("{log}\n".format(log=log))
 
 
 def enrichLog(logfile, target, node):
