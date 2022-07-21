@@ -1,62 +1,17 @@
 
 import os
 import zipfile
-import fileinput
-import sys
 import csv
 from pathlib import Path
 from shutil import move
-import pymongo
-from typing import Optional
-from pydantic import BaseModel
-from beanie import Document, Indexed, init_beanie
-#from odmantic import AIOEngine, Model
 from datetime import datetime
 import re
-import asyncio
-import motor
+from model import JavaLog
+from db import init, client
 
 # Vars
 sourcedir = "./source"
 outdir = "./out"
-connection = "mongodb://root:example@localhost:27017/?authMechanism=DEFAULT"
-database = "logs"
-client = motor.motor_asyncio.AsyncIOMotorClient(connection)
-
-
-class Log(Document):
-    node: Indexed(str)
-    datetime: datetime
-    message: Indexed(str, pymongo.DESCENDING)
-
-    class Settings:
-        name = "logs"
-        anystr_strip_whitespace = True
-        indexes = [
-            [
-                ("node", pymongo.TEXT),
-                ("message", pymongo.TEXT),
-            ]
-        ]
-
-
-class JavaLog(Log):
-    severity: Indexed(str)
-    jvm: str
-    source: Indexed(str)
-    type: Indexed(str)
-
-    class Settings:
-        name = "javalogs"
-    indexes = [
-        [
-            ("node", pymongo.TEXT),
-            ("message", pymongo.TEXT),
-            ("severity", pymongo.TEXT),
-            ("source", pymongo.TEXT),
-            ("type", pymongo.TEXT),
-        ]
-    ]
 
 
 def getNode(file: str) -> str:
@@ -133,10 +88,6 @@ def convertLogtoCSV(logfile, target):
 
 async def saveLogs(logs):
     await JavaLog.insert_many(logs)
-
-
-async def init():
-    await init_beanie(database=client[database], document_models=[JavaLog])
 
 
 async def main():
