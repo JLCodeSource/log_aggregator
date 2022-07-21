@@ -6,54 +6,57 @@ import sys
 import csv
 from pathlib import Path
 from shutil import move
-
+import pymongo
 from typing import Optional
 from pydantic import BaseModel
-from odmantic import AIOEngine, Model
-from motor.motor_asyncio import AsyncIOMotorClient
+from beanie import Document, Indexed, init_beanie
+#from odmantic import AIOEngine, Model
 from datetime import datetime
 import re
+import asyncio
+import motor
 
 # Vars
 sourcedir = "./source"
 outdir = "./out"
 connection = "mongodb://root:example@localhost:27017/?authMechanism=DEFAULT"
 database = "logs"
+client = motor.motor_asyncio.AsyncIOMotorClient(connection)
 
 
-class Log(Model):
-    node: str  # Indexed(str)
+class Log(Document):
+    node: Indexed(str)
     datetime: datetime
-    message: str  # Indexed(str, pymongo.DESCENDING)
+    message: Indexed(str, pymongo.DESCENDING)
 
-    class Config:
-        collection = "logs"
+    class Settings:
+        name = "logs"
         anystr_strip_whitespace = True
-        """ indexes = [
+        indexes = [
             [
                 ("node", pymongo.TEXT),
                 ("message", pymongo.TEXT),
             ]
-        ] """
+        ]
 
 
 class JavaLog(Log):
-    severity: str  # Indexed(str)
+    severity: Indexed(str)
     jvm: str
-    source: str  # Indexed(str)
-    type: str  # Indexed(str)
+    source: Indexed(str)
+    type: Indexed(str)
 
     class Settings:
-        collection = "javalogs"
-        """ indexes = [
-            [
-                ("node", pymongo.TEXT),
-                ("message", pymongo.TEXT),
-                ("severity", pymongo.TEXT),
-                ("source", pymongo.TEXT),
-                ("type", pymongo.TEXT),
-            ]
-        ] """
+        name = "javalogs"
+    indexes = [
+        [
+            ("node", pymongo.TEXT),
+            ("message", pymongo.TEXT),
+            ("severity", pymongo.TEXT),
+            ("source", pymongo.TEXT),
+            ("type", pymongo.TEXT),
+        ]
+    ]
 
 
 def getNode(file: str) -> str:
@@ -128,15 +131,21 @@ def convertLogtoCSV(logfile, target):
         return list(reader)
 
 
-async def saveLogs(engine, logs):
-    await engine.save_all(engine, logs)
+async def saveLogs(logs):
+    await JavaLog.insert_many(logs)
 
 
-def main():
+async def init():
+    await init_beanie(database=client[database], document_models=[JavaLog])
+
+
+async def main():
     # Main app
 
-    client = AsyncIOMotorClient(connection)
-    engine = AIOEngine(motor_client=client, database=database)
+    await init()
+    """     db = client[database]
+    collection = db["javalogs"]
+    engine = AIOEngine(motor_client=client, database=database) """
 
     LogList = []
     for file in os.listdir(sourcedir):
@@ -161,7 +170,7 @@ def main():
                 dict["node"] = node
 
                 timestamp = datetime.strptime(
-                    dict["datetime"], "%Y/%m/%d %H:%M:%S")
+                    dict["datetime"].strip(), "%Y/%m/%d %H:%M:%S")
                 log = JavaLog(
                     node=dict["node"],
                     severity=dict["severity"],
@@ -173,8 +182,18 @@ def main():
                 )
                 LogList.append(log)
 
-            print(LogList)
-            saveLogs(engine, LogList)
+                # print(LogList)
+
+            await saveLogs(LogList)
+            #print("inserted {len} docs".format(len=len(result.insertd_ids)))
+
+            # for log in engine.find(JavaLog, JavaLog["node"] == "tot-n12"):
+            #     print(repr(log))
 
 
 main()
+
+
+if __name__ == "__main__":
+    loop = client.get_io_loop()
+    loop.run_until_complete(main())
