@@ -1,3 +1,6 @@
+"""convert.py handles conversion of logs into json 
+for upload to the database.
+"""
 import os
 import re
 import csv
@@ -9,11 +12,12 @@ from model import JavaLog
 
 
 def lineStartMatch(match, string):
-    """Returns true if the beginning of the string matches match"""
+    # Returns true if the beginning of the string matches match
     return bool(re.match(match, string))
 
 
 def yield_matches(full_log: list[str]):
+    # Yield matches creates a list of logs and yields the list on match
     log = []
     for line in full_log.split("\n"):
         if lineStartMatch("INFO|WARN|ERROR", line):  # if line matches start
@@ -43,6 +47,7 @@ def yield_matches(full_log: list[str]):
 
 
 def multiToSingleLine(logfile, target):
+    # multiToSingleLine converts multiline to single line logs
     data = open(os.path.join(target, logfile)).read()
 
     logs = list(yield_matches(data))
@@ -53,6 +58,7 @@ def multiToSingleLine(logfile, target):
 
 
 def convertLogtoCSV(logfile, target):
+    # Converts the CSV log file to a dict
     header = ["severity", "jvm",
               "datetime", "source", "type", "message"]
     with open(os.path.join(target, logfile), "r") as file:
@@ -62,7 +68,6 @@ def convertLogtoCSV(logfile, target):
 
 async def convert(logfile, logsout, node):
     # Work on log files in logsout
-
     LogList = []
     for logfile in os.listdir(logsout):
         multiToSingleLine(logfile, logsout)

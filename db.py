@@ -1,3 +1,5 @@
+"""db.py handles the initialization of the database and all database operations
+"""
 from beanie import init_beanie
 import motor
 from model import JavaLog

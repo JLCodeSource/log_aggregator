@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from beanie import Document, Indexed, init_beanie
+"""model.py manages the document (log) schema"""
+from beanie import Document, Indexed
 from datetime import datetime
 import pymongo
 

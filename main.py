@@ -1,13 +1,17 @@
+"""main.py is an async function that inits the database & 
+extracts the logs from the source directory"""
+
 from db import init, client
 from extract import extractLog
 from vars import sourcedir
 
 
 async def main():
-    # Main app
 
+    # Init database
     await init()
 
+    # Extact logs from source directory
     await extractLog(sourcedir)
 
 
