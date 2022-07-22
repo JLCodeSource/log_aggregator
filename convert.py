@@ -18,8 +18,25 @@ def yield_matches(full_log: list[str]):
             if len(log) > 0:  # if there's already a log
                 yield "; ".join(log)  # yield the log
                 log = []  # and set the log back to nothing
-        if not len(line.split("|")) == 6:
-            print(len(line.split("|")))
+        # Handle corrupted lines
+        lineLen = len(line.split("|"))
+        # if not lineLen == 1 and not lineLen == 6:
+        #   print(lineLen)
+        #   print(line.split("|"))
+        if lineLen > 6:
+            line = line.split("|")
+            line[5] = line[5] + " ***CORRUPTED_NEXT_LOG_FOLLOWS*** "
+            for i in range(6, lineLen):
+                line[5] = line[5] + line[i]
+                line.pop(i)
+            #print("New line: \n {line}".format(line=line))
+        tmpLine = ""
+        if type(line) == list:
+            for s in line:
+                tmpLine = tmpLine + "," + s
+            line = tmpLine[1:]
+            # print(type(line))
+            # print(line)
         log.append(line.strip())  # add current line to log (list)
 
 
@@ -52,7 +69,10 @@ async def convert(logfile, logsout, node):
         for dict in reader:
             for k, v in dict.items():
                 if dict[k]:
-                    dict[k] = v.strip()
+                    try:
+                        dict[k] = v.strip()
+                    except AttributeError as err:
+                        print("Attribute error: {0}".format(err))
 
             dict["node"] = node
 
