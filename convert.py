@@ -2,6 +2,8 @@ import os
 import re
 import csv
 from datetime import datetime
+
+from pydantic import ValidationError
 from db import saveLogs
 from model import JavaLog
 
@@ -78,16 +80,20 @@ async def convert(logfile, logsout, node):
 
             timestamp = datetime.strptime(
                 dict["datetime"].strip(), "%Y/%m/%d %H:%M:%S")
-            log = JavaLog(
-                node=dict["node"],
-                severity=dict["severity"],
-                jvm=dict["jvm"],
-                datetime=timestamp,
-                source=dict["source"],
-                type=dict["type"],
-                message=dict["message"]
-            )
-            LogList.append(log)
+            try:
+                log = JavaLog(
+                    node=dict["node"],
+                    severity=dict["severity"],
+                    jvm=dict["jvm"],
+                    datetime=timestamp,
+                    source=dict["source"],
+                    type=dict["type"],
+                    message=dict["message"]
+                )
+                LogList.append(log)
+            except ValidationError as err:
+                print("Validation error: {err}".format(
+                    err=err))
 
     await saveLogs(LogList)
     LogList = []
