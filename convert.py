@@ -8,15 +8,16 @@ for upload to the database.
 Functions: lineStartMatch, yield_matches, multiToSingleLine,
 convertLogtoCSV, convert
 """
+import csv
+import logging
 import os
 import re
-import csv
 from datetime import datetime
 
 from pydantic import ValidationError
+
 from db import saveLogs
 from model import JavaLog
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +56,7 @@ def multiToSingleLine(logfile, target):
 
 def convertLogtoCSV(logfile, target):
     # Converts the CSV log file to a dict
-    header = ["severity", "jvm",
-              "datetime", "source", "type", "message"]
+    header = ["severity", "jvm", "datetime", "source", "type", "message"]
     with open(os.path.join(target, logfile), "r") as file:
         reader = csv.DictReader(file, delimiter="|", fieldnames=header)
         logger.info(f"Opened {logfile} as csv.dictReader")
@@ -80,11 +80,13 @@ async def convert(logfile, logsout, node):
 
             dict["node"] = node
 
-            timestamp = datetime.strptime(
-                dict["datetime"].strip(), "%Y/%m/%d %H:%M:%S")
+            timestamp = datetime.strptime(dict["datetime"].strip(), "%Y/%m/%d %H:%M:%S")
 
-            if dict["message"] is None and dict["type"] is None and \
-                    not dict["source"] is None:
+            if (
+                dict["message"] is None
+                and dict["type"] is None
+                and not dict["source"] is None
+            ):
                 dict["message"] = dict["source"]
                 dict["source"] = None
 
@@ -96,7 +98,7 @@ async def convert(logfile, logsout, node):
                     datetime=timestamp,
                     source=dict["source"],
                     type=dict["type"],
-                    message=dict["message"]
+                    message=dict["message"],
                 )
                 LogList.append(log)
             except ValidationError as err:

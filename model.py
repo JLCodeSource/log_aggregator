@@ -6,10 +6,11 @@ Change Log: Initial
 Summary: model manages the document (log) schema
 Classes: Log, JavaLog
 """
-from beanie import Document, Indexed
 from datetime import datetime
 from typing import Optional
+
 import pymongo
+from beanie import Document, Indexed
 
 
 class Log(Document):
@@ -36,6 +37,7 @@ class JavaLog(Log):
 
     class Settings:
         name = "javalogs"
+
     indexes = [
         [
             ("node", pymongo.TEXT),

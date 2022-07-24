@@ -9,9 +9,9 @@ Functions: main, init, extractLog
 Variables: sourcedir
 """
 
-from db import init, client
-from extract import extractLog
 from config import sourcedir
+from db import client, init
+from extract import extractLog
 from logs import configureLogging
 
 

@@ -11,7 +11,6 @@ import logging
 
 
 class OneLineExceptionFormatter(logging.Formatter):
-
     def format(self, record):
         result = super().format(record)
         if record.exc_text:

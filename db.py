@@ -6,11 +6,13 @@ Change Log: Initial
 Summary: db handles the initialization of the database and all db operations
 Functions: init, saveLogs
 """
-from beanie import init_beanie
-import motor
-from model import JavaLog
-from config import database, connection
 import logging
+
+import motor
+from beanie import init_beanie
+
+from config import connection, database
+from model import JavaLog
 
 logger = logging.getLogger(__name__)
 

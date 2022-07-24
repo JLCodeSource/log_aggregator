@@ -20,13 +20,14 @@ Functions: getNode, getLogType, getLogOutputDir,
 createLogsOutputDir, extract, extractLog
 """
 
+import logging
 import os
-from pathlib import Path
 import zipfile
+from pathlib import Path
 from shutil import move
+
 from config import outdir, sourcedir
 from convert import convert
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -61,20 +62,19 @@ def createLogsOutputDir(target: str):
 def extract(file: str, target: str, extension: str):
     # Find zip files and extract (by default) just  files with .log extension
     if file.endswith(".zip"):
-        with zipfile.ZipFile(os.path.join(sourcedir, file), 'r') as zip_file:
+        with zipfile.ZipFile(os.path.join(sourcedir, file), "r") as zip_file:
             filesInZip = zip_file.namelist()
             for filename in filesInZip:
                 if filename.endswith(extension):
                     zip_file.extract(filename, target)
                     logger.info(
-                        f"Extracted {extension} generating {filename} "
-                        f"at {target}")
+                        f"Extracted {extension} generating {filename} " f"at {target}"
+                    )
 
     # Move log files out of System folder where they are by default
     tmplogsout = os.path.join(target, "System")
     for filename in os.listdir(tmplogsout):
-        move(os.path.join(tmplogsout, filename),
-             os.path.join(target, filename))
+        move(os.path.join(tmplogsout, filename), os.path.join(target, filename))
         logger.debug(f"Moved {filename} from {tmplogsout} to {target}")
 
     # Remove System folder
