@@ -28,6 +28,7 @@ from shutil import move
 
 from config import outdir, sourcedir
 from convert import convert
+from db import saveLogs
 
 logger = logging.getLogger(__name__)
 
@@ -95,4 +96,5 @@ async def extractLog(dir):
 
         extract(file, logsout, extension)
 
-        await convert(file, logsout, node)
+        logList = await convert(file, logsout, node)
+        await saveLogs(logList)

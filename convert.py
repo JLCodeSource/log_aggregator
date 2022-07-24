@@ -16,7 +16,6 @@ from datetime import datetime
 
 from pydantic import ValidationError
 
-from db import saveLogs
 from model import JavaLog
 
 logger = logging.getLogger(__name__)
@@ -65,7 +64,7 @@ def convertLogtoCSV(logfile, target):
 
 async def convert(logfile, logsout, node):
     # Work on log files in logsout
-    LogList = []
+    logList = []
     for logfile in os.listdir(logsout):
         multiToSingleLine(logfile, logsout)
         reader = convertLogtoCSV(logfile, logsout)
@@ -100,10 +99,7 @@ async def convert(logfile, logsout, node):
                     type=dict["type"],
                     message=dict["message"],
                 )
-                LogList.append(log)
+                logList.append(log)
             except ValidationError as err:
                 logger.exception(f"ValidationError: {err}")
-
-    await saveLogs(LogList)
-    LogList = []
-    # print(LogList)
+    return logList
