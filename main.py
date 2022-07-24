@@ -20,8 +20,9 @@ main()
 
 
 if __name__ == "__main__":
+    format = "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
     logging.basicConfig(
-        level=logging.DEBUG, format="%(asctime)s | %(name)s | %(levelname)s | %(message)s")
+        level=logging.INFO, format=format)
 
     loop = client.get_io_loop()
     loop.run_until_complete(main())
