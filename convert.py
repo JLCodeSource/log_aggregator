@@ -1,5 +1,5 @@
 """
-Module Name: convert.py 
+Module Name: convert.py
 Created: 2022-07-24
 Creator: JL
 Change Log: Initial
@@ -36,24 +36,6 @@ def yield_matches(full_log: list[str]):
             if len(logs) > 0:  # if there's already a log
                 yield "; ".join(logs)  # yield the log
                 logs = []  # and set the log back to nothing
-        # Handle corrupted lines
-        lineLen = len(line.split("|"))
-        if not lineLen == 1 and not lineLen == 6:
-            logger.warn(f"Found corrupt log entry with {lineLen} sections")
-            logEntry = line.split("|")
-            logger.warn(f"logEntry: {logEntry}")
-        if lineLen > 6:
-            line = line.split("|")
-            line[5] = line[5] + " ***CORRUPTED_NEXT_LOG_FOLLOWS*** "
-            for i in range(6, lineLen):
-                line[5] = line[5] + line[i]
-                line.pop(i)
-            logger.warn(f"New line: \n {line}")
-        tmpLine = ""
-        if type(line) == list:
-            for s in line:
-                tmpLine = tmpLine + "," + s
-            line = tmpLine[1:]
         logs.append(line.strip())  # add current line to log (list)
         logger.debug(f"Appended: {line} to list")
 
@@ -100,6 +82,12 @@ async def convert(logfile, logsout, node):
 
             timestamp = datetime.strptime(
                 dict["datetime"].strip(), "%Y/%m/%d %H:%M:%S")
+
+            if dict["message"] is None and dict["type"] is None and \
+                    not dict["source"] is None:
+                dict["message"] = dict["source"]
+                dict["source"] = None
+
             try:
                 log = JavaLog(
                     node=dict["node"],

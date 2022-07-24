@@ -8,6 +8,7 @@ Classes: Log, JavaLog
 """
 from beanie import Document, Indexed
 from datetime import datetime
+from typing import Optional
 import pymongo
 
 
@@ -29,9 +30,9 @@ class Log(Document):
 
 class JavaLog(Log):
     severity: Indexed(str)
-    jvm: str
-    source: Indexed(str)
-    type: Indexed(str)
+    jvm: Optional[str] = None
+    source: Optional[Indexed(str)] = None
+    type: Optional[Indexed(str)] = None
 
     class Settings:
         name = "javalogs"
