@@ -4,7 +4,7 @@ extracts the logs from the source directory"""
 from db import init, client
 from extract import extractLog
 from config import sourcedir
-import logging
+from logs import configureLogging
 
 
 async def main():
@@ -16,13 +16,9 @@ async def main():
     await extractLog(sourcedir)
 
 
-main()
-
-
 if __name__ == "__main__":
-    format = "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
-    logging.basicConfig(
-        level=logging.INFO, format=format)
+
+    configureLogging()
 
     loop = client.get_io_loop()
     loop.run_until_complete(main())

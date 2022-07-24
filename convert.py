@@ -1,4 +1,4 @@
-"""convert.py handles conversion of logs into json 
+"""convert.py handles conversion of logs into json
 for upload to the database.
 """
 import os
@@ -87,7 +87,7 @@ async def convert(logfile, logsout, node):
                     try:
                         dict[k] = v.strip()
                     except AttributeError as err:
-                        logger.warn(f"AttributeError: {err}")
+                        logger.exception(f"AttributeError: {err}")
 
             dict["node"] = node
 
@@ -105,7 +105,7 @@ async def convert(logfile, logsout, node):
                 )
                 LogList.append(log)
             except ValidationError as err:
-                logger.warn(f"ValidationError: {err}")
+                logger.exception(f"ValidationError: {err}")
 
     await saveLogs(LogList)
     LogList = []
