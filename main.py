@@ -1,4 +1,4 @@
-"""main.py is an async function that inits the database & 
+"""main.py is an async function that inits the database &s
 extracts the logs from the source directory"""
 
 from db import init, client
