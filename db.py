@@ -3,7 +3,7 @@
 from beanie import init_beanie
 import motor
 from model import JavaLog
-from vars import database, connection
+from config import database, connection
 
 client = motor.motor_asyncio.AsyncIOMotorClient(connection)
 

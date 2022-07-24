@@ -3,7 +3,8 @@ extracts the logs from the source directory"""
 
 from db import init, client
 from extract import extractLog
-from vars import sourcedir
+from config import sourcedir
+import logging
 
 
 async def main():
@@ -19,5 +20,8 @@ main()
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.DEBUG, format="%(asctime)s | %(name)s | %(levelname)s | %(message)s")
+
     loop = client.get_io_loop()
     loop.run_until_complete(main())

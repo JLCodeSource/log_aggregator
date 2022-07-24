@@ -16,28 +16,38 @@ import os
 from pathlib import Path
 import zipfile
 from shutil import move
-from vars import outdir, sourcedir
+from config import outdir, sourcedir
 from convert import convert
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def getNode(file: str) -> str:
     # Extract node name from filename
-    return file.split("_")[1].split(".")[0]
+    node = file.split("_")[1].split(".")[0]
+    logger.debug(f"node: {node} from {file}")
+    return node
 
 
 def getLogType(file: str) -> str:
     # Extract logtype from filename
-    return file.split("_")[2]
+    logtype = file.split("_")[2]
+    logger.debug(f"logType: {logtype} from {file}")
+    return logtype
 
 
 def getLogOutputDir(node: str, logtype: str):
     # Return the output dir as a path
-    return os.path.join(outdir, node, logtype)
+    out = os.path.join(outdir, node, logtype)
+    logger.debug(f"outdir: {out} from {outdir}, {node}, {logtype}")
+    return out
 
 
 def createLogsOutputDir(target: str):
     # Create logs output directory
     Path(target).mkdir(parents=True, exist_ok=True)
+    logger.debug(f"Created {target}")
 
 
 def extract(file: str, target: str, extension: str):
@@ -48,15 +58,20 @@ def extract(file: str, target: str, extension: str):
             for filename in filesInZip:
                 if filename.endswith(extension):
                     zip_file.extract(filename, target)
+                    logger.info(
+                        f"Extracted {extension} generating {filename} "
+                        f"at {target}")
 
     # Move log files out of System folder where they are by default
     tmplogsout = os.path.join(target, "System")
     for filename in os.listdir(tmplogsout):
         move(os.path.join(tmplogsout, filename),
              os.path.join(target, filename))
+        logger.debug(f"Moved {filename} from {tmplogsout} to {target}")
 
     # Remove System folder
     os.rmdir(tmplogsout)
+    logger.debug(f"Removed {tmplogsout}")
 
 
 async def extractLog(dir):
