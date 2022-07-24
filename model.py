@@ -1,5 +1,5 @@
 """
-Module Name: model.py 
+Module Name: model.py
 Created: 2022-07-24
 Creator: JL
 Change Log: Initial
