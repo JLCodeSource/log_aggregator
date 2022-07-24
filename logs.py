@@ -2,18 +2,22 @@ import logging
 
 
 class OneLineExceptionFormatter(logging.Formatter):
-    def formatException(self, exc_info):
-        """
-        Format an exception so that it prints on a single line
-        """
-        result = super(OneLineExceptionFormatter,
-                       self).formatException(exc_info)
-        return repr(result)
+    """def formatException(self, exc_info):
+    Format an exception so that it prints on a single line
+
+    result = super().formatException(exc_info)
+    return repr(result)
+    """
 
     def format(self, record):
-        result = super(OneLineExceptionFormatter, self).format(record)
+        result = super().format(record)
         if record.exc_text:
             result = result.replace("\n", " ; ")
+            result = result.replace("  ", "")
+            trace = result.split(" ; Traceback")
+            if len(trace) > 0:
+                result = trace
+                result = result[0]
         return result
 
 
