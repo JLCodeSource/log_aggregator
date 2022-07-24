@@ -1,13 +1,16 @@
+"""
+Module Name: logs.py 
+Created: 2022-07-24
+Creator: JL
+Change Log: Initial
+Summary: logs configures logging & makes exceptions 1 line
+Functions: configureLogging
+Classes: OneLineExceptionFormatter
+"""
 import logging
 
 
 class OneLineExceptionFormatter(logging.Formatter):
-    """def formatException(self, exc_info):
-    Format an exception so that it prints on a single line
-
-    result = super().formatException(exc_info)
-    return repr(result)
-    """
 
     def format(self, record):
         result = super().format(record)

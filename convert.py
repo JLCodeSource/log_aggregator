@@ -1,5 +1,12 @@
-"""convert.py handles conversion of logs into json
+"""
+Module Name: convert.py 
+Created: 2022-07-24
+Creator: JL
+Change Log: Initial
+Summary: convert handles conversion of logs into json
 for upload to the database.
+Functions: lineStartMatch, yield_matches, multiToSingleLine,
+convertLogtoCSV, convert
 """
 import os
 import re

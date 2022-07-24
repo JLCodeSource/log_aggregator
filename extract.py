@@ -1,4 +1,9 @@
-"""extract.py handles log file extractions.
+"""
+Module Name: extract.py 
+Created: 2022-07-24
+Creator: JL
+Change Log: Initial
+Summary: extract.py handles log file extractions.
 
 It assumes log files have been collected using gbmgm.
 Each node has its own log file with the names of the type:
@@ -10,6 +15,9 @@ formats and different log formats.
 
 For example, fanapiservice.zip contains fanapiservice.log and
 smb3_1.log and their rolled versions. 
+
+Functions: getNode, getLogType, getLogOutputDir,
+createLogsOutputDir, extract, extractLog
 """
 
 import os

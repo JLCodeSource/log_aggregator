@@ -1,4 +1,10 @@
-"""db.py handles the initialization of the database and all database operations
+"""
+Module Name: db.py 
+Created: 2022-07-24
+Creator: JL
+Change Log: Initial
+Summary: db handles the initialization of the database and all db operations
+Functions: init, saveLogs
 """
 from beanie import init_beanie
 import motor

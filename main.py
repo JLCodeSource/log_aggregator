@@ -1,5 +1,13 @@
-"""main.py is an async function that inits the database &s
-extracts the logs from the source directory"""
+"""
+Module Name: main.py 
+Created: 2022-07-24
+Creator: JL
+Change Log: Initial
+Summary: Main is an async function that inits the database &
+extracts the logs from the source directory
+Functions: main, init, extractLog
+Variables: sourcedir
+"""
 
 from db import init, client
 from extract import extractLog
