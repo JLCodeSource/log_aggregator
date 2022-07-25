@@ -69,7 +69,7 @@ def extract(file: str, target: str, extension: str):
                 if filename.endswith(extension):
                     zip_file.extract(filename, target)
                     logger.info(
-                        f"Extracted {extension} generating {filename} " f"at {target}"
+                        f"Extracted {extension} generating {filename} at {target}"
                     )
 
     # Move log files out of System folder where they are by default
