@@ -41,7 +41,7 @@ class Settings(BaseSettings):
         conn_log = self.connection.split("@")
         if len(conn_log) > 1:
             conn_log[0] = conn_log[0].split("//")
-            conn_log = str(conn_log[0][0]) + "username:password" \
+            conn_log = str(conn_log[0][0]) + "//username:password" \
                 + str(conn_log[1:])
         return conn_log
 
