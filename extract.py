@@ -44,7 +44,7 @@ def get_node(file: str) -> str:
 def get_log_type(file: str) -> str:
     # Extract logtype from filename
     log_type = file.split("_")[2]
-    logger.debug(f"logType: {log_type} from {file}")
+    logger.debug(f"log_type: {log_type} from {file}")
     return log_type
 
 

@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     sourcedir: str = os.getenv("SOURCE", "./source")
     outdir: str = os.getenv("OUT", "./out")
     database: str = os.getenv("DATABASE", "logs")
-    log_level: int = os.getenv("LOG_LEVEL", logging.DEBUG)
+    log_level: int = os.getenv("LOG_LEVEL", logging.INFO)
 
     def get_environment(self):
         return self.environment

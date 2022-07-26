@@ -38,11 +38,11 @@ def make_filename():
     def _make_filename(node, service, tld):
         ts = 1658844081 + randrange(-100000, 100000)
         if tld is True:
-            filename = (f"GBLogs_{node}.domain.tld_",
-                        f"{service}_{ts}.zip")
+            filename = f"GBLogs_{node}.domain.tld_" \
+                + f"{service}_{ts}.zip"
         else:
-            filename = (f"GBLogs_{node}_",
-                        f"{service}_{ts}.zip")
+            filename = f"GBLogs_{node}_" \
+                + f"{service}_{ts}.zip"
         return str(filename)
 
     return _make_filename
