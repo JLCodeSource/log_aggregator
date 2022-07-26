@@ -14,7 +14,7 @@ Depending on the type of log, they have different internal name
 formats and different log formats.
 
 For example, fanapiservice.zip contains fanapiservice.log and
-smb3_1.log and their rolled versions. 
+smb3_1.log and their rolled versions.
 
 Functions: getNode, getLogType, getLogOutputDir,
 createLogsOutputDir, extract, extractLog
