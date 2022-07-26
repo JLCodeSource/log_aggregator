@@ -1,8 +1,10 @@
+from cmath import log
 import logging
+from re import L
 import pytest
 import os
 import extract
-import zipfile
+from zipfile import ZipFile
 
 filename_data = [
     ("newnode", "newservice", True),
@@ -79,22 +81,33 @@ def test_remove_folder(logger, tmpdir):
     ]
 
 
-@pytest.mark.mock
-def test_extract(logger, tmpdir, monkeypatch):
-    def mock_zip_namelist():
+class MockZip:
+
+    @staticmethod
+    def namelist():
         return [
             'System/fanapiservice.log.1',
             'System/fanapiservice.log',
         ]
 
-    monkeypatch.setattr(zipfile.ZipFile, "extract", mock_zip_namelist)
+
+@pytest.mark.mock
+def test_extract(logger, tmpdir, monkeypatch):
+
+    def mock_zip_namelist(*args, **kwargs):
+        return MockZip.namelist()
+
+    monkeypatch.setattr(ZipFile, "namelist", mock_zip_namelist)
 
     file = "GBLogs_psc-n11_fanapiservice_1657563227839.zip"
     extension = "service.log"
+    log_file = ""
+    for filename in MockZip.namelist():
+        if filename.endswith(extension):
+            log_file = filename
     extract.extract(file,
                     tmpdir, extension)
-    assert logger.record_tuples == [
-        ("extract", logging.INFO,
-         f"Extracted {extension} generating" /
-         + f"{file} at {tmpdir}")
-    ]
+    logs = logger.record_tuples
+    assert logs[0] == ("extract", logging.INFO,
+                       f"Extracted *{extension} generating "
+                       + f"{log_file} at {tmpdir}")

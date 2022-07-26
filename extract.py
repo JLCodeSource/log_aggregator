@@ -86,7 +86,7 @@ def extract(file: str, target: str, extension: str):
                 if filename.endswith(extension):
                     zip_file.extract(filename, target)
                     logger.info(
-                        (f"Extracted {extension} generating" /
+                        (f"Extracted *{extension} generating "
                          + f"{filename} at {target}"))
 
     move_files_to_target(target, "System")
