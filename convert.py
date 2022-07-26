@@ -79,7 +79,8 @@ async def convert(logfile, logs_out, node):
 
             dict["node"] = node
 
-            timestamp = datetime.strptime(dict["datetime"].strip(), "%Y/%m/%d %H:%M:%S")
+            timestamp = datetime.strptime(dict["datetime"].strip(),
+                                          "%Y/%m/%d %H:%M:%S")
 
             if (
                 dict["message"] is None

@@ -19,8 +19,10 @@ logger = logging.getLogger("__name__")
 class Settings(BaseSettings):
     environment: str = os.getenv("ENVIRONMENT", "dev")
     testing: bool = os.getenv("TESTING", 0)
-    connection: AnyUrl = os.getenv("DATABASE_URL",
-                                   "mongodb://root:example@localhost:27017/?authMechanism=DEFAULT")
+    connection: AnyUrl = os.getenv(
+        "DATABASE_URL",
+        "mongodb://root:example@localhost:27017/?authMechanism=DEFAULT"
+    )
     sourcedir: str = os.getenv("SOURCE", "./source")
     outdir: str = os.getenv("OUT", "./out")
     database: str = os.getenv("DATABASE", "logs")
