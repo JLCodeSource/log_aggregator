@@ -1,13 +1,15 @@
 """
-Module Name: logs.py 
+Module Name: logs.py
 Created: 2022-07-24
 Creator: JL
-Change Log: Initial
+Change Log: 2022-07-26 - added environment settings
 Summary: logs configures logging & makes exceptions 1 line
 Functions: configureLogging
 Classes: OneLineExceptionFormatter
 """
 import logging
+
+from config import get_settings
 
 
 class OneLineExceptionFormatter(logging.Formatter):
@@ -23,11 +25,12 @@ class OneLineExceptionFormatter(logging.Formatter):
         return result
 
 
-def configureLogging():
+def configure_logging():
     handler = logging.StreamHandler()
     format = "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
     formatter = OneLineExceptionFormatter(format)
     handler.setFormatter(formatter)
     logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+    settings = get_settings()
+    logger.setLevel(settings.log_level)
     logger.addHandler(handler)

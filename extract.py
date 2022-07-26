@@ -1,8 +1,8 @@
 """
-Module Name: extract.py 
+Module Name: extract.py
 Created: 2022-07-24
 Creator: JL
-Change Log: Initial
+Change Log: 2022-07-26 - added environment settings
 Summary: extract.py handles log file extractions.
 
 It assumes log files have been collected using gbmgm.
@@ -26,35 +26,36 @@ import zipfile
 from pathlib import Path
 from shutil import move
 
-from config import outdir, sourcedir
+from config import get_settings
 from convert import convert
-from db import saveLogs
+from db import save_logs
 
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
 
-def getNode(file: str) -> str:
+def get_node(file: str) -> str:
     # Extract node name from filename
     node = file.split("_")[1].split(".")[0]
     logger.debug(f"node: {node} from {file}")
     return node
 
 
-def getLogType(file: str) -> str:
+def get_log_type(file: str) -> str:
     # Extract logtype from filename
-    logtype = file.split("_")[2]
-    logger.debug(f"logType: {logtype} from {file}")
-    return logtype
+    log_type = file.split("_")[2]
+    logger.debug(f"logType: {log_type} from {file}")
+    return log_type
 
 
-def getLogOutputDir(node: str, logtype: str):
+def get_log_dir(node: str, log_type: str):
     # Return the output dir as a path
-    out = os.path.join(outdir, node, logtype)
-    logger.debug(f"outdir: {out} from {outdir}, {node}, {logtype}")
+    out = os.path.join(settings.outdir, node, log_type)
+    logger.debug(f"outdir: {out} from {settings.outdir}, {node}, {log_type}")
     return out
 
 
-def createLogsOutputDir(target: str):
+def create_log_dir(target: str):
     # Create logs output directory
     Path(target).mkdir(parents=True, exist_ok=True)
     logger.debug(f"Created {target}")
@@ -63,38 +64,41 @@ def createLogsOutputDir(target: str):
 def extract(file: str, target: str, extension: str):
     # Find zip files and extract (by default) just  files with .log extension
     if file.endswith(".zip"):
-        with zipfile.ZipFile(os.path.join(sourcedir, file), "r") as zip_file:
+        with zipfile.ZipFile(os.path.join(
+                settings.sourcedir, file), "r") as zip_file:
             filesInZip = zip_file.namelist()
             for filename in filesInZip:
                 if filename.endswith(extension):
                     zip_file.extract(filename, target)
                     logger.info(
-                        f"Extracted {extension} generating {filename} at {target}"
+                        (f"Extracted {extension} generating",
+                         f"{filename} at {target}")
                     )
 
     # Move log files out of System folder where they are by default
-    tmplogsout = os.path.join(target, "System")
-    for filename in os.listdir(tmplogsout):
-        move(os.path.join(tmplogsout, filename), os.path.join(target, filename))
-        logger.debug(f"Moved {filename} from {tmplogsout} to {target}")
+    tmp_logs_out = os.path.join(target, "System")
+    for filename in os.listdir(tmp_logs_out):
+        move(os.path.join(tmp_logs_out, filename),
+             os.path.join(target, filename))
+        logger.debug(f"Moved {filename} from {tmp_logs_out} to {target}")
 
     # Remove System folder
-    os.rmdir(tmplogsout)
-    logger.debug(f"Removed {tmplogsout}")
+    os.rmdir(tmp_logs_out)
+    logger.debug(f"Removed {tmp_logs_out}")
 
 
-async def extractLog(dir):
+async def extract_log(dir):
     # Manages the process of extracting the logs
     # Kicks off the conversion process for each in an await
 
     for file in os.listdir(dir):
-        node = getNode(file)
-        logtype = getLogType(file)
-        logsout = getLogOutputDir(node, logtype)
+        node = get_node(file)
+        log_type = get_log_type(file)
+        logs_out = get_log_dir(node, log_type)
         extension = "service.log"
-        createLogsOutputDir(logsout)
+        create_log_dir(logs_out)
 
-        extract(file, logsout, extension)
+        extract(file, logs_out, extension)
 
-        logList = await convert(file, logsout, node)
-        await saveLogs(logList)
+        log_list = await convert(file, logs_out, node)
+        await save_logs(log_list)
