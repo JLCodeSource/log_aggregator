@@ -43,3 +43,12 @@ def test_get_log_dir(logger, settings_override, node, service, tld):
     assert logger.record_tuples == [
         ("extract", logging.DEBUG,
          f"outdir: {out} from {settings_override.outdir}, {node}, {service}")]
+
+
+@pytest.mark.unit
+def test_create_log_dir(logger, tmpdir):
+    extract.create_log_dir(tmpdir)
+    assert logger.record_tuples == [
+        ("extract", logging.DEBUG,
+         f"Created {tmpdir}")
+    ]
