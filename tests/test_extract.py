@@ -2,7 +2,7 @@ import logging
 import pytest
 import os
 import extract
-
+import zipfile
 
 filename_data = [
     ("newnode", "newservice", True),
@@ -51,4 +51,50 @@ def test_create_log_dir(logger, tmpdir):
     assert logger.record_tuples == [
         ("extract", logging.DEBUG,
          f"Created {tmpdir}")
+    ]
+
+
+@pytest.mark.unit
+def test_move_files_to_target(logger, tmpdir):
+    filename = "test.txt"
+    file = tmpdir.mkdir("System").join(filename)
+    sub = tmpdir.join("System")
+    file.write("text to test.txt\n")
+    extract.move_files_to_target(tmpdir, "System")
+    assert filename in os.listdir(tmpdir)
+    assert filename not in os.listdir(sub)
+    assert logger.record_tuples == [
+        ("extract", logging.DEBUG,
+         f"Moved {filename} from {sub} to {tmpdir}")
+    ]
+
+
+@pytest.mark.unit
+def test_remove_folder(logger, tmpdir):
+    extract.remove_folder(tmpdir)
+    assert os.path.exists(tmpdir) is False
+    assert logger.record_tuples == [
+        ("extract", logging.DEBUG,
+         f"Removed {tmpdir}")
+    ]
+
+
+@pytest.mark.mock
+def test_extract(logger, tmpdir, monkeypatch):
+    def mock_zip_namelist():
+        return [
+            'System/fanapiservice.log.1',
+            'System/fanapiservice.log',
+        ]
+
+    monkeypatch.setattr(zipfile.ZipFile, "extract", mock_zip_namelist)
+
+    file = "GBLogs_psc-n11_fanapiservice_1657563227839.zip"
+    extension = "service.log"
+    extract.extract(file,
+                    tmpdir, extension)
+    assert logger.record_tuples == [
+        ("extract", logging.INFO,
+         f"Extracted {extension} generating" /
+         + f"{file} at {tmpdir}")
     ]

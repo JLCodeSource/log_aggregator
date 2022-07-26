@@ -61,6 +61,21 @@ def create_log_dir(target: str):
     logger.debug(f"Created {target}")
 
 
+def move_files_to_target(target: str, source: str):
+    # Move log files out of System folder where they are by default
+    tmp_logs_out = os.path.join(target, source)
+    for filename in os.listdir(tmp_logs_out):
+        move(os.path.join(tmp_logs_out, filename),
+             os.path.join(target, filename))
+        logger.debug(f"Moved {filename} from {tmp_logs_out} to {target}")
+
+
+def remove_folder(target):
+    # Remove System folder
+    os.rmdir(target)
+    logger.debug(f"Removed {target}")
+
+
 def extract(file: str, target: str, extension: str):
     # Find zip files and extract (by default) just  files with .log extension
     if file.endswith(".zip"):
@@ -71,20 +86,12 @@ def extract(file: str, target: str, extension: str):
                 if filename.endswith(extension):
                     zip_file.extract(filename, target)
                     logger.info(
-                        (f"Extracted {extension} generating",
-                         f"{filename} at {target}")
-                    )
+                        (f"Extracted {extension} generating" /
+                         + f"{filename} at {target}"))
 
-    # Move log files out of System folder where they are by default
-    tmp_logs_out = os.path.join(target, "System")
-    for filename in os.listdir(tmp_logs_out):
-        move(os.path.join(tmp_logs_out, filename),
-             os.path.join(target, filename))
-        logger.debug(f"Moved {filename} from {tmp_logs_out} to {target}")
+    move_files_to_target(target, "System")
 
-    # Remove System folder
-    os.rmdir(tmp_logs_out)
-    logger.debug(f"Removed {tmp_logs_out}")
+    remove_folder(os.path.join(target, "System"))
 
 
 async def extract_log(dir):
