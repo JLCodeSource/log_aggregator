@@ -1,10 +1,10 @@
 """
-Module Name: config.py 
+Module Name: config.py
 Created: 2022-07-24
 Creator: JL
 Change Log: 2022-07-26 - added environment settings
 Summary: config holds the global config settings
-Variables: sourcedir, outdir, connection, database 
+Variables: sourcedir, outdir, connection, database
 """
 
 import logging
