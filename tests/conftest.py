@@ -1,6 +1,7 @@
 """
 This module contains shared fixtures, steps and hooks.
 """
+from random import randrange
 import pytest
 import logging
 
@@ -8,8 +9,11 @@ from config import get_settings
 
 
 @pytest.fixture()
-def settings():
-    return get_settings()
+def settings_override():
+    settings = get_settings()
+    settings.database = "test-logs"
+    settings.log_level = logging.DEBUG
+    return settings
 
 
 @pytest.fixture()
@@ -27,3 +31,18 @@ def one_line_log():
 def two_line_log():
     return ("INFO | jvm | 2022/07/11 | ttl | swift | SMB | Exec haproxy\n" /
             + "INFO | jvm | 2022/07/11 | ttl | swift | SMB | Exec haproxy")
+
+
+@pytest.fixture()
+def make_filename():
+    def _make_filename(node, service, tld):
+        ts = 1658844081 + randrange(-100000, 100000)
+        if tld is True:
+            filename = (f"GBLogs_{node}.domain.tld_",
+                        f"{service}_{ts}.zip")
+        else:
+            filename = (f"GBLogs_{node}_",
+                        f"{service}_{ts}.zip")
+        return str(filename)
+
+    return _make_filename
