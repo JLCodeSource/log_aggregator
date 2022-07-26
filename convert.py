@@ -63,6 +63,7 @@ def convert_log_to_csv(logfile, target):
 
 
 async def convert(logfile, logs_out, node):
+    logger.info(f"Starting new convert coroutine for {logfile} and {node}")
     # Work on log files in logsout
     log_list = []
     for logfile in os.listdir(logs_out):
@@ -103,4 +104,5 @@ async def convert(logfile, logs_out, node):
                 log_list.append(log)
             except ValidationError as err:
                 logger.exception(f"ValidationError: {err}")
+    logger.info(f"Ending convert coroutine for {logfile} and {node}")
     return log_list

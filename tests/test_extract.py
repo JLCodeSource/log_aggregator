@@ -1,16 +1,22 @@
-from cmath import log
 import logging
-from re import L
 import pytest
 import os
 import extract
 from zipfile import ZipFile
+
 
 filename_data = [
     ("newnode", "newservice", True),
     ("newnode", "newservice", False),
     ("Complex-1", "Svc-23e", True),
     ("Complex-1", "Svc-23e", False),
+]
+
+filename_example = "GBLogs_psc-n11_fanapiservice_1657563227839.zip"
+
+sourcedir_example = [
+    "GBLogs_-n11_fanapiservice_1657563227839.zip",
+    'GBLogs_-n16_fanapiservice_1657563218539.zip',
 ]
 
 
@@ -99,7 +105,7 @@ def test_extract(logger, tmpdir, monkeypatch):
 
     monkeypatch.setattr(ZipFile, "namelist", mock_zip_namelist)
 
-    file = "GBLogs_psc-n11_fanapiservice_1657563227839.zip"
+    file = filename_example
     extension = "service.log"
     log_file = ""
     for filename in MockZip.namelist():
@@ -111,3 +117,30 @@ def test_extract(logger, tmpdir, monkeypatch):
     assert logs[0] == ("extract", logging.INFO,
                        f"Extracted *{extension} generating "
                        + f"{log_file} at {tmpdir}")
+
+
+@pytest.mark.mock
+def test_extract_log(logger, tmpdir, monkeypatch, one_line_log,
+                     settings_override):
+
+    def mock_listdir():
+        return sourcedir_example
+
+    monkeypatch.setattr(os, "listdir", mock_listdir)
+
+    def mock_convert():
+        return one_line_log()
+
+    monkeypatch.setattr(extract.extract_log, "convert", mock_convert,
+                        raising=False)
+
+    log_len = len(one_line_log.splitlines())
+
+    settings = settings_override
+
+    extract.extract_log(tmpdir)
+
+    logs = logger.record_tuples
+    # assert logs[0] == (
+    #    "extract", logging.INFO,
+    #    f"Inserted {log_len} into {settings.database}")

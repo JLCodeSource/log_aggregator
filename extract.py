@@ -76,18 +76,17 @@ def remove_folder(target):
     logger.debug(f"Removed {target}")
 
 
-def extract(file: str, target: str, extension: str):
+async def extract(file: str, target: str, extension: str):
     # Find zip files and extract (by default) just  files with .log extension
-    if file.endswith(".zip"):
-        with zipfile.ZipFile(os.path.join(
-                settings.sourcedir, file), "r") as zip_file:
-            filesInZip = zip_file.namelist()
-            for filename in filesInZip:
-                if filename.endswith(extension):
-                    zip_file.extract(filename, target)
-                    logger.info(
-                        (f"Extracted *{extension} generating "
-                         + f"{filename} at {target}"))
+    with zipfile.ZipFile(os.path.join(
+            settings.sourcedir, file), "r") as zip_file:
+        filesInZip = zip_file.namelist()
+        for filename in filesInZip:
+            if filename.endswith(extension):
+                zip_file.extract(filename, target)
+                logger.info(
+                    (f"Extracted *{extension} generating "
+                        + f"{filename} at {target}"))
 
     move_files_to_target(target, "System")
 
@@ -101,11 +100,12 @@ async def extract_log(dir):
     for file in os.listdir(dir):
         node = get_node(file)
         log_type = get_log_type(file)
-        logs_out = get_log_dir(node, log_type)
+        logs_dir = get_log_dir(node, log_type)
         extension = "service.log"
-        create_log_dir(logs_out)
+        create_log_dir(logs_dir)
 
-        extract(file, logs_out, extension)
+        if file.endswith(".zip"):
+            await extract(file, logs_dir, extension)
 
-        log_list = await convert(file, logs_out, node)
+        log_list = await convert(file, logs_dir, node)
         await save_logs(log_list)
