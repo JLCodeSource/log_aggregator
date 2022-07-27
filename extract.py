@@ -16,43 +16,21 @@ formats and different log formats.
 For example, fanapiservice.zip contains fanapiservice.log and
 smb3_1.log and their rolled versions.
 
-Functions: getNode, getLogType, getLogOutputDir,
-createLogsOutputDir, extract, extractLog
+Functions: createLogsOutputDir, extract, extractLog
 """
 
 import logging
 import os
 import zipfile
+import helper
 from pathlib import Path
 from shutil import move
 
 from config import get_settings
-from convert import convert
-from db import save_logs
+
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
-
-
-def get_node(file: str) -> str:
-    # Extract node name from filename
-    node = file.split("_")[1].split(".")[0]
-    logger.debug(f"node: {node} from {file}")
-    return node
-
-
-def get_log_type(file: str) -> str:
-    # Extract logtype from filename
-    log_type = file.split("_")[2]
-    logger.debug(f"log_type: {log_type} from {file}")
-    return log_type
-
-
-def get_log_dir(node: str, log_type: str):
-    # Return the output dir as a path
-    out = os.path.join(settings.outdir, node, log_type)
-    logger.debug(f"outdir: {out} from {settings.outdir}, {node}, {log_type}")
-    return out
 
 
 def create_log_dir(target: str):
@@ -76,7 +54,9 @@ def remove_folder(target):
     logger.debug(f"Removed {target}")
 
 
-async def extract(file: str, target: str, extension: str):
+async def extract(file: str, target: os.path, extension: str):
+
+    log_files = []
     # Find zip files and extract (by default) just  files with .log extension
     with zipfile.ZipFile(os.path.join(
             settings.sourcedir, file), "r") as zip_file:
@@ -92,20 +72,28 @@ async def extract(file: str, target: str, extension: str):
 
     remove_folder(os.path.join(target, "System"))
 
+    for filename in os.listdir(target):
+
+        log_files.append(os.path.join(target, filename))
+
+    return log_files
+
 
 async def extract_log(dir):
     # Manages the process of extracting the logs
     # Kicks off the conversion process for each in an await
 
+    log_files = []
+
     for file in os.listdir(dir):
-        node = get_node(file)
-        log_type = get_log_type(file)
-        logs_dir = get_log_dir(node, log_type)
+        node = helper.get_node(file)
+        log_type = helper.get_log_type(file)
+        logs_dir = helper.get_log_dir(node, log_type)
         extension = "service.log"
         create_log_dir(logs_dir)
 
         if file.endswith(".zip"):
-            await extract(file, logs_dir, extension)
+            new_log_files = await extract(file, logs_dir, extension)
+            log_files.extend(new_log_files)
 
-        log_list = await convert(file, logs_dir, node)
-        await save_logs(log_list)
+    return log_files

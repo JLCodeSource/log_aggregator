@@ -10,7 +10,8 @@ Variables: sourcedir
 """
 
 from config import get_settings
-from db import client, init
+from convert import convert
+from db import client, init, save_logs
 from extract import extract_log
 from logs import configure_logging
 import logging
@@ -32,7 +33,11 @@ async def main():
     await init()
 
     # Extact logs from source directory
-    await extract_log(settings.sourcedir)
+    log_files = await extract_log(settings.sourcedir)
+
+    for file in log_files:
+        log_list = await convert(file)
+        await save_logs(log_list)
 
 
 if __name__ == "__main__":

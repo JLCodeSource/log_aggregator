@@ -15,6 +15,7 @@ import re
 from datetime import datetime
 
 from pydantic import ValidationError
+from helper import get_node
 
 from model import JavaLog
 
@@ -40,69 +41,70 @@ def yield_matches(full_log: list[str]):
         logger.debug(f"Appended: {line} to list")
 
 
-def multi_to_single_line(logfile, target):
+def multi_to_single_line(logfile):
     # multiToSingleLine converts multiline to single line logs
-    data = open(os.path.join(target, logfile)).read()
+    data = open(logfile).read()
     logger.info(f"Opened {logfile} for reading")
     logs = list(yield_matches(data))
 
-    with open(os.path.join(target, logfile), "w") as file:
+    with open(os.path.join(logfile), "w") as file:
         for line in logs:
             file.write(f"{line}\n")
             logger.debug(f"Wrote: {line} to {file}")
         logger.info(f"Wrote converted logs to {logfile}")
 
 
-def convert_log_to_csv(logfile, target):
+def convert_log_to_csv(logfile):
     # Converts the CSV log file to a dict
     header = ["severity", "jvm", "datetime", "source", "type", "message"]
-    with open(os.path.join(target, logfile), "r") as file:
+    with open(os.path.join(logfile), "r") as file:
         reader = csv.DictReader(file, delimiter="|", fieldnames=header)
         logger.info(f"Opened {logfile} as csv.dictReader")
         return list(reader)
 
 
-async def convert(logfile, logs_out, node):
-    logger.info(f"Starting new convert coroutine for {logfile} and {node}")
+async def convert(logfile):
+    logger.info(f"Starting new convert coroutine for {logfile}")
     # Work on log files in logsout
     log_list = []
-    for logfile in os.listdir(logs_out):
-        multi_to_single_line(logfile, logs_out)
-        reader = convert_log_to_csv(logfile, logs_out)
+    node = get_node(logfile)
 
-        for dict in reader:
-            for k, v in dict.items():
-                if dict[k]:
-                    try:
-                        dict[k] = v.strip()
-                    except AttributeError as err:
-                        logger.exception(f"AttributeError: {err}")
+    multi_to_single_line(logfile)
+    reader = convert_log_to_csv(logfile)
 
-            dict["node"] = node
+    for dict in reader:
+        for k, v in dict.items():
+            if dict[k]:
+                try:
+                    dict[k] = v.strip()
+                except AttributeError as err:
+                    logger.exception(f"AttributeError: {err}")
 
-            timestamp = datetime.strptime(dict["datetime"].strip(),
-                                          "%Y/%m/%d %H:%M:%S")
+        dict["node"] = node
 
-            if (
-                dict["message"] is None
-                and dict["type"] is None
-                and not dict["source"] is None
-            ):
-                dict["message"] = dict["source"]
-                dict["source"] = None
+        timestamp = datetime.strptime(dict["datetime"].strip(),
+                                      "%Y/%m/%d %H:%M:%S")
 
-            try:
-                log = JavaLog(
-                    node=dict["node"],
-                    severity=dict["severity"],
-                    jvm=dict["jvm"],
-                    datetime=timestamp,
-                    source=dict["source"],
-                    type=dict["type"],
-                    message=dict["message"],
-                )
-                log_list.append(log)
-            except ValidationError as err:
-                logger.exception(f"ValidationError: {err}")
+        if (
+            dict["message"] is None
+            and dict["type"] is None
+            and not dict["source"] is None
+        ):
+            dict["message"] = dict["source"]
+            dict["source"] = None
+
+        try:
+            log = JavaLog(
+                node=dict["node"],
+                severity=dict["severity"],
+                jvm=dict["jvm"],
+                datetime=timestamp,
+                source=dict["source"],
+                type=dict["type"],
+                message=dict["message"],
+            )
+            log_list.append(log)
+        except ValidationError as err:
+            logger.exception(f"ValidationError: {err}")
     logger.info(f"Ending convert coroutine for {logfile} and {node}")
     return log_list
