@@ -4,6 +4,7 @@ This module contains shared fixtures, steps and hooks.
 from random import randrange
 import pytest
 import logging
+import os
 
 from config import get_settings
 
@@ -34,15 +35,22 @@ def two_line_log():
 
 
 @pytest.fixture()
-def make_filename():
-    def _make_filename(node, service, tld):
+def make_filename(settings_override):
+
+    settings = settings_override
+
+    def _make_filename(node, service, ext, tld):
         ts = 1658844081 + randrange(-100000, 100000)
-        if tld is True:
+
+        if ext == ".zip" and tld is True:
             filename = f"GBLogs_{node}.domain.tld_" \
                 + f"{service}_{ts}.zip"
-        else:
+        elif ext == ".zip" and tld is False:
             filename = f"GBLogs_{node}_" \
                 + f"{service}_{ts}.zip"
+        elif ext == ".log":
+            file = f"{service}{ext}"
+            filename = os.path.join(settings.outdir, node, service, file)
         return str(filename)
 
     return _make_filename

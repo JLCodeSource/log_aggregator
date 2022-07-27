@@ -16,7 +16,7 @@ formats and different log formats.
 For example, fanapiservice.zip contains fanapiservice.log and
 smb3_1.log and their rolled versions.
 
-The structure of the .log files is outdir/node/service/log.* 
+The structure of the .log files is outdir/node/service/log.*
 
 Functions: getNode, getLogType, getLogOutputDir,
 """
@@ -33,14 +33,14 @@ def get_node(file: str) -> str:
     # Extract node name from filename
     if os.path.basename(file).endswith(".zip"):
         node = file.split("_")[1].split(".")[0]
-        logger.debug(f"node: {node} from {file}")
     else:
         # strip outdir + leading slash
-        file = file[len(settings.outdir)+1:]
+        node = file[len(settings.outdir)+1:]
         # Split by directory
-        file = file.split(os.path.sep)
+        node = node.split(os.path.sep)
         # node is first directory
-        node = file[0]
+        node = node[0]
+    logger.debug(f"node: {node} from {file}")
     return node
 
 
@@ -48,14 +48,14 @@ def get_log_type(file: str) -> str:
     # Extract logtype from filename
     if os.path.basename(file).endswith(".zip"):
         log_type = file.split("_")[2]
-        logger.debug(f"log_type: {log_type} from {file}")
     else:
         # strip outdir + leading slash
-        file = file[len(settings.outdir)+1:]
+        log_type = file[len(settings.outdir)+1:]
         # Split by directory
-        file = file.split(os.path.sep)
+        log_type = log_type.split(os.path.sep)
         # log_type is second directory
-        log_type = file[1]
+        log_type = log_type[1]
+    logger.debug(f"log_type: {log_type} from {file}")
     return log_type
 
 

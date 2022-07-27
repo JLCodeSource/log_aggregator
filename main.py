@@ -29,6 +29,7 @@ async def main():
     logger.debug(f"Sourcedir: {settings.sourcedir}")
     logger.debug(f"Outdir: {settings.outdir}")
     logger.debug(f"Database: {settings.database}")
+    logger.info(f"Log Level: {settings.log_level}")
     # Init database
     await init()
 

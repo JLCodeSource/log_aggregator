@@ -2,16 +2,8 @@ import logging
 import pytest
 import os
 import extract
-import helper
 from zipfile import ZipFile
 
-
-filename_data = [
-    ("newnode", "newservice", True),
-    ("newnode", "newservice", False),
-    ("Complex-1", "Svc-23e", True),
-    ("Complex-1", "Svc-23e", False),
-]
 
 filename_example = "GBLogs_psc-n11_fanapiservice_1657563227839.zip"
 
@@ -19,39 +11,6 @@ sourcedir_example = [
     "GBLogs_-n11_fanapiservice_1657563227839.zip",
     'GBLogs_-n16_fanapiservice_1657563218539.zip',
 ]
-
-
-@pytest.mark.parametrize("node, service, tld", filename_data)
-@pytest.mark.unit
-def test_get_node(logger, make_filename, node, service, tld):
-    file = make_filename(node, service, tld)
-    assert helper.get_node(file) == node
-    assert logger.record_tuples == [
-        ("helper", logging.DEBUG,
-         f"node: {node} from {file}")
-    ]
-
-
-@pytest.mark.parametrize("node, service, tld", filename_data)
-@pytest.mark.unit
-def test_get_log_type(logger, make_filename, node, service, tld):
-    file = make_filename(node, service, tld)
-    assert helper.get_log_type(file) == service
-    assert logger.record_tuples == [
-        ("helper", logging.DEBUG,
-         f"log_type: {service} from {file}")
-    ]
-
-
-@pytest.mark.parametrize("node, service, tld", filename_data)
-@pytest.mark.unit
-def test_get_log_dir(logger, settings_override, node, service, tld):
-    out = os.path.join(settings_override.outdir, node, service)
-    test = helper.get_log_dir(node, service)
-    assert test == out
-    assert logger.record_tuples == [
-        ("helper", logging.DEBUG,
-         f"outdir: {out} from {settings_override.outdir}, {node}, {service}")]
 
 
 @pytest.mark.unit
@@ -137,13 +96,13 @@ async def test_extract_log(logger, tmpdir, monkeypatch, one_line_log,
     monkeypatch.setattr(extract.extract_log, "convert", mock_convert,
                         raising=False)
 
-    log_len = len(one_line_log.splitlines())
+    #log_len = len(one_line_log.splitlines())
 
-    settings = settings_override
+    #settings = settings_override
 
     await extract.extract_log(tmpdir)
 
-    logs = logger.record_tuples
+    #logs = logger.record_tuples
     # assert logs[0] == (
     #    "extract", logging.INFO,
     #    f"Inserted {log_len} into {settings.database}")
