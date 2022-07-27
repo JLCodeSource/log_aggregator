@@ -2,6 +2,7 @@ import logging
 import pytest
 import os
 import extract
+import helper
 from zipfile import ZipFile
 
 
@@ -24,9 +25,9 @@ sourcedir_example = [
 @pytest.mark.unit
 def test_get_node(logger, make_filename, node, service, tld):
     file = make_filename(node, service, tld)
-    assert extract.get_node(file) == node
+    assert helper.get_node(file) == node
     assert logger.record_tuples == [
-        ("extract", logging.DEBUG,
+        ("helper", logging.DEBUG,
          f"node: {node} from {file}")
     ]
 
@@ -35,9 +36,9 @@ def test_get_node(logger, make_filename, node, service, tld):
 @pytest.mark.unit
 def test_get_log_type(logger, make_filename, node, service, tld):
     file = make_filename(node, service, tld)
-    assert extract.get_log_type(file) == service
+    assert helper.get_log_type(file) == service
     assert logger.record_tuples == [
-        ("extract", logging.DEBUG,
+        ("helper", logging.DEBUG,
          f"log_type: {service} from {file}")
     ]
 
@@ -46,10 +47,10 @@ def test_get_log_type(logger, make_filename, node, service, tld):
 @pytest.mark.unit
 def test_get_log_dir(logger, settings_override, node, service, tld):
     out = os.path.join(settings_override.outdir, node, service)
-    test = extract.get_log_dir(node, service)
+    test = helper.get_log_dir(node, service)
     assert test == out
     assert logger.record_tuples == [
-        ("extract", logging.DEBUG,
+        ("helper", logging.DEBUG,
          f"outdir: {out} from {settings_override.outdir}, {node}, {service}")]
 
 
@@ -98,7 +99,8 @@ class MockZip:
 
 
 @pytest.mark.mock
-def test_extract(logger, tmpdir, monkeypatch):
+@pytest.mark.asyncio
+async def test_extract(logger, tmpdir, monkeypatch):
 
     def mock_zip_namelist(*args, **kwargs):
         return MockZip.namelist()
@@ -111,8 +113,8 @@ def test_extract(logger, tmpdir, monkeypatch):
     for filename in MockZip.namelist():
         if filename.endswith(extension):
             log_file = filename
-    extract.extract(file,
-                    tmpdir, extension)
+    await extract.extract(file,
+                          tmpdir, extension)
     logs = logger.record_tuples
     assert logs[0] == ("extract", logging.INFO,
                        f"Extracted *{extension} generating "
@@ -120,8 +122,9 @@ def test_extract(logger, tmpdir, monkeypatch):
 
 
 @pytest.mark.mock
-def test_extract_log(logger, tmpdir, monkeypatch, one_line_log,
-                     settings_override):
+@pytest.mark.asyncio
+async def test_extract_log(logger, tmpdir, monkeypatch, one_line_log,
+                           settings_override):
 
     def mock_listdir():
         return sourcedir_example
@@ -138,7 +141,7 @@ def test_extract_log(logger, tmpdir, monkeypatch, one_line_log,
 
     settings = settings_override
 
-    extract.extract_log(tmpdir)
+    await extract.extract_log(tmpdir)
 
     logs = logger.record_tuples
     # assert logs[0] == (
