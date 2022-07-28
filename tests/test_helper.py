@@ -1,10 +1,12 @@
 import logging
 import pytest
 import os
-import helper
-from config import get_settings
+from aggregator import config, helper
 
-settings = get_settings()
+
+settings = config.get_settings()
+
+module_name = "aggregator.helper"
 
 filename_data = [
     ("newnode", "newservice", ".zip", True),
@@ -24,7 +26,7 @@ def test_get_node(logger, make_filename, node, service, ext, tld):
     file = make_filename(node, service, ext, tld)
     assert helper.get_node(file) == node
     assert logger.record_tuples == [
-        ("helper", logging.DEBUG, f"node: {node} from {file}")
+        (module_name, logging.DEBUG, f"node: {node} from {file}")
     ]
 
 
@@ -34,7 +36,7 @@ def test_get_log_type(logger, make_filename, node, service, ext, tld):
     file = make_filename(node, service, ext, tld)
     assert helper.get_log_type(file) == service
     assert logger.record_tuples == [
-        ("helper", logging.DEBUG,
+        (module_name, logging.DEBUG,
          f"log_type: {service} from {file}")
     ]
 
@@ -46,5 +48,5 @@ def test_get_log_dir(logger, settings_override, node, service, ext, tld):
     test = helper.get_log_dir(node, service)
     assert test == out
     assert logger.record_tuples == [
-        ("helper", logging.DEBUG,
+        (module_name, logging.DEBUG,
          f"outdir: {out} from {settings_override.outdir}, {node}, {service}")]

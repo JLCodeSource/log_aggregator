@@ -11,8 +11,8 @@ import logging
 import motor
 from beanie import init_beanie
 
-from config import get_settings
-from model import JavaLog
+from aggregator.config import get_settings
+from aggregator.model import JavaLog
 
 logger = logging.getLogger(__name__)
 

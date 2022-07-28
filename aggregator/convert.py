@@ -15,9 +15,9 @@ import re
 from datetime import datetime
 
 from pydantic import ValidationError
-from helper import get_node
+from aggregator.helper import get_node
 
-from model import JavaLog
+from aggregator.model import JavaLog
 
 logger = logging.getLogger(__name__)
 

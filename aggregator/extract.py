@@ -22,11 +22,12 @@ Functions: createLogsOutputDir, extract, extractLog
 import logging
 import os
 import zipfile
-import helper
+
 from pathlib import Path
 from shutil import move
 
-from config import get_settings
+from aggregator import helper
+from aggregator.config import get_settings
 
 
 logger = logging.getLogger(__name__)

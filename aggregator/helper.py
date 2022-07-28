@@ -23,7 +23,7 @@ Functions: getNode, getLogType, getLogOutputDir,
 
 import logging
 import os
-from config import get_settings
+from aggregator.config import get_settings
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

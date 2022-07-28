@@ -9,11 +9,11 @@ Functions: main, init, extractLog
 Variables: sourcedir
 """
 
-from config import get_settings
-from convert import convert
-from db import client, init, save_logs
-from extract import extract_log
-from logs import configure_logging
+from aggregator.config import get_settings
+from aggregator.convert import convert
+from aggregator.db import client, init, save_logs
+from aggregator.extract import extract_log
+from aggregator.logs import configure_logging
 import logging
 
 logger = logging.getLogger("main")

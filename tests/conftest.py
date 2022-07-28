@@ -5,13 +5,12 @@ from random import randrange
 import pytest
 import logging
 import os
-
-from config import get_settings
+from aggregator import config
 
 
 @pytest.fixture()
 def settings_override():
-    settings = get_settings()
+    settings = config.get_settings()
     settings.database = "test-logs"
     settings.log_level = logging.DEBUG
     return settings

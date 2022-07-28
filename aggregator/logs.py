@@ -9,7 +9,7 @@ Classes: OneLineExceptionFormatter
 """
 import logging
 
-from config import get_settings
+from aggregator.config import get_settings
 
 
 class OneLineExceptionFormatter(logging.Formatter):

@@ -1,9 +1,8 @@
 import logging
 import pytest
 import os
-import extract
 from zipfile import ZipFile
-
+from aggregator import extract  # noqa
 
 filename_example = "GBLogs_psc-n11_fanapiservice_1657563227839.zip"
 
@@ -12,12 +11,14 @@ sourcedir_example = [
     'GBLogs_-n16_fanapiservice_1657563218539.zip',
 ]
 
+module_name = "aggregator.extract"
+
 
 @pytest.mark.unit
 def test_create_log_dir(logger, tmpdir):
     extract.create_log_dir(tmpdir)
     assert logger.record_tuples == [
-        ("extract", logging.DEBUG,
+        (module_name, logging.DEBUG,
          f"Created {tmpdir}")
     ]
 
@@ -32,7 +33,7 @@ def test_move_files_to_target(logger, tmpdir):
     assert filename in os.listdir(tmpdir)
     assert filename not in os.listdir(sub)
     assert logger.record_tuples == [
-        ("extract", logging.DEBUG,
+        (module_name, logging.DEBUG,
          f"Moved {filename} from {sub} to {tmpdir}")
     ]
 
@@ -42,7 +43,7 @@ def test_remove_folder(logger, tmpdir):
     extract.remove_folder(tmpdir)
     assert os.path.exists(tmpdir) is False
     assert logger.record_tuples == [
-        ("extract", logging.DEBUG,
+        (module_name, logging.DEBUG,
          f"Removed {tmpdir}")
     ]
 
@@ -75,17 +76,17 @@ async def test_extract(logger, tmpdir, monkeypatch):
     await extract.extract(file,
                           tmpdir, extension)
     logs = logger.record_tuples
-    assert logs[0] == ("extract", logging.INFO,
+    assert logs[0] == (module_name, logging.INFO,
                        f"Extracted *{extension} generating "
                        + f"{log_file} at {tmpdir}")
 
-
+""" 
 @pytest.mark.mock
 @pytest.mark.asyncio
 async def test_extract_log(logger, tmpdir, monkeypatch, one_line_log,
                            settings_override):
 
-    def mock_listdir():
+    def mock_listdir(tmpdir):
         return sourcedir_example
 
     monkeypatch.setattr(os, "listdir", mock_listdir)
@@ -104,5 +105,5 @@ async def test_extract_log(logger, tmpdir, monkeypatch, one_line_log,
 
     #logs = logger.record_tuples
     # assert logs[0] == (
-    #    "extract", logging.INFO,
-    #    f"Inserted {log_len} into {settings.database}")
+    #    module_name, logging.INFO,
+    #    f"Inserted {log_len} into {settings.database}") """
