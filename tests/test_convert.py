@@ -1,5 +1,4 @@
 import logging
-from operator import mod
 import pytest
 from aggregator import convert
 

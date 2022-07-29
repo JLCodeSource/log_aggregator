@@ -15,6 +15,7 @@ import re
 from datetime import datetime
 
 from pydantic import ValidationError
+from beanie.exceptions import CollectionWasNotInitialized
 from aggregator.helper import get_node
 
 from aggregator.model import JavaLog
@@ -106,5 +107,11 @@ async def convert(logfile):
             log_list.append(log)
         except ValidationError as err:
             logger.exception(f"ValidationError: {err}")
+        except CollectionWasNotInitialized as err:
+            logger.fatal(f"CollectionWasNotInitializedError: {err}")
+            exit()
+        except BaseException as err:
+            logger.exception(f"Unexpected {err=}, {type(err)=}")
+
     logger.info(f"Ending convert coroutine for {logfile} and {node}")
     return log_list
