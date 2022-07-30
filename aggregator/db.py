@@ -6,6 +6,7 @@ Change Log: 2022-07-26 - added environment settings
 Summary: db handles the initialization of the database and all db operations
 Functions: init, saveLogs
 """
+import asyncio
 import logging
 
 import motor
@@ -31,9 +32,18 @@ async def init():
         exit()
 
 
-async def save_logs(logs):
-    await JavaLog.insert_many(logs)
+async def save_logs(logs) -> str:
     num_logs = len(logs)
-    logger.info(f"Inserted {num_logs} into {settings.database}")
+    logger.info(
+        f"Started insert coroutine for {num_logs} into db: {settings.database}"
+    )
+    await asyncio.sleep(0)
+    await JavaLog.insert_many(logs)
+
+    logger.info(f"Inserted {num_logs} into db: {settings.database}")
     for log in logs:
         logger.debug(f"Inserted {log}")
+    logger.info(
+        f"Ending insert coroutine for {num_logs} into db: {settings.database}"
+    )
+    return "ok"

@@ -19,6 +19,7 @@ smb3_1.log and their rolled versions.
 Functions: createLogsOutputDir, extract, extractLog
 """
 
+import asyncio
 import logging
 import os
 import zipfile
@@ -55,8 +56,9 @@ def remove_folder(target):
     logger.debug(f"Removed {target}")
 
 
-async def extract(file: str, target: os.path, extension: str):
+async def extract(file: str, target: os.path, extension: str) -> list:
 
+    logger.info(f"Starting extraction coroutine for {file}")
     log_files = []
     # Find zip files and extract (by default) just  files with .log extension
     with zipfile.ZipFile(os.path.join(
@@ -64,6 +66,7 @@ async def extract(file: str, target: os.path, extension: str):
         filesInZip = zip_file.namelist()
         for filename in filesInZip:
             if filename.endswith(extension):
+                await asyncio.sleep(0)
                 zip_file.extract(filename, target)
                 logger.info(
                     (f"Extracted *{extension} generating "
@@ -74,16 +77,17 @@ async def extract(file: str, target: os.path, extension: str):
     remove_folder(os.path.join(target, "System"))
 
     for filename in os.listdir(target):
-
         log_files.append(os.path.join(target, filename))
 
+    logger.info(f"Ending extraction coroutine for {file}")
     return log_files
 
 
-async def extract_log(dir):
+async def extract_log(dir: os.path) -> list:
     # Manages the process of extracting the logs
     # Kicks off the conversion process for each in an await
 
+    zip_files_extract_fn_list = []
     log_files = []
 
     for file in os.listdir(dir):
@@ -94,7 +98,12 @@ async def extract_log(dir):
         create_log_dir(logs_dir)
 
         if file.endswith(".zip"):
-            new_log_files = await extract(file, logs_dir, extension)
-            log_files.extend(new_log_files)
+            zip_files_extract_fn_list.append(
+                extract(file, logs_dir, extension))
+        else:
+            continue
+
+    new_log_files = await asyncio.gather(*zip_files_extract_fn_list)
+    log_files.extend(list(new_log_files))
 
     return log_files

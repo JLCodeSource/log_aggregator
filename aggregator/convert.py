@@ -8,6 +8,7 @@ for upload to the database.
 Functions: lineStartMatch, yield_matches, multiToSingleLine,
 convertLogtoCSV, convert
 """
+import asyncio
 import csv
 import logging
 import os
@@ -112,6 +113,7 @@ async def convert(logfile):
             exit()
         except BaseException as err:
             logger.exception(f"Unexpected {err=}, {type(err)=}")
+        await asyncio.sleep(0)
 
     logger.info(f"Ending convert coroutine for {logfile} and {node}")
     return log_list

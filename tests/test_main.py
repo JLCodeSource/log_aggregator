@@ -1,12 +1,21 @@
-from main import Aggregator, main
+from main import main
 import pytest
+import logging
+import asyncio
+
+logger = logging.getLogger(__name__)
 
 
-@pytest.mark.unit
-@pytest.mark.asyncio(scope="session")
-async def test_main(logger, event_loop):
-    event_loop.run_until_complete(main())
-    yield logger
+""" @pytest.mark.asyncio(scope="session")
+@pytest.mark.mock
+async def test_main(logger, settings_override, monkeypatch):
+
+    def mock_get_settings():
+        return settings_override
+
+    monkeypatch.setattr(main, "Settings", mock_get_settings)
+
+    asyncio.run(main())
     logs = logger.record_tuples
-
     assert logs[0][0] == "fail"
+ """

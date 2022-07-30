@@ -76,9 +76,15 @@ async def test_extract(logger, tmpdir, monkeypatch):
     await extract.extract(file,
                           tmpdir, extension)
     logs = logger.record_tuples
-    assert logs[0] == (module_name, logging.INFO,
-                       f"Extracted *{extension} generating "
-                       + f"{log_file} at {tmpdir}")
+    assert logs[0] == (
+        module_name,
+        logging.INFO,
+        f"Starting extraction coroutine for {file}")
+    assert logs[1] == (
+        module_name,
+        logging.INFO,
+        f"Extracted *{extension} generating {log_file} at {tmpdir}"
+    )
 
 """ 
 @pytest.mark.mock

@@ -13,6 +13,7 @@ def settings_override():
     settings = config.get_settings()
     settings.database = "test-logs"
     settings.log_level = logging.DEBUG
+    settings.testing = True
     return settings
 
 

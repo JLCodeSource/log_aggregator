@@ -12,10 +12,11 @@ Variables: sourcedir
 from pyparsing import empty
 from aggregator.config import get_settings
 from aggregator.convert import convert
-from aggregator.db import client, init, save_logs
+from aggregator.db import init, save_logs
 from aggregator.extract import extract_log
 from aggregator.logs import configure_logging
 import logging
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -46,25 +47,34 @@ async def main():
     logger.debug(f"Database: {settings.database}")
     logger.info(f"Log Level: {settings.log_level}")
     # Init database
-    await init()
+    init_db = asyncio.create_task(init())
+    await init_db
 
     # Extact logs from source directory
     try:
-        log_files = await extract_log(settings.sourcedir)
-        if log_files is None or log_files is empty:
+        log_file_lists = await extract_log(settings.sourcedir)
+        if log_file_lists is None or log_file_lists is empty:
             raise Exception(
                 f"Failed to get log_files from {settings.sourcedir}")
     except Exception as err:
         logger.error(f"{err}")
 
-    for file in log_files:
-        log_list = await convert(file)
-        await save_logs(log_list)
+    convert_fn_list = []
+    for log_list in log_file_lists:
+        for file in log_list:
+            convert_fn_list.append(convert(file))
 
+    converted_log_lists = await asyncio.gather(*convert_fn_list)
+
+    insert_log_fn_list = []
+    for log_lists in converted_log_lists:
+        insert_log_fn_list.append(save_logs(log_lists))
+
+    ok = await asyncio.gather(*insert_log_fn_list)
+    logger.info(f"Output from db insert: {ok}")
 
 if __name__ == "__main__":
 
     configure_logging()
 
-    loop = client.get_io_loop()
-    loop.run_until_complete(main())
+    asyncio.run(main())

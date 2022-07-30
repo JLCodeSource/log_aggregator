@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
-def get_node(file: str) -> str:
+def get_node(file: os.path) -> str:
     # Extract node name from filename
     if os.path.basename(file).endswith(".zip"):
         node = file.split("_")[1].split(".")[0]
@@ -44,7 +44,7 @@ def get_node(file: str) -> str:
     return node
 
 
-def get_log_type(file: str) -> str:
+def get_log_type(file: os.path) -> str:
     # Extract logtype from filename
     if os.path.basename(file).endswith(".zip"):
         log_type = file.split("_")[2]
@@ -59,7 +59,7 @@ def get_log_type(file: str) -> str:
     return log_type
 
 
-def get_log_dir(node: str, log_type: str):
+def get_log_dir(node: str, log_type: str) -> os.path:
     # Return the output dir as a path
     out = os.path.join(settings.outdir, node, log_type)
     logger.debug(f"outdir: {out} from {settings.outdir}, {node}, {log_type}")
