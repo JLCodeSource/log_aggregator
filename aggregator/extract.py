@@ -37,8 +37,12 @@ settings = get_settings()
 
 def create_log_dir(target: str):
     # Create logs output directory
-    Path(target).mkdir(parents=True, exist_ok=True)
-    logger.debug(f"Created {target}")
+    try:
+        Path(target).mkdir(parents=True, exist_ok=True)
+        logger.debug(f"Created {target}")
+    except FileNotFoundError as err:
+        logger.error(f"Could not create directory: {err}")
+        raise err
 
 
 def move_files_to_target(target: str, source: str):

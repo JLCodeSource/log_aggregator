@@ -1,6 +1,7 @@
 import logging
 import pytest
 import os
+from pathlib import Path
 from zipfile import ZipFile
 from aggregator import extract  # noqa
 
@@ -14,7 +15,7 @@ sourcedir_example = [
 module_name = "aggregator.extract"
 
 
-@pytest.mark.unit
+@pytest.mark.mock
 def test_create_log_dir(logger, tmpdir):
     extract.create_log_dir(tmpdir)
     assert logger.record_tuples == [
@@ -23,7 +24,31 @@ def test_create_log_dir(logger, tmpdir):
     ]
 
 
-@pytest.mark.unit
+class MockPath:
+
+    @staticmethod
+    def mkdir():
+        raise FileNotFoundError
+
+
+@pytest.mark.mock
+def test_create_log_dir_parents_false(logger, tmpdir, monkeypatch):
+    def mock_mkdir(*args, **kwargs):
+        return MockPath.mkdir()
+
+    monkeypatch.setattr(Path, "mkdir", mock_mkdir)
+
+    with pytest.raises(FileNotFoundError):
+        extract.create_log_dir(os.path.join(tmpdir, "no_parent", "sub"))
+
+    assert logger.record_tuples[0][0] == module_name
+    assert logger.record_tuples[0][1] == logging.ERROR
+    assert logger.record_tuples[0][2].startswith(
+        "Could not create directory:"
+    )
+
+
+@ pytest.mark.unit
 def test_move_files_to_target(logger, tmpdir):
     filename = "test.txt"
     file = tmpdir.mkdir("System").join(filename)
@@ -38,7 +63,7 @@ def test_move_files_to_target(logger, tmpdir):
     ]
 
 
-@pytest.mark.unit
+@ pytest.mark.unit
 def test_remove_folder(logger, tmpdir):
     extract.remove_folder(tmpdir)
     assert os.path.exists(tmpdir) is False
@@ -50,7 +75,7 @@ def test_remove_folder(logger, tmpdir):
 
 class MockZip:
 
-    @staticmethod
+    @ staticmethod
     def namelist():
         return [
             'System/fanapiservice.log.1',
@@ -58,8 +83,8 @@ class MockZip:
         ]
 
 
-@pytest.mark.mock
-@pytest.mark.asyncio
+@ pytest.mark.mock
+@ pytest.mark.asyncio
 async def test_extract(logger, tmpdir, monkeypatch):
 
     def mock_zip_namelist(*args, **kwargs):
@@ -86,7 +111,7 @@ async def test_extract(logger, tmpdir, monkeypatch):
         f"Extracted *{extension} generating {log_file} at {tmpdir}"
     )
 
-""" 
+"""
 @pytest.mark.mock
 @pytest.mark.asyncio
 async def test_extract_log(logger, tmpdir, monkeypatch, one_line_log,
@@ -103,13 +128,13 @@ async def test_extract_log(logger, tmpdir, monkeypatch, one_line_log,
     monkeypatch.setattr(extract.extract_log, "convert", mock_convert,
                         raising=False)
 
-    #log_len = len(one_line_log.splitlines())
+    # log_len = len(one_line_log.splitlines())
 
-    #settings = settings_override
+    # settings = settings_override
 
     await extract.extract_log(tmpdir)
 
-    #logs = logger.record_tuples
+    # logs = logger.record_tuples
     # assert logs[0] == (
     #    module_name, logging.INFO,
     #    f"Inserted {log_len} into {settings.database}") """
