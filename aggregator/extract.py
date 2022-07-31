@@ -87,12 +87,13 @@ async def extract(file: str, target: os.path, extension: str) -> list:
     return log_files
 
 
-async def extract_log(dir: os.path) -> list:
+async def extract_log(
+        dir: os.path,
+        zip_files_extract_fn_list: list | None = [],
+        log_files: list | None = []) -> list:
     # Manages the process of extracting the logs
     # Kicks off the conversion process for each in an await
-
-    zip_files_extract_fn_list = []
-    log_files = []
+    # Added options to pass in list values for testing purposes
 
     for file in os.listdir(dir):
         node = helper.get_node(file)
@@ -102,12 +103,19 @@ async def extract_log(dir: os.path) -> list:
         create_log_dir(logs_dir)
 
         if file.endswith(".zip"):
-            zip_files_extract_fn_list.append(
-                extract(file, logs_dir, extension))
+            try:
+                zip_files_extract_fn_list.append(
+                    extract(file, logs_dir, extension))
+            except AttributeError as err:
+                logger.error(f"Attribute Error: {err}")
+                raise err
         else:
             continue
-
-    new_log_files = await asyncio.gather(*zip_files_extract_fn_list)
+    try:
+        new_log_files = await asyncio.gather(*zip_files_extract_fn_list)
+    except FileNotFoundError as err:
+        logger.error(f"FileNotFound Error: {err}")
+        raise err
     log_files.extend(list(new_log_files))
 
     return log_files

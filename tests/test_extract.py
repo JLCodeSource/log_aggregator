@@ -48,6 +48,30 @@ def test_create_log_dir_parents_false(logger, tmpdir, monkeypatch):
     )
 
 
+class MockDir:
+
+    @staticmethod
+    def listdir(dir: os.path):
+        return sourcedir_example
+
+
+@pytest.mark.asyncio
+@pytest.mark.mock
+@pytest.mark.mutmut
+async def test_extract_log_empty_fn_list(logger, monkeypatch, tmpdir):
+    def mock_listdir(*args, **kwargs):
+        return MockDir.listdir(tmpdir)
+
+    monkeypatch.setattr(os, "listdir", mock_listdir)
+
+    with pytest.raises(AttributeError):
+        await extract.extract_log(tmpdir, None)
+    print(logger.record_tuples[:-1])
+    assert logger.record_tuples[-1][2].startswith(
+        "Attribute Error:"
+    )
+
+
 @ pytest.mark.unit
 def test_move_files_to_target(logger, tmpdir):
     filename = "test.txt"
