@@ -106,6 +106,7 @@ async def convert(logfile):
                 message=dict["message"],
             )
             log_list.append(log)
+            logger.debug(f"Appended {log} to log_list")
         except ValidationError as err:
             logger.exception(f"ValidationError: {err}")
         except CollectionWasNotInitialized as err:

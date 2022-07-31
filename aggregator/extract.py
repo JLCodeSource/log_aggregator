@@ -87,18 +87,36 @@ async def extract(file: str, target: os.path, extension: str) -> list:
     return log_files
 
 
-async def extract_log(
+def gen_zip_extract_fn_list(
         dir: os.path,
-        zip_files_extract_fn_list: list | None = [],
-        log_files: list | None = []) -> list:
+        zip_files_extract_fn_list: list | None = []) -> list:
     # Manages the process of extracting the logs
     # Kicks off the conversion process for each in an await
     # Added options to pass in list values for testing purposes
 
     for file in os.listdir(dir):
-        node = helper.get_node(file)
-        log_type = helper.get_log_type(file)
-        logs_dir = helper.get_log_dir(node, log_type)
+        try:
+            node = helper.get_node(file)
+            if node is None:
+                raise Exception("TypeError", "node should not be 'NoneType'")
+        except Exception as err:
+            logger.error(f"TypeError: {err}")
+            continue
+        try:
+            log_type = helper.get_log_type(file)
+            if log_type is None:
+                raise Exception("NoneException", "log_type should not be None")
+        except Exception as err:
+            logger.error(f"NoneException: {err}")
+            exit()
+        try:
+            logs_dir = helper.get_log_dir(node, log_type)
+            if logs_dir is None:
+                raise Exception("NoneException", "logs_dir should not be None")
+        except Exception as err:
+            logger.error(f"NoneException: {err}")
+            exit()
+
         extension = "service.log"
         create_log_dir(logs_dir)
 
@@ -111,8 +129,14 @@ async def extract_log(
                 raise err
         else:
             continue
+    return zip_files_extract_fn_list
+
+
+async def extract_log(
+        extract_fn_list: list = [], log_files: list = []) -> list:
+
     try:
-        new_log_files = await asyncio.gather(*zip_files_extract_fn_list)
+        new_log_files = await asyncio.gather(*extract_fn_list)
     except FileNotFoundError as err:
         logger.error(f"FileNotFound Error: {err}")
         raise err

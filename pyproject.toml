@@ -3,6 +3,7 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "unit: unit tests",
     "mock: mock tests",
+    "mutmut: tests made for mutmut",
 ]
 [tool.poetry]
 name = "log-aggregator"

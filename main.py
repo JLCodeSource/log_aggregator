@@ -13,7 +13,7 @@ from pyparsing import empty
 from aggregator.config import get_settings
 from aggregator.convert import convert
 from aggregator.db import init, save_logs
-from aggregator.extract import extract_log
+from aggregator.extract import extract_log, gen_zip_extract_fn_list
 from aggregator.logs import configure_logging
 import logging
 import asyncio
@@ -50,17 +50,20 @@ async def main():
     init_db = asyncio.create_task(init())
     await init_db
 
+    # Create list of configured extraction functions for zip extraction
+    log_file_list = gen_zip_extract_fn_list(settings.sourcedir)
+
     # Extact logs from source directory
     try:
-        log_file_lists = await extract_log(settings.sourcedir)
-        if log_file_lists is None or log_file_lists is empty:
+        log_file_list = await extract_log(log_file_list)
+        if log_file_list is None or log_file_list is empty:
             raise Exception(
                 f"Failed to get log_files from {settings.sourcedir}")
     except Exception as err:
         logger.error(f"{err}")
 
     convert_fn_list = []
-    for log_list in log_file_lists:
+    for log_list in log_file_list:
         for file in log_list:
             convert_fn_list.append(convert(file))
 

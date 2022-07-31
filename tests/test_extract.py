@@ -1,9 +1,10 @@
+import asyncio
 import logging
 import pytest
 import os
 from pathlib import Path
 from zipfile import ZipFile
-from aggregator import extract  # noqa
+from aggregator import extract, helper  # noqa
 
 filename_example = "GBLogs_psc-n11_fanapiservice_1657563227839.zip"
 
@@ -31,6 +32,7 @@ class MockPath:
         raise FileNotFoundError
 
 
+@pytest.mark.mutmut
 @pytest.mark.mock
 def test_create_log_dir_parents_false(logger, tmpdir, monkeypatch):
     def mock_mkdir(*args, **kwargs):
@@ -45,30 +47,6 @@ def test_create_log_dir_parents_false(logger, tmpdir, monkeypatch):
     assert logger.record_tuples[0][1] == logging.ERROR
     assert logger.record_tuples[0][2].startswith(
         "Could not create directory:"
-    )
-
-
-class MockDir:
-
-    @staticmethod
-    def listdir(dir: os.path):
-        return sourcedir_example
-
-
-@pytest.mark.asyncio
-@pytest.mark.mock
-@pytest.mark.mutmut
-async def test_extract_log_empty_fn_list(logger, monkeypatch, tmpdir):
-    def mock_listdir(*args, **kwargs):
-        return MockDir.listdir(tmpdir)
-
-    monkeypatch.setattr(os, "listdir", mock_listdir)
-
-    with pytest.raises(AttributeError):
-        await extract.extract_log(tmpdir, None)
-    print(logger.record_tuples[:-1])
-    assert logger.record_tuples[-1][2].startswith(
-        "Attribute Error:"
     )
 
 
@@ -135,30 +113,57 @@ async def test_extract(logger, tmpdir, monkeypatch):
         f"Extracted *{extension} generating {log_file} at {tmpdir}"
     )
 
-"""
-@pytest.mark.mock
-@pytest.mark.asyncio
-async def test_extract_log(logger, tmpdir, monkeypatch, one_line_log,
-                           settings_override):
 
-    def mock_listdir(tmpdir):
+class MockNone:
+
+    @staticmethod
+    def get_none(file: str, log_type: str | None = None):
+        return None
+
+
+class MockDir:
+
+    @staticmethod
+    def listdir(dir: os.path):
         return sourcedir_example
+
+
+@pytest.mark.asyncio
+@pytest.mark.mock
+@pytest.mark.mutmut
+async def test_extract_gen_extract_fn_list_empty(logger, monkeypatch, tmpdir):
+    def mock_listdir(*args, **kwargs):
+        return MockDir.listdir(tmpdir)
 
     monkeypatch.setattr(os, "listdir", mock_listdir)
 
-    def mock_convert():
-        return one_line_log()
+    with pytest.raises(AttributeError):
+        await extract.gen_zip_extract_fn_list(tmpdir, None)
 
-    monkeypatch.setattr(extract.extract_log, "convert", mock_convert,
-                        raising=False)
+    assert logger.record_tuples[-1][2].startswith(
+        "Attribute Error:"
+    )
 
-    # log_len = len(one_line_log.splitlines())
 
-    # settings = settings_override
+@pytest.mark.mock
+@pytest.mark.mutmut
+@pytest.mark.asyncio
+async def test_extract_log_helper_node_none(logger, tmpdir, monkeypatch):
+    def mock_listdir(*args, **kwargs):
+        return MockDir.listdir(tmpdir)
 
-    await extract.extract_log(tmpdir)
+    def mock_helper_get_node(file):
+        return MockNone.get_none(file)
 
-    # logs = logger.record_tuples
-    # assert logs[0] == (
-    #    module_name, logging.INFO,
-    #    f"Inserted {log_len} into {settings.database}") """
+    def mock_asyncio_gather_get_none(*args, **kwargs):
+        return MockNone.get_none(*args)
+
+    monkeypatch.setattr(os, "listdir", mock_listdir)
+
+    monkeypatch.setattr(helper, "get_node", mock_helper_get_node)
+
+    monkeypatch.setattr(asyncio, "gather", mock_asyncio_gather_get_none)
+
+    with pytest.raises(Exception):
+        log = await extract.extract_log(tmpdir, None, None)
+        assert log[-1][2].startswith("Fail:")
