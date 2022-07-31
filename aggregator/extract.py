@@ -40,8 +40,8 @@ def create_log_dir(target: str):
     try:
         Path(target).mkdir(parents=True, exist_ok=True)
         logger.debug(f"Created {target}")
-    except FileNotFoundError as err:
-        logger.error(f"Could not create directory: {err}")
+    except (FileNotFoundError, FileExistsError) as err:
+        logger.error(f"ErrorType: {type(err)} - Could not create directory")
         raise err
 
 

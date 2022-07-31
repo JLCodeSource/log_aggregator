@@ -28,25 +28,47 @@ def test_create_log_dir(logger, tmpdir):
 class MockPath:
 
     @staticmethod
-    def mkdir():
+    def mkdir_fnf():
         raise FileNotFoundError
+
+    @staticmethod
+    def mkdir_fee():
+        raise FileExistsError
 
 
 @pytest.mark.mutmut
 @pytest.mark.mock
 def test_create_log_dir_parents_false(logger, tmpdir, monkeypatch):
-    def mock_mkdir(*args, **kwargs):
-        return MockPath.mkdir()
+    def mock_mkdir_fnf(*args, **kwargs):
+        return MockPath.mkdir_fnf()
 
-    monkeypatch.setattr(Path, "mkdir", mock_mkdir)
+    monkeypatch.setattr(Path, "mkdir", mock_mkdir_fnf)
 
     with pytest.raises(FileNotFoundError):
         extract.create_log_dir(os.path.join(tmpdir, "no_parent", "sub"))
 
     assert logger.record_tuples[0][0] == module_name
     assert logger.record_tuples[0][1] == logging.ERROR
-    assert logger.record_tuples[0][2].startswith(
-        "Could not create directory:"
+    assert logger.record_tuples[0][2] == (
+        "ErrorType: <class 'FileNotFoundError'> - Could not create directory"
+    )
+
+
+@pytest.mark.mutmut
+@pytest.mark.mock
+def test_create_log_dir_exist_ok_false(logger, tmpdir, monkeypatch):
+    def mock_mkdir_fee(*args, **kwargs):
+        return MockPath.mkdir_fee()
+
+    monkeypatch.setattr(Path, "mkdir", mock_mkdir_fee)
+
+    with pytest.raises(FileExistsError):
+        extract.create_log_dir(tmpdir)
+
+    assert logger.record_tuples[0][0] == module_name
+    assert logger.record_tuples[0][1] == logging.ERROR
+    assert logger.record_tuples[0][2] == (
+        "ErrorType: <class 'FileExistsError'> - Could not create directory"
     )
 
 

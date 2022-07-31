@@ -1,4 +1,15 @@
 [[package]]
+name = "astunparse"
+version = "1.6.3"
+description = "An AST unparser for Python"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+six = ">=1.6.1,<2.0"
+
+[[package]]
 name = "atomicwrites"
 version = "1.4.1"
 description = "Atomic file writes."
@@ -293,6 +304,17 @@ description = "Version of the glob module that can capture patterns and supports
 category = "dev"
 optional = false
 python-versions = "*"
+
+[[package]]
+name = "hammett"
+version = "0.9.3"
+description = "hammett is a fast python test runner"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+astunparse = "*"
 
 [[package]]
 name = "html5lib"
@@ -1025,9 +1047,13 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "1dddd17358df3a95ad841dbaf96c66cb0abd7c7c40e3150f8bde544cf03645e8"
+content-hash = "bcbdfa669f1608f35b54350f76eb5b2778bcc195c9469be546ccdb100440ccf7"
 
 [metadata.files]
+astunparse = [
+    {file = "astunparse-1.6.3-py2.py3-none-any.whl", hash = "sha256:c2652417f2c8b5bb325c885ae329bdf3f86424075c4fd1a128674bc6fba4b8e8"},
+    {file = "astunparse-1.6.3.tar.gz", hash = "sha256:5ad93a8456f0d084c3456d059fd9a92cce667963232cbf763eac3bc5b7940872"},
+]
 atomicwrites = [
     {file = "atomicwrites-1.4.1.tar.gz", hash = "sha256:81b2c9071a49367a7f770170e5eec8cb66567cfbbc8c73d20ce5ca4a8d71cf11"},
 ]
@@ -1263,6 +1289,9 @@ gitpython = [
 ]
 glob2 = [
     {file = "glob2-0.7.tar.gz", hash = "sha256:85c3dbd07c8aa26d63d7aacee34fa86e9a91a3873bc30bf62ec46e531f92ab8c"},
+]
+hammett = [
+    {file = "hammett-0.9.3.tar.gz", hash = "sha256:65fcf171b337058ba9f699fed630fc7dd0e61d48c6f10cd28e60c8392217855c"},
 ]
 html5lib = [
     {file = "html5lib-1.1-py2.py3-none-any.whl", hash = "sha256:0d78f8fde1c230e99fe37986a60526d7049ed4bf8a9fadbad5f00e22e58e041d"},
