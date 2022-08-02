@@ -31,6 +31,8 @@ from aggregator import helper
 from aggregator.config import get_settings
 
 
+READ = "r"
+
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
@@ -66,7 +68,7 @@ async def extract(file: str, target: os.path, extension: str) -> list:
     log_files = []
     # Find zip files and extract (by default) just  files with .log extension
     with zipfile.ZipFile(os.path.join(
-            settings.sourcedir, file), "r") as zip_file:
+            settings.sourcedir, file), READ) as zip_file:
         filesInZip = zip_file.namelist()
         for filename in filesInZip:
             if filename.endswith(extension):
@@ -133,7 +135,9 @@ def gen_zip_extract_fn_list(
 
 
 async def extract_log(
-        extract_fn_list: list = [], log_files: list = []) -> list:
+    extract_fn_list: list = [],
+    log_files: list = []
+) -> list:
 
     try:
         new_log_files = await asyncio.gather(*extract_fn_list)
