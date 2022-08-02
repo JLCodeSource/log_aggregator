@@ -132,3 +132,6 @@ dmypy.json
 *zip
 source
 out
+
+# Tests
+.mutmut_cache
