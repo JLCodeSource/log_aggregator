@@ -134,4 +134,4 @@ source
 out
 
 # Tests
-.mutmut_cache
+.mutmut-cache
