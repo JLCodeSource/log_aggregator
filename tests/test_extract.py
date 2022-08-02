@@ -224,22 +224,56 @@ async def test_extract_gen_extract_fn_list_empty(logger, monkeypatch, tmpdir):
     )
 
 
+@pytest.mark.parametrize(
+    "get_node, get_log_type, get_log_dir",
+    [
+        (
+            MockNone.get_none(),
+            helper.get_log_type(filename_example),
+            helper.get_log_dir("node", "fanapiservice"),
+        ),
+        (
+            helper.get_node(filename_example),
+            MockNone.get_none(),
+            helper.get_log_dir("node", "fanapiservice"),
+
+        ),
+        (
+            helper.get_node(filename_example),
+            helper.get_log_type(filename_example),
+            MockNone.get_none()
+        ),
+    ]
+)
 @pytest.mark.mock
 @pytest.mark.mutmut
 @pytest.mark.asyncio
-async def test_gen_extract_fn_list_helper_node_none(
-        logger, tmpdir, monkeypatch):
+async def test_gen_extract_fn_list_helper_none_returns(
+        logger, tmpdir, monkeypatch, get_node, get_log_type, get_log_dir):
     # Given a source directory
     def mock_listdir(*args, **kwargs):
         return MockDir.listdir(tmpdir)
 
     monkeypatch.setattr(os, "listdir", mock_listdir)
 
-    # And a "None" node
-    def mock_helper_get_node(file):
-        return MockNone.get_none(file)
+    # And a node
+    def mock_helper_get_node(*args, **kwargs):
+        return get_node
 
     monkeypatch.setattr(helper, "get_node", mock_helper_get_node)
+
+    # And a log_type
+    def mock_helper_get_log_type(*args, **kwargs):
+        return get_log_type
+
+    monkeypatch.setattr(helper, "get_log_type", mock_helper_get_log_type)
+
+    # And a log_dir returned
+
+    def mock_helper_get_log_dir(*args, **kwargs):
+        return get_log_dir
+
+    monkeypatch.setattr(helper, "get_log_dir", mock_helper_get_log_dir)
 
     # When it tries to extract the zip function list
     # Then it raises a TypeError
@@ -247,9 +281,9 @@ async def test_gen_extract_fn_list_helper_node_none(
         await extract.gen_zip_extract_fn_list(tmpdir, None)
 
     # And the logger logs it
-    assert logger.record_tuples[0][0] == module_name
-    assert logger.record_tuples[0][1] == logging.ERROR
-    assert logger.record_tuples[0][2].startswith("TypeError: ")
+    assert logger.record_tuples[-1][0] == module_name
+    assert logger.record_tuples[-1][1] == logging.ERROR
+    assert logger.record_tuples[-1][2] == "TypeError: Value should not be None"
 
 
 # When it tries to gather the nodes
