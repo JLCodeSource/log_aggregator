@@ -43,10 +43,10 @@ def create_log_dir(target: str):
     # Create logs output directory
     try:
         Path(target).mkdir(parents=True, exist_ok=True)
-        logger.debug(f"Created {target}")
     except (FileNotFoundError, FileExistsError) as err:
         logger.error(f"ErrorType: {type(err)} - Could not create directory")
         raise err
+    logger.debug(f"Created {target}")
 
 
 def move_files_to_target(target: str, source: str):
