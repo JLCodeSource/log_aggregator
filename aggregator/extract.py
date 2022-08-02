@@ -32,6 +32,8 @@ from aggregator.config import get_settings
 
 
 READ = "r"
+TYPEERROR = "Value should not be None"
+DEFAULT_LOG_EXTENSION = "service.log"
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -63,7 +65,8 @@ def remove_folder(target):
 
 
 async def extract(
-        file: str, target: os.path, extension: str = "service.log") -> list:
+        file: str, target: os.path,
+        extension: str = DEFAULT_LOG_EXTENSION) -> list:
 
     logger.info(f"Starting extraction coroutine for {file}")
     log_files = []
@@ -73,7 +76,7 @@ async def extract(
         filesInZip = zip_file.namelist()
         for filename in filesInZip:
             if filename.endswith(extension):
-                await asyncio.sleep(1)
+                await asyncio.sleep(0)
                 zip_file.extract(filename, target)
                 logger.info(
                     f"Extracted *{extension} generating {filename} at {target}"
@@ -105,7 +108,7 @@ def gen_zip_extract_fn_list(
             if node is None or \
                     log_type is None or \
                     logs_dir is None:
-                raise TypeError("Value should not be None")
+                raise TypeError(TYPEERROR)
         except TypeError as err:
             logger.error(f"TypeError: {err}")
             return err
@@ -129,9 +132,9 @@ async def extract_log(
 
     try:
         new_log_files = await asyncio.gather(*extract_fn_list)
+        log_files.extend(list(new_log_files))
     except (FileNotFoundError, TypeError) as err:
         logger.error(f"ErrorType: {type(err)} - asyncio gather failed")
         raise err
-    log_files.extend(list(new_log_files))
 
     return log_files
