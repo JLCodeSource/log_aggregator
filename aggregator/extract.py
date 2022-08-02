@@ -62,7 +62,8 @@ def remove_folder(target):
     logger.debug(f"Removed {target}")
 
 
-async def extract(file: str, target: os.path, extension: str) -> list:
+async def extract(
+        file: str, target: os.path, extension: str = "service.log") -> list:
 
     logger.info(f"Starting extraction coroutine for {file}")
     log_files = []
@@ -72,12 +73,12 @@ async def extract(file: str, target: os.path, extension: str) -> list:
         filesInZip = zip_file.namelist()
         for filename in filesInZip:
             if filename.endswith(extension):
-                await asyncio.sleep(0)
+                await asyncio.sleep(1)
                 zip_file.extract(filename, target)
                 logger.info(
-                    (f"Extracted *{extension} generating "
-                        + f"{filename} at {target}"))
-
+                    f"Extracted *{extension} generating {filename} at {target}"
+                )
+    # TODO: Extract move_files_to_target & remove_folder
     move_files_to_target(target, "System")
 
     remove_folder(os.path.join(target, "System"))
@@ -109,18 +110,15 @@ def gen_zip_extract_fn_list(
             logger.error(f"TypeError: {err}")
             return err
 
-        extension = "service.log"
         create_log_dir(logs_dir)
 
-        if file.endswith(".zip"):
-            try:
-                zip_files_extract_fn_list.append(
-                    extract(file, logs_dir, extension))
-            except AttributeError as err:
-                logger.error(f"Attribute Error: {err}")
-                raise err
-        else:
-            continue
+        try:
+            zip_files_extract_fn_list.append(
+                extract(file, logs_dir))
+        except AttributeError as err:
+            logger.error(f"Attribute Error: {err}")
+            raise err
+
     return zip_files_extract_fn_list
 
 
@@ -131,8 +129,8 @@ async def extract_log(
 
     try:
         new_log_files = await asyncio.gather(*extract_fn_list)
-    except FileNotFoundError as err:
-        logger.error(f"FileNotFound Error: {err}")
+    except (FileNotFoundError, TypeError) as err:
+        logger.error(f"ErrorType: {type(err)} - asyncio gather failed")
         raise err
     log_files.extend(list(new_log_files))
 

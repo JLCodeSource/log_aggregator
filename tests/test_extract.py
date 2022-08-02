@@ -1,4 +1,5 @@
-#import asyncio
+import asyncio
+from datetime import datetime
 import logging
 import pytest
 import os
@@ -17,6 +18,7 @@ module_name = "aggregator.extract"
 
 
 @pytest.mark.mock
+@pytest.mark.unit
 def test_create_log_dir(logger, tmpdir):
     # Given a (viable) log directory (tmpdir)
 
@@ -48,6 +50,7 @@ class MockPath:
 
 @pytest.mark.mutmut
 @pytest.mark.mock
+@pytest.mark.unit
 def test_create_log_dir_parents_false(logger, tmpdir, monkeypatch):
     # Given a log dir as a subdirectory without a parent
     def mock_mkdir_fnf(*args, **kwargs):
@@ -69,6 +72,7 @@ def test_create_log_dir_parents_false(logger, tmpdir, monkeypatch):
 
 @pytest.mark.mutmut
 @pytest.mark.mock
+@pytest.mark.unit
 def test_create_log_dir_exist_ok_false(logger, tmpdir, monkeypatch):
     # Given a log_directory file that already exists
     def mock_mkdir_fee(*args, **kwargs):
@@ -144,8 +148,9 @@ class MockZip:
         ]
 
 
-@ pytest.mark.mock
-@ pytest.mark.asyncio
+@pytest.mark.mock
+@pytest.mark.asyncio
+@pytest.mark.unit
 async def test_extract(logger, tmpdir, monkeypatch):
     # Given a test namelist
     def mock_zip_namelist(*args, **kwargs):
@@ -207,6 +212,7 @@ class MockDir:
 @pytest.mark.asyncio
 @pytest.mark.mock
 @pytest.mark.mutmut
+@pytest.mark.unit
 async def test_extract_gen_extract_fn_list_empty(logger, monkeypatch, tmpdir):
     # Given an example source directory with zip files
     def mock_listdir(*args, **kwargs):
@@ -248,6 +254,7 @@ async def test_extract_gen_extract_fn_list_empty(logger, monkeypatch, tmpdir):
 @pytest.mark.mock
 @pytest.mark.mutmut
 @pytest.mark.asyncio
+@pytest.mark.unit
 async def test_gen_extract_fn_list_helper_none_returns(
         logger, tmpdir, monkeypatch, get_node, get_log_type, get_log_dir):
     # Given a source directory
@@ -286,8 +293,82 @@ async def test_gen_extract_fn_list_helper_none_returns(
     assert logger.record_tuples[-1][2] == "TypeError: Value should not be None"
 
 
-# When it tries to gather the nodes
-#    def mock_asyncio_gather_get_none(*args, **kwargs):
-#        return MockNone.get_none(*args)
+@pytest.mark.asyncio
+@pytest.mark.mock
+@pytest.mark.mutmut
+@pytest.mark.unit
+async def test_gen_extract_fn_list_None_list(logger, tmpdir, monkeypatch):
+    # Given a source directory
+    def mock_listdir(*args, **kwargs):
+        return MockDir.listdir(tmpdir)
 
-#   monkeypatch.setattr(asyncio, "gather", mock_asyncio_gather_get_none)
+    monkeypatch.setattr(os, "listdir", mock_listdir)
+
+    # Given a test namelist
+    def mock_zip_namelist(*args, **kwargs):
+        return MockZip.namelist()
+
+    monkeypatch.setattr(ZipFile, "namelist", mock_zip_namelist)
+
+    # And a mock gather function
+    def mock_asyncio_gather_get_none(*args, **kwargs):
+        return MockNone.get_none(*args)
+
+    monkeypatch.setattr(asyncio, "gather", mock_asyncio_gather_get_none)
+
+    # When it tries to extract the zip function list
+    # Then it raises a TypeError
+    with pytest.raises(AttributeError):
+        await extract.gen_zip_extract_fn_list(tmpdir, None)
+
+    # And the logger logs it
+    assert logger.record_tuples[-1] == (
+        module_name, logging.ERROR,
+        "Attribute Error: 'NoneType' object has no attribute 'append'"
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.mock
+@pytest.mark.mutmut
+@pytest.mark.unit
+async def test_extract_log_asyncio_returns_none(logger, monkeypatch):
+    # Given a mock asyncio gather gunction
+    def mock_asyncio_gather_get_none(*args, **kwargs):
+        return MockNone.get_none(*args)
+
+    monkeypatch.setattr(asyncio, "gather", mock_asyncio_gather_get_none)
+
+    # When it tries to extract the log
+    # Then it raises an error
+    with pytest.raises(TypeError):
+        await extract.extract_log()
+
+    # And the logger logs it
+    assert logger.record_tuples[-1] == (
+        module_name, logging.ERROR,
+        "ErrorType: <class 'TypeError'> - asyncio gather failed"
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.mock
+@pytest.mark.mutmut
+@pytest.mark.unit
+async def test_extract_log_asyncio_returns_FnF(logger, tmpdir):
+    # Given a mock zip_file_extract_fn_list
+    extract_fn_list = []
+    extract_fn_list.append(
+        extract.extract('./notafile.zip', tmpdir)
+    )
+
+    # When it tries to extract the log
+    # Then it raises an error
+    with pytest.raises(FileNotFoundError):
+        await extract.extract_log(extract_fn_list)
+
+    # And the logger logs it
+    assert logger.record_tuples[-1] == (
+        module_name, logging.ERROR,
+        "ErrorType: <class 'FileNotFoundError'> - asyncio gather failed"
+    )
