@@ -195,7 +195,7 @@ async def test_extract_successful_run(
             log_file = filename
     # And it tries to extract a file
     await extract.extract(
-        tgt_zip, extension)
+        tgt_zip, tmpdir, extension)
 
     # Then it extracts the file
     target_log = os.path.join(tmpdir, os.path.basename(log_file))
@@ -224,7 +224,7 @@ async def test_extract_badzipfile(
         logger, tmpdir, settings_override, monkeypatch):
     # And an example filename
     zip_file = badzipfile_example
-    src_dir = settings_override.get_sourcedir()
+    src_dir = settings_override.get_testdatadir()
     src_file = os.path.join(src_dir, zip_file)
     tgt_file = os.path.join(tmpdir, zip_file)
     shutil.copy(src_file, tmpdir)
@@ -269,7 +269,7 @@ async def test_gen_extract_fn_list(monkeypatch, tmpdir):
 
     # When it tries to generate the extract files list
     zip_files_extract_fn_list = extract.gen_zip_extract_fn_list(
-        dir)
+        tmpdir)
 
     # Then it returns a list of functions
     assert inspect.iscoroutine(zip_files_extract_fn_list[0]) is True
@@ -410,7 +410,7 @@ async def test_extract_log_returns_log_files(
 
     # And a list of coroutines
     coroutine_list = []
-    coroutine_list.append(extract.extract(file_full_path))
+    coroutine_list.append(extract.extract(file_full_path, tmpdir))
 
     # When it tries to extract the log list
     log_files = await extract.extract_log(coroutine_list)
@@ -459,7 +459,7 @@ async def test_extract_log_asyncio_returns_FnF(logger, tmpdir):
     # And a mock zip_file_extract_fn_list
     extract_fn_list = []
     extract_fn_list.append(
-        extract.extract(file)
+        extract.extract(file, tmpdir)
     )
 
     # When it tries to extract the log

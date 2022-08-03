@@ -69,12 +69,12 @@ def remove_folder(target) -> None | Exception:
 
 
 async def extract(
-        zip_file: os.path,
+        zip_file: os.path, target_dir: os.path,
         extension: str = DEFAULT_LOG_EXTENSION) -> list:
 
     logger.info(f"Starting extraction coroutine for {zip_file}")
     log_files = []
-    target_dir = os.path.dirname(zip_file)
+    #source_dir = os.path.dirname(zip_file)
 
     if not os.path.exists(zip_file):
         logger.error(f"FileNotFoundError: {zip_file} is not a file")
@@ -96,29 +96,30 @@ async def extract(
                     f"{target_dir}"
                 )
 
-    # TODO: Extract move_files_to_target & remove_folder
-    move_files_to_target(target_dir, "System")
+        # TODO: Extract move_files_to_target & remove_folder
+        move_files_to_target(target_dir, "System")
 
-    remove_folder(os.path.join(target_dir, "System"))
+        remove_folder(os.path.join(target_dir, "System"))
 
-    for filename in os.listdir(target_dir):
-        log_files.append(zip_file)
+        for filename in os.listdir(target_dir):
+            filename = os.path.join(target_dir, filename)
+            log_files.append(filename)
 
     logger.info(f"Ending extraction coroutine for {zip_file}")
     return log_files
 
 
 def gen_zip_extract_fn_list(
-        dir: os.path,
+        src_dir: os.path,
         zip_files_extract_fn_list: list | None = []) -> list | Exception:
     # Manages the process of extracting the logs
     # Kicks off the conversion process for each in an await
     # Added options to pass in list values for testing purposes
 
-    for file in os.listdir(dir):
+    for zip_file in os.listdir(src_dir):
         try:
-            node = helper.get_node(file)
-            log_type = helper.get_log_type(file)
+            node = helper.get_node(zip_file)
+            log_type = helper.get_log_type(zip_file)
             logs_dir = helper.get_log_dir(node, log_type)
             if node is None or \
                     log_type is None or \
@@ -129,7 +130,7 @@ def gen_zip_extract_fn_list(
             return err
 
         create_log_dir(logs_dir)
-        zip_file = os.path.join(logs_dir, file)
+        zip_file = os.path.join(src_dir, zip_file)
 
         try:
             zip_files_extract_fn_list.append(

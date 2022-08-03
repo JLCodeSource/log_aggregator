@@ -23,8 +23,9 @@ class Settings(BaseSettings):
         "DATABASE_URL",
         "mongodb://root:example@localhost:27017/?authMechanism=DEFAULT"
     )
-    sourcedir: str = os.getenv("SOURCE", "./source")
+    sourcedir: str = os.getenv("SOURCE", "./testsource/logs")
     outdir: str = os.getenv("OUT", "./out")
+    testdatadir: str = os.getenv("TESTDATA", "./testsource")
     database: str = os.getenv("DATABASE", "logs")
     log_level: int = os.getenv("LOG_LEVEL", logging.INFO)
 
@@ -41,8 +42,8 @@ class Settings(BaseSettings):
         conn_log = self.connection.split("@")
         if len(conn_log) > 1:
             conn_log[0] = conn_log[0].split("//")
-            conn_log = str(conn_log[0][0]) + "//username:password" \
-                + str(conn_log[1:])
+            conn_log = str(conn_log[0][0]) + "//username:password@" \
+                + str(conn_log[1])
         return conn_log
 
     def get_sourcedir(self):
@@ -51,10 +52,13 @@ class Settings(BaseSettings):
     def get_outdir(self):
         return self.outdir
 
+    def get_testdatadir(self):
+        return self.testdatadir
+
     def get_database(self):
         return self.database
 
-    def get_loglevel(self):
+    def get_log_level(self):
         return self.log_level
 
 
