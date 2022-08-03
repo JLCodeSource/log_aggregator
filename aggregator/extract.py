@@ -58,38 +58,52 @@ def move_files_to_target(target: str, source: str):
         logger.debug(f"Moved {filename} from {tmp_logs_out} to {target}")
 
 
-def remove_folder(target):
+def remove_folder(target) -> None | Exception:
     # Remove System folder
-    os.rmdir(target)
-    logger.debug(f"Removed {target}")
+    try:
+        os.rmdir(target)
+        logger.debug(f"Removed {target}")
+    except FileNotFoundError as err:
+        logger.error(f"FileNotFoundError: {err}")
 
 
 async def extract(
-        file: str, target: os.path,
+        zip_file: os.path,
         extension: str = DEFAULT_LOG_EXTENSION) -> list:
 
-    logger.info(f"Starting extraction coroutine for {file}")
+    logger.info(f"Starting extraction coroutine for {zip_file}")
     log_files = []
+    target_dir = os.path.dirname(zip_file)
+
+    if not os.path.exists(zip_file):
+        logger.error(f"FileNotFoundError: {zip_file} is not a file")
+        raise FileNotFoundError
+    elif not zipfile.is_zipfile(zip_file):
+        logger.warning(f"BadZipFile: {zip_file} is a BadZipFile")
+        raise zipfile.BadZipFile
+
     # Find zip files and extract (by default) just  files with .log extension
-    with zipfile.ZipFile(os.path.join(
-            settings.sourcedir, file), READ) as zip_file:
-        filesInZip = zip_file.namelist()
+    with zipfile.ZipFile(zip_file, READ) as zf:
+
+        filesInZip = zf.namelist()
         for filename in filesInZip:
             if filename.endswith(extension):
                 await asyncio.sleep(0)
-                zip_file.extract(filename, target)
+                zf.extract(filename, target_dir)
                 logger.info(
-                    f"Extracted *{extension} generating {filename} at {target}"
+                    f"Extracted *{extension} generating {filename} at "
+                    f"{target_dir}"
                 )
+
     # TODO: Extract move_files_to_target & remove_folder
-    move_files_to_target(target, "System")
+    move_files_to_target(target_dir, "System")
 
-    remove_folder(os.path.join(target, "System"))
+    remove_folder(os.path.join(target_dir, "System"))
 
-    for filename in os.listdir(target):
-        log_files.append(os.path.join(target, filename))
+    for filename in os.listdir(target_dir):
+        log_files.append(zip_file)
 
-    logger.info(f"Ending extraction coroutine for {file}")
+    logger.info(f"Ending extraction coroutine for {zip_file}")
     return log_files
 
 
@@ -114,10 +128,11 @@ def gen_zip_extract_fn_list(
             return err
 
         create_log_dir(logs_dir)
+        zip_file = os.path.join(logs_dir, file)
 
         try:
             zip_files_extract_fn_list.append(
-                extract(file, logs_dir))
+                extract(zip_file, logs_dir))
         except AttributeError as err:
             logger.error(f"Attribute Error: {err}")
             raise err

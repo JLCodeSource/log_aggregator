@@ -1,13 +1,16 @@
 import asyncio
-from datetime import datetime
+import inspect
 import logging
 import pytest
 import os
+import shutil
 from pathlib import Path
-from zipfile import ZipFile
+from zipfile import BadZipFile, ZipFile
 from aggregator import extract, helper  # noqa
 
-filename_example = "GBLogs_psc-n11_fanapiservice_1657563227839.zip"
+filename_example = "GBLogs_-n11_fanapiservice_1657563227839.zip"
+badzipfile_example = "not_a_zip.zip"
+non_file = "non_file.zip"
 
 sourcedir_example = [
     "GBLogs_-n11_fanapiservice_1657563227839.zip",
@@ -150,8 +153,9 @@ class MockZip:
 
 @pytest.mark.mock
 @pytest.mark.asyncio
-@pytest.mark.unit
-async def test_extract(logger, tmpdir, monkeypatch):
+@pytest.mark.integration
+async def test_extract_successful_run(
+        logger, tmpdir, settings_override, monkeypatch):
     # Given a test namelist
     def mock_zip_namelist(*args, **kwargs):
         return MockZip.namelist()
@@ -160,6 +164,10 @@ async def test_extract(logger, tmpdir, monkeypatch):
 
     # And an example filename
     zip_file = filename_example
+    src_dir = settings_override.get_sourcedir()
+    src_file = os.path.join(src_dir, zip_file)
+    tgt_zip = os.path.join(tmpdir, zip_file)
+    shutil.copy(src_file, tmpdir)
     # And an example extension
     extension = "service.log"
     # And an empty log_filename
@@ -171,16 +179,16 @@ async def test_extract(logger, tmpdir, monkeypatch):
             log_file = filename
     # And it tries to extract a file
     await extract.extract(
-        zip_file, tmpdir, extension)
+        tgt_zip, extension)
 
     # Then it extracts the file
-    target_file = os.path.join(tmpdir, os.path.basename(log_file))
-    assert os.path.exists(target_file)
+    target_log = os.path.join(tmpdir, os.path.basename(log_file))
+    assert os.path.exists(target_log)
     # And the logger logs the start of the coroutine
     logs = logger.record_tuples
     assert logs[0] == (
         module_name, logging.INFO,
-        f"Starting extraction coroutine for {zip_file}")
+        f"Starting extraction coroutine for {tgt_zip}")
     # And the logger logs the extraction of the file
     assert logs[1] == (
         module_name, logging.INFO,
@@ -189,7 +197,31 @@ async def test_extract(logger, tmpdir, monkeypatch):
     # And the logger logs the end of the coroutine
     assert logs[-1] == (
         module_name, logging.INFO,
-        f"Ending extraction coroutine for {zip_file}"
+        f"Ending extraction coroutine for {tgt_zip}"
+    )
+
+
+@pytest.mark.mock
+@pytest.mark.asyncio
+@pytest.mark.integration
+async def test_extract_badzipfile(
+        logger, tmpdir, settings_override, monkeypatch):
+    # And an example filename
+    zip_file = badzipfile_example
+    src_dir = settings_override.get_sourcedir()
+    src_file = os.path.join(src_dir, zip_file)
+    tgt_file = os.path.join(tmpdir, zip_file)
+    shutil.copy(src_file, tmpdir)
+
+    # When it tries to extract the zip
+    # Then it raises
+    with pytest.raises(BadZipFile):
+        await extract.extract(tgt_file, tmpdir)
+
+    # And it logs the error
+    assert logger.record_tuples[-1] == (
+        module_name, logging.WARN,
+        f"BadZipFile: {tgt_file} is a BadZipFile"
     )
 
 
@@ -211,9 +243,27 @@ class MockDir:
 
 @pytest.mark.asyncio
 @pytest.mark.mock
+@pytest.mark.unit
+async def test_gen_extract_fn_list(monkeypatch, tmpdir):
+    # Given a mock example source directory
+    def mock_listdir(*args, **kwargs):
+        return MockDir.listdir(tmpdir)
+
+    monkeypatch.setattr(os, "listdir", mock_listdir)
+
+    # When it tries to generate the extract files list
+    zip_files_extract_fn_list = extract.gen_zip_extract_fn_list(
+        dir)
+
+    # Then it returns a list of functions
+    assert inspect.iscoroutine(zip_files_extract_fn_list[0]) is True
+
+
+@pytest.mark.asyncio
+@pytest.mark.mock
 @pytest.mark.mutmut
 @pytest.mark.unit
-async def test_extract_gen_extract_fn_list_empty(logger, monkeypatch, tmpdir):
+async def test_gen_extract_fn_list_none(logger, monkeypatch, tmpdir):
     # Given an example source directory with zip files
     def mock_listdir(*args, **kwargs):
         return MockDir.listdir(tmpdir)
@@ -330,6 +380,38 @@ async def test_gen_extract_fn_list_None_list(logger, tmpdir, monkeypatch):
 
 @pytest.mark.asyncio
 @pytest.mark.mock
+@pytest.mark.integration
+async def test_extract_log_returns_log_files(
+    logger, tmpdir, settings_override
+):
+    # Given  a target directory
+    src_dir = settings_override.get_sourcedir()
+    # And a zip file
+    file_full_path = os.path.join(tmpdir, filename_example)
+    # And a log to be extracted (filename_example)
+    src_file = os.path.join(src_dir, filename_example)
+    shutil.copy(src_file, tmpdir)
+
+    # And a list of coroutines
+    coroutine_list = []
+    coroutine_list.append(extract.extract(file_full_path))
+
+    # When it tries to extract the log list
+    log_files = await extract.extract_log(coroutine_list)
+
+    # The extracted file is in the log_files output
+    assert file_full_path in log_files[0]
+
+    # And the logger logs the extraction
+    assert logger.record_tuples[1] == (
+        module_name, logging.INFO,
+        f"Extracted *service.log generating System/fanapiservice.log at "
+        f"{tmpdir}"
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.mock
 @pytest.mark.mutmut
 @pytest.mark.unit
 async def test_extract_log_asyncio_returns_none(logger, monkeypatch):
@@ -356,10 +438,12 @@ async def test_extract_log_asyncio_returns_none(logger, monkeypatch):
 @pytest.mark.mutmut
 @pytest.mark.unit
 async def test_extract_log_asyncio_returns_FnF(logger, tmpdir):
-    # Given a mock zip_file_extract_fn_list
+    # Given a non file
+    file = os.path.join(tmpdir, non_file)
+    # And a mock zip_file_extract_fn_list
     extract_fn_list = []
     extract_fn_list.append(
-        extract.extract('./notafile.zip', tmpdir)
+        extract.extract(file)
     )
 
     # When it tries to extract the log
