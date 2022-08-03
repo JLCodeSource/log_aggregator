@@ -74,7 +74,6 @@ async def extract(
 
     logger.info(f"Starting extraction coroutine for {zip_file}")
     log_files = []
-    #source_dir = os.path.dirname(zip_file)
 
     if not os.path.exists(zip_file):
         logger.error(f"FileNotFoundError: {zip_file} is not a file")
