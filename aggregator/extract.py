@@ -65,6 +65,7 @@ def remove_folder(target) -> None | Exception:
         logger.debug(f"Removed {target}")
     except FileNotFoundError as err:
         logger.error(f"FileNotFoundError: {err}")
+        raise err
 
 
 async def extract(

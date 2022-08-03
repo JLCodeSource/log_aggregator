@@ -141,6 +141,22 @@ def test_remove_folder(logger, tmpdir):
     ]
 
 
+@pytest.mark.unit
+def test_remove_folder_fnf(logger, tmpdir):
+    # Given a non-existent temp dir
+    os.rmdir(tmpdir)
+
+    # When it tries to remove the folder
+    # Then it raises a FileNotFoundError
+    with pytest.raises(FileNotFoundError):
+        extract.remove_folder(tmpdir)
+
+    # And the logger logs it
+    assert logger.record_tuples[0][0] == module_name
+    assert logger.record_tuples[0][1] == logging.ERROR
+    assert logger.record_tuples[0][2].startswith("FileNotFoundError:")
+
+
 class MockZip:
     # Mock for Zip to return test namelist
     @ staticmethod
