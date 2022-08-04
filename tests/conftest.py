@@ -15,7 +15,7 @@ from aggregator.model import JavaLog
 from datetime import datetime
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture()
 def settings_override():
     settings = config.get_settings()
     settings.database = "test-logs"
