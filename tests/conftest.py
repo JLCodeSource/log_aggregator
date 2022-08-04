@@ -45,7 +45,7 @@ async def motor_client_gen(motor_client_values):
     return [i async for i in motor_client_values]
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture()
 async def add_one():
 
     # And adds a log
