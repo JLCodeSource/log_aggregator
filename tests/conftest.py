@@ -25,7 +25,7 @@ def settings_override():
     return settings
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture()
 async def motor_client_values(settings_override):
     choices = string.ascii_lowercase + string.digits
     postfix = "".join(random.choices(choices, k=4))
@@ -40,7 +40,7 @@ async def motor_client_values(settings_override):
     client.drop_database(database)
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture()
 async def motor_client_gen(motor_client_values):
     return [i async for i in motor_client_values]
 

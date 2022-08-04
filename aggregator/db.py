@@ -10,7 +10,7 @@ import asyncio
 import logging
 
 import motor
-from beanie import init_beanie
+import beanie
 from pymongo.errors import ServerSelectionTimeoutError
 
 from aggregator.config import get_settings
@@ -25,12 +25,13 @@ client = motor.motor_asyncio.AsyncIOMotorClient(settings.connection)
 async def init(database: str = settings.database, client=client):
     logger.info(f"Initializing beanie with {database} using {client}")
     try:
-        await init_beanie(database=client[database],
-                          document_models=[JavaLog])
+        await beanie.init_beanie(database=client[database],
+                                 document_models=[JavaLog])
         logger.info(f"Initialized beanie with {database} using {client}")
     except ServerSelectionTimeoutError as err:
-        logger.fatal(f"ServerSelectionTimeoutError: {err}")
-        exit()
+        logger.fatal("ServerSelectionTimeoutError: Server was unreachable "
+                     "within the timeout")
+        raise err
     logger.info(
         f"Completed initialization of beanie with {database} using {client}")
     return "ok"
