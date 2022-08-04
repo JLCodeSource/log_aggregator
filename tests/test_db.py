@@ -1,13 +1,14 @@
-from datetime import datetime
+# import asyncio
+# from datetime import datetime
 import beanie
-import string
-import random
-import motor
-import aggregator.db
-import asyncio
 import pytest
+import logging
 
-from aggregator.model import JavaLog
+import aggregator.db
+# from aggregator.model import JavaLog
+
+
+module_name = "aggregator.db"
 
 
 class MockBeanie:
@@ -20,41 +21,45 @@ class MockBeanie:
 # And a mock init_beanie to target the test database
 # def mock_init_beanie(*args, **kwargs):
 #    return MockBeanie.init_beanie(args, kwargs)
-
-#monkeypatch.setattr(beanie, "init_beanie", mock_init_beanie)
+# monkeypatch.setattr(beanie, "init_beanie", mock_init_beanie)
 
 
 @pytest.mark.asyncio
 @pytest.mark.unit
-async def test_init(settings_override, motor_client, monkeypatch):
-    # Given a motor client & a test-logs database async generator
-    async def gen():
-        return [i async for i in motor_client]
+async def test_init(motor_client_gen, logger, add_one):
 
-    motor_client = await gen()
+    motor_client = await motor_client_gen
     # And a motor_client
     client = motor_client[0][0]
     # And a database
     database = motor_client[0][1]
 
-    # When it tries to init the database
-    ok = await aggregator.db.init(database, client)
+    try:
+        # When it tries to init the database
+        ok = await aggregator.db.init(database, client)
 
-    # And adds a log
-    log = JavaLog(
-        node="testnode",
-        severity="INFO",
-        jvm="jvm",
-        datetime=datetime.now(),
-        source="source",
-        type="fanapiservice",
-        message="This is a log"
-    )
-    await JavaLog.insert_one(log)
-    asyncio.sleep(1)
+        # And it adds a log
+        await add_one
 
-    # Then it returns ok
-    assert ok == "ok"
-    # And it creates a database
-    assert database in await client.list_database_names()
-    client.drop_database(database)
+        # Then it returns ok
+        assert ok == "ok"
+        # And it creates a database
+        assert database in await client.list_database_names()
+        # And the logger logs it
+        assert logger.record_tuples == [
+            (module_name, logging.INFO,
+                f"Initializing beanie with {database} using {client}"
+             ),
+            (module_name, logging.INFO,
+                f"Initialized beanie with {database} using {client}"
+             ),
+            (module_name, logging.INFO,
+                f"Completed initialization of beanie with {database}"
+                f" using {client}"
+             ),
+        ]
+
+    finally:
+        # Set Manual Teardown
+
+        await client.drop_database(database)
