@@ -22,14 +22,15 @@ settings = get_settings()
 client = motor.motor_asyncio.AsyncIOMotorClient(settings.connection)
 
 
-async def init():
-    logger.info(f"Initializing beanie with {settings.database} using {client}")
+async def init(database: str = settings.database, client=client):
+    logger.info(f"Initializing beanie with {database} using {client}")
     try:
-        await init_beanie(database=client[settings.database],
+        await init_beanie(database=client[database],
                           document_models=[JavaLog])
     except ServerSelectionTimeoutError as err:
         logger.fatal(f"ServerSelectionTimeoutError: {err}")
         exit()
+    return "ok"
 
 
 async def save_logs(logs) -> str:

@@ -4,8 +4,14 @@ This module contains shared fixtures, steps and hooks.
 from random import randrange
 import pytest
 import logging
+import motor
+import string
 import os
+import random
+import collections
 from aggregator import config
+from aggregator.model import JavaLog
+from beanie import init_beanie
 
 
 @pytest.fixture()
@@ -16,6 +22,21 @@ def settings_override():
     settings.testing = True
     settings.sourcedir = "./testsource/logs"
     return settings
+
+
+@pytest.fixture()
+async def motor_client(settings_override):
+    choices = string.ascii_lowercase + string.digits
+    postfix = "".join(random.choices(choices, k=4))
+    client = motor.motor_asyncio.AsyncIOMotorClient(
+        settings_override.get_connection())
+    database = settings_override.get_database()
+    database = f"{database}-{postfix}"
+    await init_beanie(database=client[database],
+                      document_models=[JavaLog])
+    test_motor_client = [client, database]
+    yield test_motor_client
+    client.drop_database(database)
 
 
 @pytest.fixture()
