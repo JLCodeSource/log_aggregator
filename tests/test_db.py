@@ -275,3 +275,52 @@ async def test_save_logs_invalid_operation_error(
     finally:
         # Set manual teardown
         await client.drop_database(database)
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_get_log(motor_client_gen, get_datetime, logger, monkeypatch):
+    # Given a motor_client generator
+    motor_client = await motor_client_gen
+    # And a motor_client
+    client = motor_client[0][0]
+    # And a database
+    database = motor_client[0][1]
+
+    # And an initialized database
+    try:
+        await aggregator.db.init(database, client)
+
+        # And 2 logs
+        log = JavaLog(
+            node="testnode",
+            severity="INFO",
+            jvm="jvm",
+            datetime=get_datetime,
+            source="source",
+            type="fanapiservice",
+            message="This is a log"
+        )
+
+        logs = []
+        for _ in range(2):
+            logs.append(log)
+
+        # And it has saved the logs
+        result = await aggregator.db.save_logs(logs)
+
+        # When it tries to get the logs
+        returned_log = await aggregator.db.get_log(result.inserted_ids[0])
+
+        # Then the returned_log matches the log
+        assert returned_log.node == log.node
+        assert returned_log.severity == log.severity
+        assert returned_log.jvm == log.jvm
+        assert get_datetime == log.datetime
+        assert returned_log.source == log.source
+        assert returned_log.type == log.type
+        assert returned_log.message == log.message
+
+    finally:
+        # Set manual teardown
+        await client.drop_database(database)

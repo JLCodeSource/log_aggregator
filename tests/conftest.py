@@ -26,6 +26,11 @@ def settings_override():
 
 
 @pytest.fixture()
+def get_datetime():
+    return datetime.now()
+
+
+@pytest.fixture()
 async def motor_client_values(settings_override):
     choices = string.ascii_lowercase + string.digits
     postfix = "".join(random.choices(choices, k=4))
