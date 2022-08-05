@@ -13,6 +13,7 @@ import motor
 import beanie
 from pymongo.errors import ServerSelectionTimeoutError, InvalidOperation
 from bson.objectid import ObjectId
+from pydantic import ValidationError
 
 from aggregator.config import get_settings
 from aggregator.model import JavaLog
@@ -63,18 +64,18 @@ async def save_logs(logs) -> str:
     return result
 
 
-async def get_log(log_id):
+async def get_log(log_id=None):
     logger.info(
         f"Starting get coroutine for {log_id} from db: {settings.database}"
     )
     try:
         result = await JavaLog.get(log_id)
         logger.info(f"Got {log_id} from db: {settings.database}")
-    except Exception as err:
-        logger.error(f"{err}")
+    except (ValidationError) as err:
+        logger.error(f"ValidationError: {err}")
         raise err
-
-    logger.info(
-        f"Ending get coroutine for {log_id} from db: {settings.database}"
-    )
+    finally:
+        logger.info(
+            f"Ending get coroutine for {log_id} from db: {settings.database}"
+        )
     return result

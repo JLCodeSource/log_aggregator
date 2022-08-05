@@ -1,5 +1,6 @@
 # import asyncio
 from datetime import datetime
+from pydantic import ValidationError
 import beanie
 from bson import ObjectId
 import pytest
@@ -279,9 +280,9 @@ async def test_save_logs_invalid_operation_error(
 
 @pytest.mark.asyncio
 @pytest.mark.unit
-async def test_get_log(
+async def test_get_log_successfully(
         motor_client_gen, get_datetime, logger,
-        settings_override, monkeypatch):
+        settings_override):
     # Given a motor_client generator
     motor_client = await motor_client_gen
     # And a motor_client
@@ -339,6 +340,46 @@ async def test_get_log(
         assert logger.record_tuples[-1] == (
             module_name, logging.INFO,
             f"Ending get coroutine for {result.inserted_ids[0]} from db: "
+            f"{database_log_name}"
+        )
+
+    finally:
+        # Set manual teardown
+        await client.drop_database(database)
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_get_log_none(
+        motor_client_gen,
+        logger,
+        settings_override):
+    # Given a motor_client generator
+    motor_client = await motor_client_gen
+    # And a motor_client
+    client = motor_client[0][0]
+    # And a database
+    database = motor_client[0][1]
+
+    # And a mocked database name output for logs
+    database_log_name = settings_override.database
+
+    # And an initialized database
+    try:
+        await aggregator.db.init(database, client)
+
+        # When it tries to get the logs with a NoneType
+        # Then it raises an error
+        with pytest.raises(ValidationError):
+            await aggregator.db.get_log()
+
+        # And the logger logs it
+        assert logger.record_tuples[-2][0] == module_name
+        assert logger.record_tuples[-2][1] == logging.ERROR
+        assert logger.record_tuples[-2][2].startswith("ValidationError:")
+        assert logger.record_tuples[-1] == (
+            module_name, logging.INFO,
+            f"Ending get coroutine for None from db: "
             f"{database_log_name}"
         )
 
