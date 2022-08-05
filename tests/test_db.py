@@ -1,6 +1,7 @@
 # import asyncio
 from datetime import datetime
 import beanie
+from bson import ObjectId
 import pytest
 import logging
 import aggregator.db
@@ -128,7 +129,7 @@ async def test_save_logs(motor_client_gen, logger):
         for i in range(2):
             logs.append(log)
 
-        ok = await aggregator.db.save_logs(logs)
+        result = await aggregator.db.save_logs(logs)
 
         # Then the logger logs it
         assert logger.record_tuples[3][0] == module_name
@@ -157,8 +158,10 @@ async def test_save_logs(motor_client_gen, logger):
             "Ending insert coroutine for 2 into db:"
         )
 
-        # And it returns ok
-        assert ok == "ok"
+        # And it returns a list of the ids
+        assert len(result.inserted_ids) == 2
+        assert isinstance(result.inserted_ids[0], ObjectId)
+        assert isinstance(result.inserted_ids[1], ObjectId)
     finally:
         # Set manual teardown
         await client.drop_database(database)

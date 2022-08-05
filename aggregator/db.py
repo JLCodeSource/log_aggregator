@@ -43,7 +43,7 @@ async def save_logs(logs) -> str:
         f"Started insert coroutine for {num_logs} into db: {settings.database}"
     )
     await asyncio.sleep(0)
-    await JavaLog.insert_many(logs)
+    result = await JavaLog.insert_many(logs)
 
     logger.info(f"Inserted {num_logs} into db: {settings.database}")
     for log in logs:
@@ -51,4 +51,5 @@ async def save_logs(logs) -> str:
     logger.info(
         f"Ending insert coroutine for {num_logs} into db: {settings.database}"
     )
-    return "ok"
+
+    return result
