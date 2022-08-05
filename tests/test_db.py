@@ -279,13 +279,18 @@ async def test_save_logs_invalid_operation_error(
 
 @pytest.mark.asyncio
 @pytest.mark.unit
-async def test_get_log(motor_client_gen, get_datetime, logger, monkeypatch):
+async def test_get_log(
+        motor_client_gen, get_datetime, logger,
+        settings_override, monkeypatch):
     # Given a motor_client generator
     motor_client = await motor_client_gen
     # And a motor_client
     client = motor_client[0][0]
     # And a database
     database = motor_client[0][1]
+
+    # And a mocked database name output for logs
+    database_log_name = settings_override.database
 
     # And an initialized database
     try:
@@ -320,6 +325,22 @@ async def test_get_log(motor_client_gen, get_datetime, logger, monkeypatch):
         assert returned_log.source == log.source
         assert returned_log.type == log.type
         assert returned_log.message == log.message
+
+        # And the logger logs it
+        assert logger.record_tuples[-3] == (
+            module_name, logging.INFO,
+            f"Starting get coroutine for {result.inserted_ids[0]} from db: "
+            f"{database_log_name}"
+        )
+        assert logger.record_tuples[-2] == (
+            module_name, logging.INFO,
+            f"Got {result.inserted_ids[0]} from db: {database_log_name}"
+        )
+        assert logger.record_tuples[-1] == (
+            module_name, logging.INFO,
+            f"Ending get coroutine for {result.inserted_ids[0]} from db: "
+            f"{database_log_name}"
+        )
 
     finally:
         # Set manual teardown

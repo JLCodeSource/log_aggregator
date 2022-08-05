@@ -64,5 +64,17 @@ async def save_logs(logs) -> str:
 
 
 async def get_log(log_id):
+    logger.info(
+        f"Starting get coroutine for {log_id} from db: {settings.database}"
+    )
+    try:
+        result = await JavaLog.get(log_id)
+        logger.info(f"Got {log_id} from db: {settings.database}")
+    except Exception as err:
+        logger.error(f"{err}")
+        raise err
 
-    return await JavaLog.get(log_id)
+    logger.info(
+        f"Ending get coroutine for {log_id} from db: {settings.database}"
+    )
+    return result
