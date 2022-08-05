@@ -5,7 +5,7 @@ from bson import ObjectId
 import pytest
 import logging
 import aggregator.db
-from pymongo.errors import ServerSelectionTimeoutError
+from pymongo.errors import ServerSelectionTimeoutError, InvalidOperation
 from aggregator.model import JavaLog
 
 
@@ -20,12 +20,12 @@ class MockBeanie:
         raise ServerSelectionTimeoutError
 
 
-class MockWriteResult:
-    # MockWriteResult is used for testing the database
+class MockJavaLog:
+    # MockJavaLog is used for testing the database
 
     @staticmethod
-    def acknowledged():
-        return False
+    def insert_many(*args, **kwargs):
+        raise InvalidOperation
 
 
 @pytest.mark.asyncio
@@ -133,7 +133,7 @@ async def test_save_logs(motor_client_gen, logger):
         )
 
         logs = []
-        for i in range(2):
+        for _ in range(2):
             logs.append(log)
 
         result = await aggregator.db.save_logs(logs)
@@ -192,7 +192,7 @@ async def test_save_logs(motor_client_gen, logger):
 
 @ pytest.mark.asyncio
 @ pytest.mark.unit
-async def test_save_logs_fails(motor_client_gen, logger, monkeypatch):
+async def test_save_logs_servertimeout(motor_client_gen, logger, monkeypatch):
     # Given a mock init_beanie_server_timeout to target the test database
     def mock_init_beanie_server_timeout(*args, **kwargs):
         return MockBeanie.init_beanie_server_timeout()
@@ -217,6 +217,59 @@ async def test_save_logs_fails(motor_client_gen, logger, monkeypatch):
             module_name, logging.FATAL,
             "ServerSelectionTimeoutError: Server was unreachable "
             "within the timeout"
+        )
+
+    finally:
+        # Set manual teardown
+        await client.drop_database(database)
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_save_logs_invalid_operation_error(
+        motor_client_gen, logger, monkeypatch):
+    # Given a MockJavaLog
+    def mock_javalog_raises_invalid_operation(*args, **kwargs):
+        return MockJavaLog.insert_many(*args, **kwargs)
+
+    monkeypatch.setattr(JavaLog, "insert_many",
+                        mock_javalog_raises_invalid_operation)
+
+    # And a motor_client generator
+    motor_client = await motor_client_gen
+    # And a motor_client
+    client = motor_client[0][0]
+    # And a database
+    database = motor_client[0][1]
+
+    # And an initialized database
+    try:
+        await aggregator.db.init(database, client)
+
+        # And 2 logs
+        log = JavaLog(
+            node="testnode",
+            severity="INFO",
+            jvm="jvm",
+            datetime=datetime.now(),
+            source="source",
+            type="fanapiservice",
+            message="This is a log"
+        )
+
+        logs = []
+        for i in range(2):
+            logs.append(log)
+
+    # When it tries to save the logs
+    # Then it raises a InvalidOperation
+        with pytest.raises(InvalidOperation):
+            await aggregator.db.save_logs(logs)
+
+        # And the logger logs the error
+        assert logger.record_tuples[-1] == (
+            module_name, logging.ERROR,
+            "Error InvalidOperation"
         )
 
     finally:

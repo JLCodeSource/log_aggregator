@@ -11,7 +11,7 @@ import logging
 
 import motor
 import beanie
-from pymongo.errors import ServerSelectionTimeoutError
+from pymongo.errors import ServerSelectionTimeoutError, InvalidOperation, BulkWriteError
 
 from aggregator.config import get_settings
 from aggregator.model import JavaLog
@@ -43,13 +43,19 @@ async def save_logs(logs) -> str:
         f"Started insert coroutine for {num_logs} into db: {settings.database}"
     )
     await asyncio.sleep(0)
-    result = await JavaLog.insert_many(logs)
-
-    logger.info(f"Inserted {num_logs} into db: {settings.database}")
-    for log in logs:
-        logger.debug(f"Inserted {log}")
-    logger.info(
-        f"Ending insert coroutine for {num_logs} into db: {settings.database}"
-    )
+    try:
+        result = await JavaLog.insert_many(logs)
+        logger.info(f"Inserted {num_logs} into db: {settings.database}")
+        for log in logs:
+            logger.debug(f"Inserted {log}")
+        logger.info(
+            f"Ending insert coroutine for {num_logs} "
+            f"into db: {settings.database}"
+        )
+    except InvalidOperation as err:
+        logger.error(
+            "Error InvalidOperation"
+        )
+        raise err
 
     return result
