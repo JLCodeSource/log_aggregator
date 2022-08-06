@@ -386,3 +386,42 @@ async def test_get_log_none(
     finally:
         # Set manual teardown
         await client.drop_database(database)
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_get_log_wrong_id(
+        motor_client_gen,
+        logger,
+        settings_override):
+    # Given a motor_client generator
+    motor_client = await motor_client_gen
+    # And a motor_client
+    client = motor_client[0][0]
+    # And a database
+    database = motor_client[0][1]
+
+    # And a missing log_id
+    log_id = "608da169eb9e17281f0ab2ff"
+
+    # And a mocked database name output for logs
+    database_log_name = settings_override.database
+
+    # And an initialized database
+    try:
+        await aggregator.db.init(database, client)
+
+        # When it tries to get the logs with a missing log
+        returned_log = await aggregator.db.get_log("608da169eb9e17281f0ab2ff")
+
+        # Then the logger logs it
+        assert logger.record_tuples[-2][0] == module_name
+        assert logger.record_tuples[-2][1] == logging.INFO
+        assert logger.record_tuples[-2][2].startswith(
+            f"When getting {log_id} from db {database_log_name} found "
+            f"{returned_log}"
+        )
+
+    finally:
+        # Set manual teardown
+        await client.drop_database(database)

@@ -64,13 +64,17 @@ async def save_logs(logs) -> str:
     return result
 
 
-async def get_log(log_id=None):
+async def get_log(log_id: JavaLog | None = None):
     logger.info(
         f"Starting get coroutine for {log_id} from db: {settings.database}"
     )
     try:
         result = await JavaLog.get(log_id)
-        logger.info(f"Got {log_id} from db: {settings.database}")
+        if result:
+            logger.info(f"Got {log_id} from db: {settings.database}")
+        else:
+            logger.info(f"When getting {log_id} from db {settings.database} "
+                        f"found {result}")
     except (ValidationError) as err:
         logger.error(f"ValidationError: {err}")
         raise err
