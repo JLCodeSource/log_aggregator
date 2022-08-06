@@ -24,10 +24,14 @@ from aggregator.model import JavaLog
 logger = logging.getLogger(__name__)
 
 
-def line_start_match(match, string):
+def line_start_match(match: str, string: str) -> bool:
     # Returns true if the beginning of the string matches match
-    matches = bool(re.match(match, string))
-    logger.debug(f"Matches: {matches} from {match} with '{string}'")
+    try:
+        matches = bool(re.match(match, string))
+        logger.debug(f"Matches: {matches} from {match} with '{string}'")
+    except TypeError as err:
+        logger.warning(f"TypeError: {err}")
+        raise TypeError
     return matches
 
 
