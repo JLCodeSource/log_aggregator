@@ -50,7 +50,7 @@ def yield_matches(full_log: list[str]):
     yield line
 
 
-def multi_to_single_line(logfile):
+def multi_to_single_line(logfile: os.path) -> None:
     # multiToSingleLine converts multiline to single line logs
     data = open(logfile).read()
     logger.info(f"Opened {logfile} for reading")

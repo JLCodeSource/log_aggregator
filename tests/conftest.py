@@ -21,7 +21,7 @@ def settings_override():
     settings.database = "test-logs"
     settings.log_level = logging.DEBUG
     settings.testing = True
-    settings.sourcedir = "./testsource/logs"
+    settings.sourcedir = "./testsource/zips"
     return settings
 
 

@@ -1,0 +1,5 @@
+INFO | This is a log
+ERROR | This is an error log
+    with multiple lines
+    and more lines
+INFO | And this is a separate log

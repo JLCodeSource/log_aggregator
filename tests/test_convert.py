@@ -1,8 +1,25 @@
 import logging
+import shutil
 import pytest
+import os
 from aggregator import convert
 
 module_name = "aggregator.convert"
+multi_line_log = (
+    "INFO | This is a log\nERROR | This is an error log\n    "
+    "with multiple lines\n    and more lines\n"
+    "INFO | And this is a separate log"
+)
+testdata_log_dir = "./testsource/logs/"
+multi_line_log_filename = "multi_line_log.log"
+
+
+class MockOpen:
+    # Mock Open
+
+    @staticmethod
+    def read_multi(file):
+        return multi_line_log
 
 
 @pytest.mark.unit
@@ -93,10 +110,7 @@ def test_yield_matches_one_line(logger):
 @pytest.mark.unit
 def test_yield_matches_multi_line(logger):
     # Given a multiline error log that starts with ERROR
-    logs = (
-        "INFO | This is a log\nERROR | This is an error log\n    "
-        "with multiple lines\n    and more lines\n"
-        "INFO | And this is a separate log")
+    logs = multi_line_log
     # And the logs split by line
     lines = logs.split("\n")
 
@@ -134,3 +148,23 @@ def test_yield_matches_multi_line(logger):
             message == f"Appended: {line} to list" for
             message in messages
         )
+
+
+@pytest.mark.unit
+def test_multi_to_single_line(
+        tmpdir):
+    # Given a logfile with 5 lines & 3 individual logs (multi_line_log)
+    log_file = os.path.join(testdata_log_dir, multi_line_log_filename)
+
+    # And a tmpdir (tmpdir)
+    # And the log_file is in the tmpdir
+    shutil.copy(log_file, tmpdir)
+    log_file = os.path.join(tmpdir, multi_line_log_filename)
+
+    # When it opens the logfile
+    convert.multi_to_single_line(log_file)
+
+    # Then it converts any multiline logs into single lines
+    with open(log_file, "r") as file:
+        lines = len(file.readlines())
+    assert lines == 3

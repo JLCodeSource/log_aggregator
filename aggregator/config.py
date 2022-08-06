@@ -23,7 +23,7 @@ class Settings(BaseSettings):
         "DATABASE_URL",
         "mongodb://root:example@localhost:27017/?authMechanism=DEFAULT"
     )
-    sourcedir: str = os.getenv("SOURCE", "./testsource/logs")
+    sourcedir: str = os.getenv("SOURCE", "./testsource/zips")
     outdir: str = os.getenv("OUT", "./out")
     testdatadir: str = os.getenv("TESTDATA", "./testsource")
     database: str = os.getenv("DATABASE", "logs")
