@@ -304,6 +304,47 @@ async def test_insert_logs_invalid_operation_error(
 
 @pytest.mark.asyncio
 @pytest.mark.unit
+async def test_insert_logs_none(
+        motor_client_gen, logger, settings_override):
+    # Given a motor_client generator
+    motor_client = await motor_client_gen
+    # And a motor_client
+    client = motor_client[0][0]
+    # And a database
+    database = motor_client[0][1]
+
+    # And a mocked database name output for logs
+    database_log_name = settings_override.database
+
+    # And an initialized database
+    try:
+        await aggregator.db.init(database, client)
+
+        # When it tries to insert None logs
+        # Then it returns None
+        result = await aggregator.db.insert_logs()
+
+        assert result is None
+
+        # And the logger logs the error
+        assert logger.record_tuples[-2] == (
+            module_name, logging.WARNING,
+            "Started insert_logs coroutine for None logs into db: "
+            f"{database_log_name}"
+        )
+        assert logger.record_tuples[-1] == (
+            module_name, logging.WARNING,
+            f"Ending insert_logs coroutine for None logs into db: "
+            f"{database_log_name}"
+        )
+
+    finally:
+        # Set manual teardown
+        await client.drop_database(database)
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
 async def test_get_log_successfully(
         motor_client_gen, get_datetime, logger,
         settings_override):
