@@ -27,7 +27,7 @@ def settings_override():
 
 @pytest.fixture()
 def get_datetime():
-    return datetime.now()
+    return datetime(2022, 8, 6, 12, 1, 1)
 
 
 @pytest.fixture()

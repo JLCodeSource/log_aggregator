@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import ValidationError
 import beanie
 from bson import ObjectId
+import asyncio
 import pytest
 import logging
 import aggregator.db
@@ -242,7 +243,7 @@ async def test_insert_logs_servertimeout(
 
 @pytest.mark.asyncio
 @pytest.mark.unit
-async def test_save_logs_invalid_operation_error(
+async def test_insert_logs_invalid_operation_error(
         motor_client_gen, logger, monkeypatch, settings_override):
     # Given a MockJavaLog
     def mock_javalog_raises_invalid_operation(*args, **kwargs):
@@ -340,7 +341,7 @@ async def test_get_log_successfully(
         # And it has saved the logs
         result = await aggregator.db.insert_logs(logs)
 
-        # When it tries to get the logs
+        # When it tries to get the log
         returned_log = await aggregator.db.get_log(result.inserted_ids[0])
 
         # Then the returned_log matches the log
@@ -492,6 +493,85 @@ async def test_get_log_server_timeout(
             f"Error: <class 'pymongo.errors.ServerSelectionTimeoutError'> "
             f"- get_log coroutine for {wrong_id} "
             f"failed for db: {database_log_name}"
+        )
+
+    finally:
+        # Set manual teardown
+        await client.drop_database(database)
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_find_logs_successfully(
+    motor_client_gen, get_datetime, logger,
+    settings_override
+):
+    # Given a motor_client generator
+    motor_client = await motor_client_gen
+    # And a motor_client
+    client = motor_client[0][0]
+    # And a database
+    database = motor_client[0][1]
+
+    # And a mocked database name output for logs
+    database_log_name = settings_override.database
+
+    # And an initialized database
+    try:
+        await aggregator.db.init(database, client)
+
+        # And 2 logs
+        log = JavaLog(
+            node="testnode",
+            severity="INFO",
+            jvm="jvm",
+            datetime=get_datetime,
+            source="source",
+            type="fanapiservice",
+            message="This is a log"
+        )
+
+        logs = []
+        for _ in range(2):
+            logs.append(log)
+
+        # And it has saved the logs
+        await aggregator.db.insert_logs(logs)
+
+        # And it has a query
+        query = (JavaLog.node == "testnode")
+
+        # When it tries to find the logs
+        result = await aggregator.db.find_logs(query)
+
+        # Then it returns both logs
+        assert len(result) == 2
+
+        # And the returned logs match the logs
+        for i in range(len(result)):
+            assert result[i].node == log.node
+            assert result[i].severity == log.severity
+            assert result[i].jvm == log.jvm
+            assert result[i].datetime == get_datetime
+            assert result[i].source == log.source
+            assert result[i].type == log.type
+            assert result[i].message == log.message
+
+        # And the logger logs it
+        assert logger.record_tuples[8] == (
+            module_name, logging.INFO,
+            f"Starting find_logs coroutine for {query} from db: "
+            f"{database_log_name}"
+        )
+        assert logger.record_tuples[9] == (
+            module_name, logging.INFO,
+            f"Found 2 logs in find_logs for {query} from db: "
+            f"{database_log_name}"
+        )
+        assert logger.record_tuples[10] == (
+            module_name, logging.INFO,
+            f"Ending find_logs coroutine for {query} from db: "
+            f"{database_log_name}"
         )
 
     finally:
