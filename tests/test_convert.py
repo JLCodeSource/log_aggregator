@@ -64,5 +64,73 @@ def test_line_start_match_non_string_arg2(logger):
     )
 
 
-# @pytest.mark.unit
-# def test_yield_matches_one_line(logger):
+@pytest.mark.unit
+def test_yield_matches_one_line(logger):
+    # Given 2 single line logs in a list of logs that starts with INFO
+    logs = "INFO | This is a log\nINFO | This is another log"
+
+    # When it tries to match the lines
+    log_list = list(convert.yield_matches(logs))
+
+    # Then the first log is yielded
+    assert log_list[0] == "INFO | This is a log"
+
+    # And the second log is yielded
+    assert log_list[1] == "INFO | This is another log"
+
+    # And the logger logs it
+    assert logger.record_tuples[1] == (
+        module_name, logging.DEBUG,
+        f"Appended: {log_list[0]} to list"
+    )
+    assert logger.record_tuples[3] == (
+        module_name, logging.DEBUG,
+        f"Appended: {log_list[1]} to list"
+
+    )
+
+
+@pytest.mark.unit
+def test_yield_matches_multi_line(logger):
+    # Given a multiline error log that starts with ERROR
+    logs = (
+        "INFO | This is a log\nERROR | This is an error log\n    "
+        "with multiple lines\n    and more lines\n"
+        "INFO | And this is a separate log")
+    # And the logs split by line
+    lines = logs.split("\n")
+
+    # When it tries to match the lines
+    log_list = list(convert.yield_matches(logs))
+
+    # Then the first log is yielded
+    assert log_list[0] == "INFO | This is a log"
+
+    # And the multi-line log is yielded
+    assert log_list[1] == (
+        "ERROR | This is an error log; with multiple lines; "
+        "and more lines"
+    )
+
+    # And the single line log at the end is yielded
+    assert log_list[2] == "INFO | And this is a separate log"
+
+    # And the logger logs it
+    modules = []
+    levels = []
+    messages = []
+    for recorded_log in logger.record_tuples:
+        modules.append(recorded_log[0])
+        levels.append(recorded_log[1])
+        messages.append(recorded_log[2])
+
+    # And the logger logs modules & levels
+    assert all(module == module_name for module in modules)
+    assert all(level == logging.DEBUG for level in levels)
+
+    # And the logger logs lines
+    for line in lines:
+        assert any(
+            message == f"Appended: {line} to list" for
+            message in messages
+        )

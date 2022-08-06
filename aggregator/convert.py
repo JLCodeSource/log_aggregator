@@ -41,10 +41,13 @@ def yield_matches(full_log: list[str]):
     for line in full_log.split("\n"):
         if line_start_match("INFO|WARN|ERROR", line):  # if line matches start
             if len(logs) > 0:  # if there's already a log
-                yield "; ".join(logs)  # yield the log
+                tmp_line = "; ".join(logs)
+                yield tmp_line  # yield the log
                 logs = []  # and set the log back to nothing
         logs.append(line.strip())  # add current line to log (list)
         logger.debug(f"Appended: {line} to list")
+
+    yield line
 
 
 def multi_to_single_line(logfile):
