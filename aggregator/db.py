@@ -12,7 +12,7 @@ import logging
 import motor
 import beanie
 from pymongo.errors import ServerSelectionTimeoutError, InvalidOperation
-from bson.objectid import ObjectId
+from pymongo.results import InsertManyResult
 from pydantic import ValidationError
 
 from aggregator.config import get_settings
@@ -39,34 +39,49 @@ async def init(database: str = settings.database, client=client):
     return "ok"
 
 
-async def save_logs(logs) -> str:
+async def insert_logs(logs: list | None = None) -> InsertManyResult:
+    if logs is None:
+        logger.warning(
+            f"Started insert_logs coroutine for {logs} logs into db: "
+            f"{settings.database}"
+        )
+        logger.warning(
+            f"Ending insert_logs coroutine for {logs} logs into db: "
+            f"{settings.database}"
+        )
+        return None
     num_logs = len(logs)
     logger.info(
-        f"Started insert coroutine for {num_logs} into db: {settings.database}"
+        f"Started insert_logs coroutine for {num_logs} logs into db: "
+        f"{settings.database}"
     )
     await asyncio.sleep(0)
     try:
         result = await JavaLog.insert_many(logs)
-        logger.info(f"Inserted {num_logs} into db: {settings.database}")
+        logger.info(f"Inserted {num_logs} logs into db: "
+                    f"{settings.database}")
         for log in logs:
             logger.debug(f"Inserted {log}")
-        logger.info(
-            f"Ending insert coroutine for {num_logs} "
-            f"into db: {settings.database}"
-        )
         # TODO: Implement BulkWriteError
-    except InvalidOperation as err:
+    except (ServerSelectionTimeoutError, InvalidOperation) as err:
         logger.error(
-            "Error InvalidOperation"
+            f"ErrorType: {type(err)} - coroutine insert_logs for {num_logs} "
+            f"logs failed for db: {settings.database}"
         )
         raise err
+    finally:
+        logger.info(
+            f"Ending insert_logs coroutine for {num_logs} logs "
+            f"into db: {settings.database}"
+        )
 
     return result
 
 
 async def get_log(log_id: JavaLog | None = None):
     logger.info(
-        f"Starting get coroutine for {log_id} from db: {settings.database}"
+        f"Starting get_log coroutine for {log_id} from db: "
+        f"{settings.database}"
     )
     try:
         result = await JavaLog.get(log_id)
@@ -75,11 +90,13 @@ async def get_log(log_id: JavaLog | None = None):
         else:
             logger.info(f"When getting {log_id} from db {settings.database} "
                         f"found {result}")
-    except (ValidationError) as err:
-        logger.error(f"ValidationError: {err}")
+    except (ValidationError, ServerSelectionTimeoutError) as err:
+        logger.error(f"Error: {type(err)} - get_log coroutine for "
+                     f"{log_id} failed for db: {settings.database}")
         raise err
     finally:
         logger.info(
-            f"Ending get coroutine for {log_id} from db: {settings.database}"
+            f"Ending get_log coroutine for {log_id} from db: "
+            f"{settings.database}"
         )
     return result

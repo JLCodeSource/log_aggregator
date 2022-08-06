@@ -12,7 +12,7 @@ Variables: sourcedir
 from pyparsing import empty
 from aggregator.config import get_settings
 from aggregator.convert import convert
-from aggregator.db import init, save_logs
+from aggregator.db import init, insert_logs
 from aggregator.extract import extract_log, gen_zip_extract_fn_list
 from aggregator.logs import configure_logging
 import logging
@@ -71,7 +71,7 @@ async def main():
 
     insert_log_fn_list = []
     for log_lists in converted_log_lists:
-        insert_log_fn_list.append(save_logs(log_lists))
+        insert_log_fn_list.append(insert_logs(log_lists))
 
     ok = await asyncio.gather(*insert_log_fn_list)
     logger.info(f"Output from db insert: {ok}")
