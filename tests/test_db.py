@@ -1,9 +1,7 @@
-# import asyncio
 from datetime import datetime
 from pydantic import ValidationError
 import beanie
 from bson import ObjectId
-import asyncio
 import pytest
 import logging
 import aggregator.db
@@ -182,7 +180,8 @@ async def test_insert_logs_success(motor_client_gen, logger):
         assert count_infos == 6
 
         # And logger includes expected values
-        assert any((s.startswith("Inserted 2 logs into db:") for s in messages))
+        assert any((s.startswith("Inserted 2 logs into db:")
+                    for s in messages))
         assert any((s.startswith("Started insert_logs coroutine for 2 logs "
                                  "into db:")
                     for s in messages))
@@ -356,8 +355,8 @@ async def test_get_log_successfully(
         # And the logger logs it
         assert logger.record_tuples[-3] == (
             module_name, logging.INFO,
-            f"Starting get_log coroutine for {result.inserted_ids[0]} from db: "
-            f"{database_log_name}"
+            f"Starting get_log coroutine for {result.inserted_ids[0]} "
+            f"from db: {database_log_name}"
         )
         assert logger.record_tuples[-2] == (
             module_name, logging.INFO,
