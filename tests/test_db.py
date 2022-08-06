@@ -546,6 +546,8 @@ async def test_find_logs_successfully(
 
         # Then it returns both logs
         assert len(result) == 2
+        assert isinstance(result[0], JavaLog)
+        assert isinstance(result[1], JavaLog)
 
         # And the returned logs match the logs
         for i in range(len(result)):
@@ -558,21 +560,35 @@ async def test_find_logs_successfully(
             assert result[i].message == log.message
 
         # And the logger logs it
-        assert logger.record_tuples[8] == (
-            module_name, logging.INFO,
-            f"Starting find_logs coroutine for {query} from db: "
-            f"{database_log_name}"
-        )
-        assert logger.record_tuples[9] == (
-            module_name, logging.INFO,
-            f"Found 2 logs in find_logs for {query} from db: "
-            f"{database_log_name}"
-        )
-        assert logger.record_tuples[10] == (
-            module_name, logging.INFO,
-            f"Ending find_logs coroutine for {query} from db: "
-            f"{database_log_name}"
-        )
+        # Get lists of types
+        modules = []
+        levels = []
+        messages = []
+
+        for recorded_log in logger.record_tuples:
+            modules.append(recorded_log[0])
+            levels.append(recorded_log[1])
+            messages.append(recorded_log[2])
+
+        count_infos = 0
+        for level in levels:
+            if level == logging.INFO:
+                count_infos = count_infos + 1
+
+        # The logger logs modules
+        assert all(module == module_name for module in modules)
+
+        assert count_infos == 9
+
+        # And logger includes expected values
+        assert any((s == f"Starting find_logs coroutine for {query} "
+                    f"from db: {database_log_name}" for s in messages))
+        assert any((s == f"Found 2 logs in find_logs coroutine for "
+                    f"{query} from db: {database_log_name}")
+                   for s in messages)
+        assert any((s == f"Ending find_logs coroutine for {query} "
+                    f"from db: {database_log_name}")
+                   for s in messages)
 
     finally:
         # Set manual teardown

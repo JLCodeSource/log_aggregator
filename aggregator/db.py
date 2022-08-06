@@ -102,14 +102,15 @@ async def get_log(log_id: JavaLog | None = None):
     return result
 
 
-async def find_logs(query):
+async def find_logs(query) -> list[JavaLog]:
     logger.info(
         f"Starting find_logs coroutine for {query} from db: "
         f"{settings.database}"
     )
     result = await JavaLog.find(query).to_list()
     logger.info(
-        f"Found {len(result)} logs in find_logs for {query} from db: "
+        f"Found {len(result)} logs in find_logs coroutine for "
+        f"{query} from db: "
         f"{settings.database}"
     )
     logger.info(
