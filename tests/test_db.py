@@ -112,6 +112,14 @@ async def test_init_server_timeout(
         await client.drop_database(database)
 
 
+def count_items(list, item):
+    items = 0
+    for element in list:
+        if element == item:
+            items = items + 1
+    return items
+
+
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_insert_logs_success(motor_client_gen, logger):
@@ -154,20 +162,11 @@ async def test_insert_logs_success(motor_client_gen, logger):
             levels.append(recorded_log[1])
             messages.append(recorded_log[2])
 
-        count_logs = 0
-        for message in messages:
-            if message == f"Inserted {log}":
-                count_logs = count_logs + 1
+        count_logs = count_items(messages, f"Inserted {log}")
 
-        count_debugs = 0
-        for level in levels:
-            if level == logging.DEBUG:
-                count_debugs = count_debugs + 1
+        count_debugs = count_items(levels, logging.DEBUG)
 
-        count_infos = 0
-        for level in levels:
-            if level == logging.INFO:
-                count_infos = count_infos + 1
+        count_infos = count_items(levels, logging.INFO)
 
         # The logger logs modules
         assert all(module == module_name for module in modules)
