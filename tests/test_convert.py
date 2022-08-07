@@ -190,7 +190,7 @@ def test_convert_log_to_csv_success(tmpdir):
     convert._multi_to_single_line(log_file)
 
     # When it tries to convert the CSV log file to a dict
-    result = convert.convert_log_to_csv(log_file)
+    result = convert._convert_log_to_csv(log_file)
 
     # Then it succeeds
     assert type(result) == list
