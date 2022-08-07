@@ -10,10 +10,26 @@ import motor
 import string
 import os
 import random
-from aggregator import config
+from aggregator import config, convert
 from aggregator.model import JavaLog
 # from beanie import init_beanie
 from datetime import datetime
+
+
+class MockGetNode:
+
+    @staticmethod
+    def mock_get_node():
+        return "node"
+
+
+@pytest.fixture()
+def mock_get_node(monkeypatch):
+
+    def mock_get_node(*args, **kwargs):
+        return MockGetNode.mock_get_node()
+
+    monkeypatch.setattr(convert, "get_node", mock_get_node)
 
 
 @pytest.fixture()

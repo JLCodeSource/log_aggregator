@@ -191,28 +191,15 @@ def test_convert_log_to_csv_success(
 # TODO: Add unhappy paths
 
 
-class MockGetNode:
-
-    @staticmethod
-    def mock_get_node():
-        return "node"
-
-
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_convert_collection_not_initialized(
-        monkeypatch, logger, temp_one_line_log):
+        logger, temp_one_line_log, mock_get_node):
     # TODO: This test is brittle as it is dependent on being called
     # before convert_success
 
     # Given a target log file
     tgt_log_file = temp_one_line_log
-
-    # And a Mock get_node
-    def mock_helper_get_node(*args, **kwargs):
-        return MockGetNode.mock_get_node()
-
-    monkeypatch.setattr(convert, "get_node", mock_helper_get_node)
 
     # When it tries to convert the logs
     # Then it raises a CollectionNotInitialized error
@@ -231,15 +218,9 @@ async def test_convert_collection_not_initialized(
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_convert_success(
-        monkeypatch, motor_client, temp_simple_svc_log):
+        motor_client, temp_simple_svc_log, mock_get_node):
     # Given a target log file
     tgt_log_file = temp_simple_svc_log
-
-    # And a Mock get_node
-    def mock_helper_get_node(*args, **kwargs):
-        return MockGetNode.mock_get_node()
-
-    monkeypatch.setattr(convert, "get_node", mock_helper_get_node)
 
     # And a motor_client, database & db_log_name
     client, database, _ = await motor_client
@@ -296,15 +277,9 @@ async def test_convert_success(
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_convert_to_datetime_bad_timestamp(
-        monkeypatch, motor_client, logger, temp_bad_timestamp_log):
+        motor_client, logger, temp_bad_timestamp_log, mock_get_node):
     # Given a target log file
     tgt_log_file = temp_bad_timestamp_log
-
-    # And a Mock get_node
-    def mock_helper_get_node(*args, **kwargs):
-        return MockGetNode.mock_get_node()
-
-    monkeypatch.setattr(convert, "get_node", mock_helper_get_node)
 
     # And a motor_client, database & db_log_name
     client, database, _ = await motor_client
@@ -340,15 +315,10 @@ class MockDatetime:
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_convert_bad_timestamp(
-        monkeypatch, motor_client, logger, temp_bad_timestamp_log):
+        monkeypatch, motor_client, logger, temp_bad_timestamp_log,
+        mock_get_node):
     # Given a target log file
     tgt_log_file = temp_bad_timestamp_log
-
-    # And a Mock get_node
-    def mock_helper_get_node(*args, **kwargs):
-        return MockGetNode.mock_get_node()
-
-    monkeypatch.setattr(convert, "get_node", mock_helper_get_node)
 
     # And a mock _convert_to_datetime
     def mock_convert_to_datetime(*args, **kwargs):
