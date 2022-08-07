@@ -85,6 +85,11 @@ def two_line_log():
 
 
 @pytest.fixture()
+def bad_timestamp_log():
+    return("INFO    | jvm 1 | 2022/07/1x 09:12:02 | ttl.test | SMB | Exec proxy")
+
+
+@pytest.fixture()
 def make_filename(settings_override):
 
     settings = settings_override

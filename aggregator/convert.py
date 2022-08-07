@@ -19,7 +19,6 @@ from pydantic import ValidationError
 from beanie.exceptions import CollectionWasNotInitialized
 from pymongo.errors import ServerSelectionTimeoutError
 from aggregator.helper import get_node
-
 from aggregator.model import JavaLog
 
 logger = logging.getLogger(__name__)
@@ -82,6 +81,15 @@ def _convert_log_to_csv(logfile) -> list[dict]:
         return list(reader)
 
 
+def _convert_to_datetime(timestamp: str) -> datetime:
+    try:
+        timestamp = datetime.strptime(timestamp, "%Y/%m/%d %H:%M:%S")
+    except ValueError as err:
+        logger.exception(f"ValueError: {err}")
+        return err
+    return timestamp
+
+
 async def convert(log_file: os.path) -> list[JavaLog]:
     logger.info(f"Starting new convert coroutine for {log_file}")
     # Work on log files in logsout
@@ -97,10 +105,6 @@ async def convert(log_file: os.path) -> list[JavaLog]:
 
         dict["node"] = node
 
-        timestamp = datetime.strptime(
-            dict["datetime"], "%Y/%m/%d %H:%M:%S"
-        )
-
         if (
             dict["message"] is None
             and dict["type"] is None
@@ -110,6 +114,7 @@ async def convert(log_file: os.path) -> list[JavaLog]:
             dict["source"] = None
 
         try:
+            timestamp = _convert_to_datetime(dict["datetime"])
             log = JavaLog(
                 node=dict["node"],
                 severity=dict["severity"],
@@ -121,14 +126,14 @@ async def convert(log_file: os.path) -> list[JavaLog]:
             )
             log_list.append(log)
             logger.debug(f"Appended {log} to log_list")
-        except ValidationError as err:
-            logger.exception(f"ValidationError: {err}")
+        except (ValueError, ValidationError) as err:
+            logger.exception(f"Error {type(err)} {err}")
         except (
             CollectionWasNotInitialized,
             ServerSelectionTimeoutError
         ) as err:
             logger.fatal(f"Error: {err=}, {type(err)=}")
-            exit()
+            raise err
         except BaseException as err:
             logger.exception(f"Unexpected {err=}, {type(err)=}")
         await asyncio.sleep(0)

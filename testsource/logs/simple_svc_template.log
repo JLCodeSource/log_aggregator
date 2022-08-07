@@ -1,4 +1,5 @@
 INFO    | jvm 1 | 2022/07/11 09:12:02 | ttl.test | SMB | Exec proxy
+INFO	| jvm 1 | 2022/07/11 09:12:55 | SecondaryMonitor -> {path: /path/secondary, number: 2361852362752}
 WARN    | jvm 1 | 2022/07/11 09:13:01 | ttl.test | async | FileIO
 ERROR   | jvm 1 | 2022/07/11 09:14:51 | ttl.test | event | error doing reconnect...
 java.io.IOException: org.Exception: ErrorCode = Connection for /locks

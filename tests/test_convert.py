@@ -4,6 +4,7 @@ import shutil
 import pytest
 import os
 from aggregator import convert, db
+from beanie.exceptions import CollectionWasNotInitialized
 
 module_name = "aggregator.convert"
 multi_line_log = (
@@ -14,6 +15,8 @@ multi_line_log = (
 testdata_log_dir = "./testsource/logs/"
 multi_line_log_filename = "multi_line_log.log"
 simple_svc_template_log = "simple_svc_template.log"
+bad_timestamp_log = "bad_timestamp.log"
+one_line_log = "one_line_log.log"
 
 
 class MockOpen:
@@ -211,10 +214,47 @@ class MockGetNode:
 
 @pytest.mark.unit
 @pytest.mark.asyncio
+async def test_convert_collection_not_initialized(
+        tmpdir, make_filename, monkeypatch,
+        logger):
+    # TODO: This test is brittle as it is dependent on being called
+    # before convert_success
+
+    # Given a directory (tmpdir) & a log_file
+    log_file_name = make_filename("node", "service", ".log", False)[2:]
+    src_log_file = os.path.join(testdata_log_dir, one_line_log)
+    tgt_folder = os.path.join(tmpdir, os.path.dirname(log_file_name))
+    tgt_log_file = os.path.join(tgt_folder, os.path.basename(log_file_name))
+
+    # And a multi-line-log has been copied to the log_file
+    os.makedirs(tgt_folder, exist_ok=True)
+    shutil.copy(src_log_file, tgt_log_file)
+
+    # And a Mock get_node
+    def mock_helper_get_node(*args, **kwargs):
+        return MockGetNode.mock_get_node()
+
+    monkeypatch.setattr(convert, "get_node", mock_helper_get_node)
+
+    # When it tries to convert the logs
+    # Then it raises a CollectionNotInitialized error
+    with pytest.raises(CollectionWasNotInitialized):
+        await convert.convert(tgt_log_file)
+
+    # Then it logs an AttributeError:
+    assert logger.record_tuples[7][0] == module_name
+    assert logger.record_tuples[7][1] == logging.CRITICAL
+    assert logger.record_tuples[7][2] == (
+        "Error: err=CollectionWasNotInitialized(), type(err)=<class "
+        "'beanie.exceptions.CollectionWasNotInitialized'>"
+    )
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
 async def test_convert_success(
         tmpdir, make_filename, monkeypatch,
-        motor_client_gen,
-        settings_override):
+        motor_client_gen):
     # Given a directory (tmpdir) & a log_file
     log_file_name = make_filename("node", "service", ".log", False)[2:]
     src_log_file = os.path.join(testdata_log_dir, simple_svc_template_log)
@@ -249,24 +289,26 @@ async def test_convert_success(
         log_list = await convert.convert(tgt_log_file)
 
         # Then it succeeds
-        assert len(log_list) == 4
+        assert len(log_list) == 5
         assert all(log.node == "node" for log in log_list)
         assert all(log.jvm == "jvm 1" for log in log_list)
-        assert sum(log.severity == "INFO" for log in log_list) == 2
+        assert sum(log.severity == "INFO" for log in log_list) == 3
         assert sum(log.severity == "ERROR" for log in log_list) == 1
         assert sum(log.severity == "WARN" for log in log_list) == 1
         assert sum(log.source == "ttl.test" for log in log_list) == 3
         assert sum(log.source == "org.connect" for log in log_list) == 1
-        assert all(log.type in ("SMB", "async", "event", "process")
+        assert all(log.type in ("SMB", "async", "event", "process", None)
                    for log in log_list)
         assert all(log.datetime in (
             datetime(2022, 7, 11, 9, 12, 2),
+            datetime(2022, 7, 11, 9, 12, 55),
             datetime(2022, 7, 11, 9, 13, 1),
             datetime(2022, 7, 11, 9, 14, 51),
             datetime(2022, 7, 11, 9, 15, 51)
         ) for log in log_list)
         assert all(log.message in (
             "Exec proxy", "FileIO", "more messages",
+            "SecondaryMonitor -> {path: /path/secondary, number: 2361852362752}",
             "error doing reconnect...; java.io.IOException: org.Exception: "
             "ErrorCode = Connection for /locks; "
             "at ttl.test.create(lock.java:2); "
@@ -282,6 +324,123 @@ async def test_convert_success(
             "at ttl.test.create(Lock.java:720); "
             "... 4 more"
         ) for log in log_list)
+
+    finally:
+        # Set manual teardown
+        await client.drop_database(database)
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_convert_to_datetime_bad_timestamp(
+        tmpdir, make_filename, monkeypatch,
+        motor_client_gen, logger):
+    # Given a directory (tmpdir) & a log_file
+    log_file_name = make_filename("node", "service", ".log", False)[2:]
+    src_log_file = os.path.join(testdata_log_dir, bad_timestamp_log)
+    tgt_folder = os.path.join(tmpdir, os.path.dirname(log_file_name))
+    tgt_log_file = os.path.join(tgt_folder, os.path.basename(log_file_name))
+
+    # And a multi-line-log has been copied to the log_file
+    os.makedirs(tgt_folder, exist_ok=True)
+    shutil.copy(src_log_file, tgt_log_file)
+
+    # And a Mock get_node
+    def mock_helper_get_node(*args, **kwargs):
+        return MockGetNode.mock_get_node()
+
+    monkeypatch.setattr(convert, "get_node", mock_helper_get_node)
+
+    # And a motor_client generator
+    motor_client = await motor_client_gen
+    # And a motor_client
+    client = motor_client[0][0]
+    # And a database
+    database = motor_client[0][1]
+
+    # And a mocked database name output for logs
+    # database_log_name = settings_override.database
+
+    # And an initialized database
+    try:
+        await db.init(database, client)
+
+        # When it tries to convert the logs
+        await convert.convert(tgt_log_file)
+
+        # Then it logs an exception
+        assert logger.record_tuples[10] == (
+            module_name, logging.ERROR,
+            "ValueError: time data '2022/07/1x 09:12:02' "
+            "does not match format '%Y/%m/%d %H:%M:%S'"
+        )
+
+    finally:
+        # Set manual teardown
+        await client.drop_database(database)
+
+
+class MockDatetime:
+
+    @staticmethod
+    def bad_timestamp():
+        return "2022/07/1x 09:12:02"
+
+# TODO: Test for file with trailing empty line
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_convert_bad_timestamp(
+        tmpdir, make_filename, monkeypatch,
+        motor_client_gen, logger):
+    # Given a directory (tmpdir) & a log_file
+    log_file_name = make_filename("node", "service", ".log", False)[2:]
+    src_log_file = os.path.join(testdata_log_dir, bad_timestamp_log)
+    tgt_folder = os.path.join(tmpdir, os.path.dirname(log_file_name))
+    tgt_log_file = os.path.join(tgt_folder, os.path.basename(log_file_name))
+
+    # And a multi-line-log has been copied to the log_file
+    os.makedirs(tgt_folder, exist_ok=True)
+    shutil.copy(src_log_file, tgt_log_file)
+
+    # And a Mock get_node
+    def mock_helper_get_node(*args, **kwargs):
+        return MockGetNode.mock_get_node()
+
+    monkeypatch.setattr(convert, "get_node", mock_helper_get_node)
+
+    # And a mock _convert_to_datetime
+    def mock_convert_to_datetime(*args, **kwargs):
+        return MockDatetime.bad_timestamp()
+
+    monkeypatch.setattr(
+        convert, "_convert_to_datetime", mock_convert_to_datetime)
+
+    # And a motor_client generator
+    motor_client = await motor_client_gen
+    # And a motor_client
+    client = motor_client[0][0]
+    # And a database
+    database = motor_client[0][1]
+
+    # And a mocked database name output for logs
+    # database_log_name = settings_override.database
+
+    # And an initialized database
+    try:
+        await db.init(database, client)
+
+        # When it tries to convert the logs:
+        await convert.convert(tgt_log_file)
+
+        # Then it logs an AttributeError:
+        assert logger.record_tuples[10][0] == module_name
+        assert logger.record_tuples[10][1] == logging.ERROR
+        assert logger.record_tuples[10][2].startswith(
+            "Error <class 'pydantic.error_wrappers.ValidationError'> "
+            "1 validation error for JavaLog"
+        )
 
     finally:
         # Set manual teardown
