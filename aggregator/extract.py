@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
-def create_log_dir(target: str):
+def _create_log_dir(target: str):
     # Create logs output directory
     try:
         Path(target).mkdir(parents=True, exist_ok=True)
@@ -49,7 +49,7 @@ def create_log_dir(target: str):
     logger.debug(f"Created {target}")
 
 
-def move_files_to_target(target: str, source: str):
+def _move_files_to_target(target: str, source: str):
     # Move log files out of System folder where they are by default
     tmp_logs_out = os.path.join(target, source)
     for filename in os.listdir(tmp_logs_out):
@@ -58,7 +58,7 @@ def move_files_to_target(target: str, source: str):
         logger.debug(f"Moved {filename} from {tmp_logs_out} to {target}")
 
 
-def remove_folder(target) -> None | Exception:
+def _remove_folder(target) -> None | Exception:
     # Remove System folder
     try:
         os.rmdir(target)
@@ -68,7 +68,7 @@ def remove_folder(target) -> None | Exception:
         raise err
 
 
-async def extract(
+async def _extract(
         zip_file: os.path, target_dir: os.path,
         extension: str = DEFAULT_LOG_EXTENSION) -> list:
 
@@ -96,9 +96,9 @@ async def extract(
                 )
 
         # TODO: Extract move_files_to_target & remove_folder
-        move_files_to_target(target_dir, "System")
+        _move_files_to_target(target_dir, "System")
 
-        remove_folder(os.path.join(target_dir, "System"))
+        _remove_folder(os.path.join(target_dir, "System"))
 
         for filename in os.listdir(target_dir):
             filename = os.path.join(target_dir, filename)
@@ -128,12 +128,12 @@ def gen_zip_extract_fn_list(
             logger.error(f"TypeError: {err}")
             return err
 
-        create_log_dir(logs_dir)
+        _create_log_dir(logs_dir)
         zip_file = os.path.join(src_dir, zip_file)
 
         try:
             zip_files_extract_fn_list.append(
-                extract(zip_file, logs_dir))
+                _extract(zip_file, logs_dir))
         except AttributeError as err:
             logger.error(f"Attribute Error: {err}")
             raise err

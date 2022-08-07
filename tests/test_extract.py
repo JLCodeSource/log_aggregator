@@ -26,7 +26,7 @@ def test_create_log_dir(logger, tmpdir):
     # Given a (viable) log directory (tmpdir)
 
     # When it tries to create that directory
-    extract.create_log_dir(tmpdir)
+    extract._create_log_dir(tmpdir)
 
     # Then it succeeds
     assert os.path.exists(tmpdir)
@@ -64,7 +64,7 @@ def test_create_log_dir_parents_false(logger, tmpdir, monkeypatch):
     # When it attempts to create the log dir
     # Then raises a FileNotFoundError
     with pytest.raises(FileNotFoundError):
-        extract.create_log_dir(os.path.join(tmpdir, "no_parent", "sub"))
+        extract._create_log_dir(os.path.join(tmpdir, "no_parent", "sub"))
 
     # And the logger logs the error
     assert logger.record_tuples[0] == (
@@ -86,7 +86,7 @@ def test_create_log_dir_exist_ok_false(logger, tmpdir, monkeypatch):
     # When it attempts to create the directory
     # Then it raises a FileExistsError
     with pytest.raises(FileExistsError):
-        extract.create_log_dir(tmpdir)
+        extract._create_log_dir(tmpdir)
 
     # And the logger logs the error
     assert logger.record_tuples[0] == (
@@ -109,7 +109,7 @@ def test_move_files_to_target(logger, tmpdir):
     sub = tmpdir.join("System")
 
     # When it moves files to target
-    extract.move_files_to_target(tmpdir, "System")
+    extract._move_files_to_target(tmpdir, "System")
 
     # Then the file will be in the source directory
     assert filename in os.listdir(tmpdir)
@@ -129,7 +129,7 @@ def test_remove_folder(logger, tmpdir):
     # Given a folder (tmpdir)
 
     # When it tries to remove the folder
-    extract.remove_folder(tmpdir)
+    extract._remove_folder(tmpdir)
 
     # Then the folder no longer exists
     assert os.path.exists(tmpdir) is False
@@ -149,7 +149,7 @@ def test_remove_folder_fnf(logger, tmpdir):
     # When it tries to remove the folder
     # Then it raises a FileNotFoundError
     with pytest.raises(FileNotFoundError):
-        extract.remove_folder(tmpdir)
+        extract._remove_folder(tmpdir)
 
     # And the logger logs it
     assert logger.record_tuples[0][0] == module_name
@@ -194,7 +194,7 @@ async def test_extract_successful_run(
         if filename.endswith(extension):
             log_file = filename
     # And it tries to extract a file
-    await extract.extract(
+    await extract._extract(
         tgt_zip, tmpdir, extension)
 
     # Then it extracts the file
@@ -232,7 +232,7 @@ async def test_extract_badzipfile(
     # When it tries to extract the zip
     # Then it raises
     with pytest.raises(BadZipFile):
-        await extract.extract(tgt_file, tmpdir)
+        await extract._extract(tgt_file, tmpdir)
 
     # And it logs the error
     assert logger.record_tuples[-1] == (
@@ -410,7 +410,7 @@ async def test_extract_log_returns_log_files(
 
     # And a list of coroutines
     coroutine_list = []
-    coroutine_list.append(extract.extract(file_full_path, tmpdir))
+    coroutine_list.append(extract._extract(file_full_path, tmpdir))
 
     # When it tries to extract the log list
     log_files = await extract.extract_log(coroutine_list)
@@ -459,7 +459,7 @@ async def test_extract_log_asyncio_returns_FnF(logger, tmpdir):
     # And a mock zip_file_extract_fn_list
     extract_fn_list = []
     extract_fn_list.append(
-        extract.extract(file, tmpdir)
+        extract._extract(file, tmpdir)
     )
 
     # When it tries to extract the log
