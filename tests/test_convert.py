@@ -252,7 +252,8 @@ async def test_convert_success(
         ) for log in log_list)
         assert all(log.message in (
             "Exec proxy", "FileIO", "more messages",
-            "SecondaryMonitor -> {path: /path/secondary, number: 2361852362752}",
+            "SecondaryMonitor -> {path: /path/secondary, "
+            "number: 2361852362752}",
             "error doing reconnect...; java.io.IOException: org.Exception: "
             "ErrorCode = Connection for /locks; "
             "at ttl.test.create(lock.java:2); "

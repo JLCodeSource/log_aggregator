@@ -104,7 +104,8 @@ async def get_log(log_id: JavaLog | None = None):
 
 async def find_logs(query, sort=None) -> list[JavaLog]:
     logger.info(
-        f"Starting find_logs coroutine for query: {query} & sort: {sort} from db: "
+        f"Starting find_logs coroutine for query: {query} "
+        f"& sort: {sort} from db: "
         f"{settings.database}"
     )
     if sort is None:
@@ -117,7 +118,7 @@ async def find_logs(query, sort=None) -> list[JavaLog]:
         f"{settings.database}"
     )
     logger.info(
-        f"Ending find_logs coroutine for query: {query} & sort: {sort} from db: "
-        f"{settings.database}"
+        f"Ending find_logs coroutine for query: {query} & sort: {sort} "
+        f"from db: {settings.database}"
     )
     return result

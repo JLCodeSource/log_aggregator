@@ -550,7 +550,8 @@ async def test_find_logs_successfully(
                     f"query: {query} & sort: None "
                     f"from db: {database_log_name}" for s in messages))
         assert any((s == f"Found 2 logs in find_logs coroutine for "
-                    f"query: {query} & sort: None from db: {database_log_name}")
+                    f"query: {query} & sort: None "
+                    f"from db: {database_log_name}")
                    for s in messages)
         assert any((s == f"Ending find_logs coroutine for query: {query} "
                     f"& sort: None from db: {database_log_name}")
@@ -606,24 +607,24 @@ async def test_find_logs_with_sort(
 
         # And the logger logs it
         # Get lists of types
-        #modules = []
-        #levels = []
-        #messages = []
+        # modules = []
+        # levels = []
+        # messages = []
 
         # for recorded_log in logger.record_tuples:
         #    modules.append(recorded_log[0])
         #    levels.append(recorded_log[1])
         #    messages.append(recorded_log[2])
 
-        #count_infos = 0
+        # count_infos = 0
         # for level in levels:
         #    if level == logging.INFO:
         #        count_infos = count_infos + 1
 
         # The logger logs modules
-        #assert all(module == module_name for module in modules)
+        # assert all(module == module_name for module in modules)
 
-        #assert count_infos == 9
+        # assert count_infos == 9
 
         # And logger includes expected values
         # assert any((s == f"Starting find_logs coroutine for {query} "
