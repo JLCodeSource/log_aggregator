@@ -51,6 +51,22 @@ async def motor_client_gen(motor_client_values):
 
 
 @pytest.fixture()
+async def motor_client(motor_client_gen, settings_override):
+    # Given a motor_client generator
+    motor_client = await motor_client_gen
+    # And a motor_client
+    client = motor_client[0][0]
+    # And a database
+    database = motor_client[0][1]
+
+    # And a mocked database name output for logs
+    database_log_name = settings_override.database
+
+    # It returns client, database & db_logname
+    return client, database, database_log_name
+
+
+@pytest.fixture()
 async def add_one():
 
     # And adds a log
