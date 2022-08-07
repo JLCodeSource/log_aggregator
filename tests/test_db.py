@@ -546,93 +546,95 @@ async def test_find_logs_successfully(
         assert count_infos == 9
 
         # And logger includes expected values
-        assert any((s == f"Starting find_logs coroutine for {query} "
+        assert any((s == f"Starting find_logs coroutine for "
+                    f"query: {query} & sort: None "
                     f"from db: {database_log_name}" for s in messages))
         assert any((s == f"Found 2 logs in find_logs coroutine for "
-                    f"{query} from db: {database_log_name}")
+                    f"query: {query} & sort: None from db: {database_log_name}")
                    for s in messages)
-        assert any((s == f"Ending find_logs coroutine for {query} "
-                    f"from db: {database_log_name}")
+        assert any((s == f"Ending find_logs coroutine for query: {query} "
+                    f"& sort: None from db: {database_log_name}")
                    for s in messages)
 
     finally:
         # Set manual teardown
         await client.drop_database(database)
 
-"""
+
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_find_logs_with_sort(
-    motor_client, get_datetime, logger, simple_svc_template_log
+    motor_client, temp_simple_svc_log, mock_get_node
 ):
     # Given a motor_client, database & db_log_name
-    client, database, database_log_name = await motor_client
+    client, database, _ = await motor_client
+
+    # And a target log file
+    tgt_log_file = temp_simple_svc_log
 
     # And an initialized database
     try:
         await db.init(database, client)
 
         # And some logs
-        logs = convert.convert(simple_svc_template_log)
+        logs = await convert.convert(tgt_log_file)
 
         # And it has saved the logs
         await db.insert_logs(logs)
 
         # And it has a query
-        query = (JavaLog.node == "testnode")
+        query = (JavaLog.node == "node")
 
         # And it has a sort
-        sort = (+Java)
+        sort = ("-datetime")
+
         # When it tries to find the logs
-        result = await db.find_logs(query)
+        result = await db.find_logs(query, sort)
 
         # Then it returns both logs
-        assert len(result) == 2
-        assert isinstance(result[0], JavaLog)
-        assert isinstance(result[1], JavaLog)
-
-        # And the returned logs match the logs
+        assert len(result) == 5
+        assert all(isinstance(r, JavaLog) for r in result)
+        timestamps = (
+            datetime(2022, 7, 11, 9, 15, 51),
+            datetime(2022, 7, 11, 9, 14, 51),
+            datetime(2022, 7, 11, 9, 13, 1),
+            datetime(2022, 7, 11, 9, 12, 55),
+            datetime(2022, 7, 11, 9, 12, 2)
+        )
         for i in range(len(result)):
-            assert result[i].node == log.node
-            assert result[i].severity == log.severity
-            assert result[i].jvm == log.jvm
-            assert result[i].datetime == get_datetime
-            assert result[i].source == log.source
-            assert result[i].type == log.type
-            assert result[i].message == log.message
+            assert result[i].datetime == timestamps[i]
 
         # And the logger logs it
         # Get lists of types
-        modules = []
-        levels = []
-        messages = []
+        #modules = []
+        #levels = []
+        #messages = []
 
-        for recorded_log in logger.record_tuples:
-            modules.append(recorded_log[0])
-            levels.append(recorded_log[1])
-            messages.append(recorded_log[2])
+        # for recorded_log in logger.record_tuples:
+        #    modules.append(recorded_log[0])
+        #    levels.append(recorded_log[1])
+        #    messages.append(recorded_log[2])
 
-        count_infos = 0
-        for level in levels:
-            if level == logging.INFO:
-                count_infos = count_infos + 1
+        #count_infos = 0
+        # for level in levels:
+        #    if level == logging.INFO:
+        #        count_infos = count_infos + 1
 
         # The logger logs modules
-        assert all(module == module_name for module in modules)
+        #assert all(module == module_name for module in modules)
 
-        assert count_infos == 9
+        #assert count_infos == 9
 
         # And logger includes expected values
-        assert any((s == f"Starting find_logs coroutine for {query} "
-                    f"from db: {database_log_name}" for s in messages))
-        assert any((s == f"Found 2 logs in find_logs coroutine for "
-                    f"{query} from db: {database_log_name}")
-                   for s in messages)
-        assert any((s == f"Ending find_logs coroutine for {query} "
-                    f"from db: {database_log_name}")
-                   for s in messages)
+        # assert any((s == f"Starting find_logs coroutine for {query} "
+        #            f"from db: {database_log_name}" for s in messages))
+        # assert any((s == f"Found 2 logs in find_logs coroutine for "
+        #            f"{query} from db: {database_log_name}")
+        #           for s in messages)
+        # assert any((s == f"Ending find_logs coroutine for {query} "
+        #            f"from db: {database_log_name}")
+        #           for s in messages)
 
     finally:
         # Set manual teardown
         await client.drop_database(database)
- """
