@@ -17,6 +17,7 @@ from datetime import datetime
 
 from pydantic import ValidationError
 from beanie.exceptions import CollectionWasNotInitialized
+from pymongo.errors import ServerSelectionTimeoutError
 from aggregator.helper import get_node
 
 from aggregator.model import JavaLog
@@ -24,7 +25,7 @@ from aggregator.model import JavaLog
 logger = logging.getLogger(__name__)
 
 
-def line_start_match(match: str, string: str) -> bool:
+def _line_start_match(match: str, string: str) -> bool:
     # Returns true if the beginning of the string matches match
     try:
         matches = bool(re.match(match, string))
@@ -35,11 +36,11 @@ def line_start_match(match: str, string: str) -> bool:
     return matches
 
 
-def yield_matches(full_log: list[str]):
+def _yield_matches(full_log: list[str]) -> str:
     # Yield matches creates a list of logs and yields the list on match
     logs = []
     for line in full_log.split("\n"):
-        if line_start_match("INFO|WARN|ERROR", line):  # if line matches start
+        if _line_start_match("INFO|WARN|ERROR", line):  # if line matches start
             if len(logs) > 0:  # if there's already a log
                 tmp_line = "; ".join(logs)
                 yield tmp_line  # yield the log
@@ -50,17 +51,26 @@ def yield_matches(full_log: list[str]):
     yield line
 
 
-def multi_to_single_line(logfile: os.path) -> None:
+def _multi_to_single_line(logfile: os.path) -> None:
     # multiToSingleLine converts multiline to single line logs
     data = open(logfile).read()
     logger.info(f"Opened {logfile} for reading")
-    logs = list(yield_matches(data))
+    logs = list(_yield_matches(data))
 
     with open(os.path.join(logfile), "w") as file:
         for line in logs:
             file.write(f"{line}\n")
             logger.debug(f"Wrote: {line} to {file}")
         logger.info(f"Wrote converted logs to {logfile}")
+
+
+def _strip_whitespace(d: dict) -> dict:
+    for k, v in d.items():
+        try:
+            d[k] = v.strip()
+        except AttributeError as err:
+            logger.exception(f"AttributeError: {err}")
+    return d
 
 
 def convert_log_to_csv(logfile) -> list[dict]:
@@ -72,32 +82,24 @@ def convert_log_to_csv(logfile) -> list[dict]:
         return list(reader)
 
 
-def strip_whitespace(d: dict) -> dict:
-    for k, v in d.items():
-        try:
-            d[k] = v.strip()
-        except AttributeError as err:
-            logger.exception(f"AttributeError: {err}")
-    return d
-
-
 async def convert(log_file: os.path) -> list[JavaLog]:
     logger.info(f"Starting new convert coroutine for {log_file}")
     # Work on log files in logsout
     log_list = []
     node = get_node(log_file)
 
-    multi_to_single_line(log_file)
+    _multi_to_single_line(log_file)
     reader = convert_log_to_csv(log_file)
 
     for dict in reader:
 
-        dict = strip_whitespace(dict)
+        dict = _strip_whitespace(dict)
 
         dict["node"] = node
 
-        timestamp = datetime.strptime(dict["datetime"].strip(),
-                                      "%Y/%m/%d %H:%M:%S")
+        timestamp = datetime.strptime(
+            dict["datetime"], "%Y/%m/%d %H:%M:%S"
+        )
 
         if (
             dict["message"] is None
@@ -121,8 +123,11 @@ async def convert(log_file: os.path) -> list[JavaLog]:
             logger.debug(f"Appended {log} to log_list")
         except ValidationError as err:
             logger.exception(f"ValidationError: {err}")
-        except CollectionWasNotInitialized as err:
-            logger.fatal(f"CollectionWasNotInitializedError: {err}")
+        except (
+            CollectionWasNotInitialized,
+            ServerSelectionTimeoutError
+        ) as err:
+            logger.fatal(f"Error: {err=}, {type(err)=}")
             exit()
         except BaseException as err:
             logger.exception(f"Unexpected {err=}, {type(err)=}")

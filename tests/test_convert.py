@@ -1,11 +1,9 @@
-import csv
 from datetime import datetime
 import logging
 import shutil
 import pytest
 import os
-from aggregator import convert, helper, db
-from aggregator.model import JavaLog
+from aggregator import convert, db
 
 module_name = "aggregator.convert"
 multi_line_log = (
@@ -32,7 +30,7 @@ def test_lineStartMatch_matches(logger):
     # And a string that matches (INFO | j |)
     # When it tries to match
     # Then it matches
-    assert convert.line_start_match("INFO", "INFO | j |") is True
+    assert convert._line_start_match("INFO", "INFO | j |") is True
 
     # And the logger logs it
     assert logger.record_tuples == [
@@ -47,7 +45,7 @@ def test_line_start_match_no_match(logger):
     # And a string that doesn't matches (xyz)
     # When it tries to match
     # Then it doesn't match
-    assert convert.line_start_match("INFO", "xyz") is False
+    assert convert._line_start_match("INFO", "xyz") is False
 
     # And the logger logs it
     assert logger.record_tuples == [
@@ -61,7 +59,7 @@ def test_line_start_match_non_string_arg1(logger):
     # When it tries to match
     # Then it raises a TypeError
     with pytest.raises(TypeError):
-        convert.line_start_match(1, "xyz")
+        convert._line_start_match(1, "xyz")
 
     # And logs a warning
     assert logger.record_tuples[0] == (
@@ -76,7 +74,7 @@ def test_line_start_match_non_string_arg2(logger):
     # When it tries to match
     # Then it raises a TypeError
     with pytest.raises(TypeError):
-        convert.line_start_match("INFO", 1)
+        convert._line_start_match("INFO", 1)
 
     # And logs a warning
     assert logger.record_tuples[0] == (
@@ -91,7 +89,7 @@ def test_yield_matches_one_line(logger):
     logs = "INFO | This is a log\nINFO | This is another log"
 
     # When it tries to match the lines
-    log_list = list(convert.yield_matches(logs))
+    log_list = list(convert._yield_matches(logs))
 
     # Then the first log is yielded
     assert log_list[0] == "INFO | This is a log"
@@ -119,7 +117,7 @@ def test_yield_matches_multi_line(logger):
     lines = logs.split("\n")
 
     # When it tries to match the lines
-    log_list = list(convert.yield_matches(logs))
+    log_list = list(convert._yield_matches(logs))
 
     # Then the first log is yielded
     assert log_list[0] == "INFO | This is a log"
@@ -165,7 +163,7 @@ def test_multi_to_single_line(tmpdir):
     log_file = os.path.join(tmpdir, multi_line_log_filename)
 
     # When it opens the logfile
-    convert.multi_to_single_line(log_file)
+    convert._multi_to_single_line(log_file)
 
     # Then it converts any multiline logs into single lines
     with open(log_file, "r") as file:
@@ -189,7 +187,7 @@ def test_convert_log_to_csv_success(tmpdir):
     log_file = os.path.join(tmpdir, multi_line_log_filename)
 
     # And it has converted the file to single lines
-    convert.multi_to_single_line(log_file)
+    convert._multi_to_single_line(log_file)
 
     # When it tries to convert the CSV log file to a dict
     result = convert.convert_log_to_csv(log_file)
