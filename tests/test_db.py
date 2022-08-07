@@ -4,7 +4,7 @@ import beanie
 from bson import ObjectId
 import pytest
 import logging
-import aggregator.db
+from aggregator import db, convert
 from pymongo.errors import ServerSelectionTimeoutError, InvalidOperation
 from aggregator.model import JavaLog
 
@@ -41,7 +41,7 @@ async def test_init(motor_client, logger, add_one):
 
     try:
         # When it tries to init the database
-        ok = await aggregator.db.init(database, client)
+        ok = await db.init(database, client)
 
         # And it adds a log
         await add_one
@@ -88,7 +88,7 @@ async def test_init_server_timeout(
     # It raises a ServerSelectionTimeoutError
     try:
         with pytest.raises(ServerSelectionTimeoutError):
-            await aggregator.db.init(database, client)
+            await db.init(database, client)
 
         assert logger.record_tuples == [
             (module_name, logging.INFO,
@@ -120,7 +120,7 @@ async def test_insert_logs_success(motor_client, logger):
 
     # And an initialized  database
     try:
-        await aggregator.db.init(database, client)
+        await db.init(database, client)
 
         # And 2 logs
         log = JavaLog(
@@ -137,7 +137,7 @@ async def test_insert_logs_success(motor_client, logger):
         for _ in range(2):
             logs.append(log)
 
-        result = await aggregator.db.insert_logs(logs)
+        result = await db.insert_logs(logs)
 
         # Then the logger logs it
         # Get lists of types
@@ -201,12 +201,12 @@ async def test_insert_logs_servertimeout(
 
     # And an initialized  database
     try:
-        await aggregator.db.init(database, client)
+        await db.init(database, client)
 
         # When it tries to save the logs
         # Then it raises a ServerSelectionTimeoutError
         with pytest.raises(ServerSelectionTimeoutError):
-            await aggregator.db.insert_logs([wrong_id])
+            await db.insert_logs([wrong_id])
 
         # And the logger logs the error
         assert logger.record_tuples[-2] == (
@@ -237,7 +237,7 @@ async def test_insert_logs_invalid_operation_error(
 
     # And an initialized database
     try:
-        await aggregator.db.init(database, client)
+        await db.init(database, client)
 
         # And 2 logs
         log = JavaLog(
@@ -257,7 +257,7 @@ async def test_insert_logs_invalid_operation_error(
     # When it tries to save the logs
     # Then it raises a InvalidOperation
         with pytest.raises(InvalidOperation):
-            await aggregator.db.insert_logs(logs)
+            await db.insert_logs(logs)
 
         # And the logger logs the error
         assert logger.record_tuples[-2] == (
@@ -285,11 +285,11 @@ async def test_insert_logs_none(
     client, database, database_log_name = await motor_client
     # And an initialized database
     try:
-        await aggregator.db.init(database, client)
+        await db.init(database, client)
 
         # When it tries to insert None logs
         # Then it returns None
-        result = await aggregator.db.insert_logs()
+        result = await db.insert_logs()
 
         assert result is None
 
@@ -319,7 +319,7 @@ async def test_get_log_successfully(
 
     # And an initialized database
     try:
-        await aggregator.db.init(database, client)
+        await db.init(database, client)
 
         # And 2 logs
         log = JavaLog(
@@ -337,10 +337,10 @@ async def test_get_log_successfully(
             logs.append(log)
 
         # And it has saved the logs
-        result = await aggregator.db.insert_logs(logs)
+        result = await db.insert_logs(logs)
 
         # When it tries to get the log
-        returned_log = await aggregator.db.get_log(result.inserted_ids[0])
+        returned_log = await db.get_log(result.inserted_ids[0])
 
         # Then the returned_log matches the log
         assert returned_log.node == log.node
@@ -382,12 +382,12 @@ async def test_get_log_none(
 
     # And an initialized database
     try:
-        await aggregator.db.init(database, client)
+        await db.init(database, client)
 
         # When it tries to get the logs with a NoneType
         # Then it raises an error
         with pytest.raises(ValidationError):
-            await aggregator.db.get_log()
+            await db.get_log()
 
         # And the logger logs it
         assert logger.record_tuples[-2] == (
@@ -419,10 +419,10 @@ async def test_get_log_wrong_id(
 
     # And an initialized database
     try:
-        await aggregator.db.init(database, client)
+        await db.init(database, client)
 
         # When it tries to get the logs with a missing log
-        returned_log = await aggregator.db.get_log("608da169eb9e17281f0ab2ff")
+        returned_log = await db.get_log("608da169eb9e17281f0ab2ff")
 
         # Then the logger logs it
         assert logger.record_tuples[-2][0] == module_name
@@ -454,11 +454,11 @@ async def test_get_log_server_timeout(
 
     # And an initialized database
     try:
-        await aggregator.db.init(database, client)
+        await db.init(database, client)
 
         # When it tries to get the logs with a missing log
         with pytest.raises(ServerSelectionTimeoutError):
-            await aggregator.db.get_log(wrong_id)
+            await db.get_log(wrong_id)
 
         # And the logger logs the error
         assert logger.record_tuples[-2] == (
@@ -483,7 +483,7 @@ async def test_find_logs_successfully(
 
     # And an initialized database
     try:
-        await aggregator.db.init(database, client)
+        await db.init(database, client)
 
         # And 2 logs
         log = JavaLog(
@@ -501,13 +501,13 @@ async def test_find_logs_successfully(
             logs.append(log)
 
         # And it has saved the logs
-        await aggregator.db.insert_logs(logs)
+        await db.insert_logs(logs)
 
         # And it has a query
         query = (JavaLog.node == "testnode")
 
         # When it tries to find the logs
-        result = await aggregator.db.find_logs(query)
+        result = await db.find_logs(query)
 
         # Then it returns both logs
         assert len(result) == 2
@@ -559,23 +559,24 @@ async def test_find_logs_successfully(
         # Set manual teardown
         await client.drop_database(database)
 
-""" 
+"""
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_find_logs_with_sort(
-    motor_client, get_datetime, logger
+    motor_client, get_datetime, logger, simple_svc_template_log
 ):
     # Given a motor_client, database & db_log_name
     client, database, database_log_name = await motor_client
 
     # And an initialized database
     try:
-        await aggregator.db.init(database, client)
+        await db.init(database, client)
 
         # And some logs
+        logs = convert.convert(simple_svc_template_log)
 
         # And it has saved the logs
-        await aggregator.db.insert_logs(logs)
+        await db.insert_logs(logs)
 
         # And it has a query
         query = (JavaLog.node == "testnode")
@@ -583,7 +584,7 @@ async def test_find_logs_with_sort(
         # And it has a sort
         sort = (+Java)
         # When it tries to find the logs
-        result = await aggregator.db.find_logs(query)
+        result = await db.find_logs(query)
 
         # Then it returns both logs
         assert len(result) == 2

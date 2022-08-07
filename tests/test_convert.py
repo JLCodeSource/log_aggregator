@@ -6,6 +6,7 @@ import os
 from aggregator import convert, db
 from beanie.exceptions import CollectionWasNotInitialized
 
+
 module_name = "aggregator.convert"
 
 
@@ -200,20 +201,12 @@ class MockGetNode:
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_convert_collection_not_initialized(
-        tmpdir, make_filename, monkeypatch,
-        logger, testdata_log_dir, one_line_log):
+        monkeypatch, logger, temp_one_line_log):
     # TODO: This test is brittle as it is dependent on being called
     # before convert_success
 
-    # Given a directory (tmpdir) & a log_file
-    log_file_name = make_filename("node", "service", ".log", False)[2:]
-    src_log_file = os.path.join(testdata_log_dir, one_line_log)
-    tgt_folder = os.path.join(tmpdir, os.path.dirname(log_file_name))
-    tgt_log_file = os.path.join(tgt_folder, os.path.basename(log_file_name))
-
-    # And a multi-line-log has been copied to the log_file
-    os.makedirs(tgt_folder, exist_ok=True)
-    shutil.copy(src_log_file, tgt_log_file)
+    # Given a target log file
+    tgt_log_file = temp_one_line_log
 
     # And a Mock get_node
     def mock_helper_get_node(*args, **kwargs):
@@ -238,17 +231,9 @@ async def test_convert_collection_not_initialized(
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_convert_success(
-        tmpdir, make_filename, monkeypatch,
-        motor_client_gen, testdata_log_dir, simple_svc_template_log):
-    # Given a directory (tmpdir) & a log_file
-    log_file_name = make_filename("node", "service", ".log", False)[2:]
-    src_log_file = os.path.join(testdata_log_dir, simple_svc_template_log)
-    tgt_folder = os.path.join(tmpdir, os.path.dirname(log_file_name))
-    tgt_log_file = os.path.join(tgt_folder, os.path.basename(log_file_name))
-
-    # And a multi-line-log has been copied to the log_file
-    os.makedirs(tgt_folder, exist_ok=True)
-    shutil.copy(src_log_file, tgt_log_file)
+        monkeypatch, motor_client, temp_simple_svc_log):
+    # Given a target log file
+    tgt_log_file = temp_simple_svc_log
 
     # And a Mock get_node
     def mock_helper_get_node(*args, **kwargs):
@@ -256,15 +241,8 @@ async def test_convert_success(
 
     monkeypatch.setattr(convert, "get_node", mock_helper_get_node)
 
-    # And a motor_client generator
-    motor_client = await motor_client_gen
-    # And a motor_client
-    client = motor_client[0][0]
-    # And a database
-    database = motor_client[0][1]
-
-    # And a mocked database name output for logs
-    # database_log_name = settings_override.database
+    # And a motor_client, database & db_log_name
+    client, database, _ = await motor_client
 
     # And an initialized database
     try:
@@ -318,17 +296,9 @@ async def test_convert_success(
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_convert_to_datetime_bad_timestamp(
-        tmpdir, make_filename, monkeypatch,
-        motor_client_gen, logger, testdata_log_dir, bad_timestamp_log):
-    # Given a directory (tmpdir) & a log_file
-    log_file_name = make_filename("node", "service", ".log", False)[2:]
-    src_log_file = os.path.join(testdata_log_dir, bad_timestamp_log)
-    tgt_folder = os.path.join(tmpdir, os.path.dirname(log_file_name))
-    tgt_log_file = os.path.join(tgt_folder, os.path.basename(log_file_name))
-
-    # And a multi-line-log has been copied to the log_file
-    os.makedirs(tgt_folder, exist_ok=True)
-    shutil.copy(src_log_file, tgt_log_file)
+        monkeypatch, motor_client, logger, temp_bad_timestamp_log):
+    # Given a target log file
+    tgt_log_file = temp_bad_timestamp_log
 
     # And a Mock get_node
     def mock_helper_get_node(*args, **kwargs):
@@ -336,15 +306,8 @@ async def test_convert_to_datetime_bad_timestamp(
 
     monkeypatch.setattr(convert, "get_node", mock_helper_get_node)
 
-    # And a motor_client generator
-    motor_client = await motor_client_gen
-    # And a motor_client
-    client = motor_client[0][0]
-    # And a database
-    database = motor_client[0][1]
-
-    # And a mocked database name output for logs
-    # database_log_name = settings_override.database
+    # And a motor_client, database & db_log_name
+    client, database, _ = await motor_client
 
     # And an initialized database
     try:
@@ -377,17 +340,9 @@ class MockDatetime:
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_convert_bad_timestamp(
-        tmpdir, make_filename, monkeypatch,
-        motor_client_gen, logger, testdata_log_dir, bad_timestamp_log):
-    # Given a directory (tmpdir) & a log_file
-    log_file_name = make_filename("node", "service", ".log", False)[2:]
-    src_log_file = os.path.join(testdata_log_dir, bad_timestamp_log)
-    tgt_folder = os.path.join(tmpdir, os.path.dirname(log_file_name))
-    tgt_log_file = os.path.join(tgt_folder, os.path.basename(log_file_name))
-
-    # And a multi-line-log has been copied to the log_file
-    os.makedirs(tgt_folder, exist_ok=True)
-    shutil.copy(src_log_file, tgt_log_file)
+        monkeypatch, motor_client, logger, temp_bad_timestamp_log):
+    # Given a target log file
+    tgt_log_file = temp_bad_timestamp_log
 
     # And a Mock get_node
     def mock_helper_get_node(*args, **kwargs):
@@ -402,15 +357,8 @@ async def test_convert_bad_timestamp(
     monkeypatch.setattr(
         convert, "_convert_to_datetime", mock_convert_to_datetime)
 
-    # And a motor_client generator
-    motor_client = await motor_client_gen
-    # And a motor_client
-    client = motor_client[0][0]
-    # And a database
-    database = motor_client[0][1]
-
-    # And a mocked database name output for logs
-    # database_log_name = settings_override.database
+    # And a motor_client, database & db_log_name
+    client, database, _ = await motor_client
 
     # And an initialized database
     try:
