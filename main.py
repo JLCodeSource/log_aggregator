@@ -29,9 +29,7 @@ class Aggregator:
         return self._func()
 
 
-@Aggregator
-async def main():
-
+async def init_app():
     try:
         settings = get_settings()
         assert (settings is not empty), "Failed to get settings"
@@ -48,7 +46,16 @@ async def main():
     logger.info(f"Log Level: {settings.log_level}")
     # Init database
     init_db = asyncio.create_task(init())
-    await init_db
+    result = await init_db
+    return result, settings
+
+
+@Aggregator
+async def main():
+
+    ok, settings = await init_app()
+    if not ok == "ok":
+        exit()
 
     # Create list of configured extraction functions for zip extraction
     log_file_list = gen_zip_extract_fn_list(settings.sourcedir)

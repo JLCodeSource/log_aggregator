@@ -53,7 +53,8 @@ def test_line_start_match_no_match(logger):
     # And the logger logs it
     assert logger.record_tuples == [
         (module_name, logging.DEBUG,
-         "Matches: False from INFO with 'xyz'")]
+         "Matches: False from INFO with 'xyz'")
+    ]
 
 
 @pytest.mark.unit
