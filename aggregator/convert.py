@@ -72,6 +72,15 @@ def convert_log_to_csv(logfile) -> list[dict]:
         return list(reader)
 
 
+def strip_whitespace(d: dict) -> dict:
+    for k, v in d.items():
+        try:
+            d[k] = v.strip()
+        except AttributeError as err:
+            logger.exception(f"AttributeError: {err}")
+    return d
+
+
 async def convert(log_file: os.path) -> list[JavaLog]:
     logger.info(f"Starting new convert coroutine for {log_file}")
     # Work on log files in logsout
@@ -82,12 +91,8 @@ async def convert(log_file: os.path) -> list[JavaLog]:
     reader = convert_log_to_csv(log_file)
 
     for dict in reader:
-        for k, v in dict.items():
-            if dict[k]:
-                try:
-                    dict[k] = v.strip()
-                except AttributeError as err:
-                    logger.exception(f"AttributeError: {err}")
+
+        dict = strip_whitespace(dict)
 
         dict["node"] = node
 
