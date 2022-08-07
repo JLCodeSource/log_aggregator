@@ -7,24 +7,6 @@ from aggregator import convert, db
 from beanie.exceptions import CollectionWasNotInitialized
 
 module_name = "aggregator.convert"
-multi_line_log = (
-    "INFO | This is a log\nERROR | This is an error log\n    "
-    "with multiple lines\n    and more lines\n"
-    "INFO | And this is a separate log"
-)
-testdata_log_dir = "./testsource/logs/"
-multi_line_log_filename = "multi_line_log.log"
-simple_svc_template_log = "simple_svc_template.log"
-bad_timestamp_log = "bad_timestamp.log"
-one_line_log = "one_line_log.log"
-
-
-class MockOpen:
-    # Mock Open
-
-    @staticmethod
-    def read_multi(file):
-        return multi_line_log
 
 
 @pytest.mark.unit
@@ -114,7 +96,7 @@ def test_yield_matches_one_line(logger):
 
 
 @pytest.mark.unit
-def test_yield_matches_multi_line(logger):
+def test_yield_matches_multi_line(logger, multi_line_log):
     # Given a multiline error log that starts with ERROR
     logs = multi_line_log
     # And the logs split by line
@@ -157,7 +139,8 @@ def test_yield_matches_multi_line(logger):
 
 
 @pytest.mark.unit
-def test_multi_to_single_line(tmpdir):
+def test_multi_to_single_line(
+        tmpdir, testdata_log_dir, multi_line_log_filename):
     # Given a logfile with 5 lines & 3 individual logs (multi_line_log)
     log_file = os.path.join(testdata_log_dir, multi_line_log_filename)
 
@@ -181,7 +164,8 @@ def test_multi_to_single_line(tmpdir):
 
 
 @pytest.mark.unit
-def test_convert_log_to_csv_success(tmpdir):
+def test_convert_log_to_csv_success(
+        tmpdir, testdata_log_dir, multi_line_log_filename):
     # Given a logfile with 5 lines & 3 individual logs (multi_line_log)
     log_file = os.path.join(testdata_log_dir, multi_line_log_filename)
 
@@ -217,7 +201,7 @@ class MockGetNode:
 @pytest.mark.asyncio
 async def test_convert_collection_not_initialized(
         tmpdir, make_filename, monkeypatch,
-        logger):
+        logger, testdata_log_dir, one_line_log):
     # TODO: This test is brittle as it is dependent on being called
     # before convert_success
 
@@ -255,7 +239,7 @@ async def test_convert_collection_not_initialized(
 @pytest.mark.asyncio
 async def test_convert_success(
         tmpdir, make_filename, monkeypatch,
-        motor_client_gen):
+        motor_client_gen, testdata_log_dir, simple_svc_template_log):
     # Given a directory (tmpdir) & a log_file
     log_file_name = make_filename("node", "service", ".log", False)[2:]
     src_log_file = os.path.join(testdata_log_dir, simple_svc_template_log)
@@ -335,7 +319,7 @@ async def test_convert_success(
 @pytest.mark.asyncio
 async def test_convert_to_datetime_bad_timestamp(
         tmpdir, make_filename, monkeypatch,
-        motor_client_gen, logger):
+        motor_client_gen, logger, testdata_log_dir, bad_timestamp_log):
     # Given a directory (tmpdir) & a log_file
     log_file_name = make_filename("node", "service", ".log", False)[2:]
     src_log_file = os.path.join(testdata_log_dir, bad_timestamp_log)
@@ -394,7 +378,7 @@ class MockDatetime:
 @pytest.mark.asyncio
 async def test_convert_bad_timestamp(
         tmpdir, make_filename, monkeypatch,
-        motor_client_gen, logger):
+        motor_client_gen, logger, testdata_log_dir, bad_timestamp_log):
     # Given a directory (tmpdir) & a log_file
     log_file_name = make_filename("node", "service", ".log", False)[2:]
     src_log_file = os.path.join(testdata_log_dir, bad_timestamp_log)

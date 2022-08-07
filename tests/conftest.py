@@ -74,19 +74,35 @@ def logger(caplog):
 
 
 @pytest.fixture()
-def one_line_log():
-    return ("INFO | jvm | 2022/07/11 | ttl | swift | SMB | Executing haproxy")
+def testdata_log_dir():
+    return ("./testsource/logs/")
 
 
 @pytest.fixture()
-def two_line_log():
-    return ("INFO | jvm | 2022/07/11 | ttl | swift | SMB | Exec haproxy\n" /
-            + "INFO | jvm | 2022/07/11 | ttl | swift | SMB | Exec haproxy")
+def multi_line_log_filename():
+    return ("multi_line_log.log")
+
+
+@pytest.fixture()
+def simple_svc_template_log():
+    return ("simple_svc_template.log")
 
 
 @pytest.fixture()
 def bad_timestamp_log():
-    return("INFO    | jvm 1 | 2022/07/1x 09:12:02 | ttl.test | SMB | Exec proxy")
+    return ("bad_timestamp.log")
+
+
+@pytest.fixture()
+def one_line_log():
+    return ("one_line_log.log")
+
+
+@pytest.fixture()
+def multi_line_log():
+    return("INFO | This is a log\nERROR | This is an error log\n    "
+           "with multiple lines\n    and more lines\n"
+           "INFO | And this is a separate log")
 
 
 @pytest.fixture()
