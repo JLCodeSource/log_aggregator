@@ -1,8 +1,11 @@
+import csv
+from datetime import datetime
 import logging
 import shutil
 import pytest
 import os
-from aggregator import convert
+from aggregator import convert, helper, db
+from aggregator.model import JavaLog
 
 module_name = "aggregator.convert"
 multi_line_log = (
@@ -12,6 +15,7 @@ multi_line_log = (
 )
 testdata_log_dir = "./testsource/logs/"
 multi_line_log_filename = "multi_line_log.log"
+simple_svc_template_log = "simple_svc_template.log"
 
 
 class MockOpen:
@@ -151,8 +155,7 @@ def test_yield_matches_multi_line(logger):
 
 
 @pytest.mark.unit
-def test_multi_to_single_line(
-        tmpdir):
+def test_multi_to_single_line(tmpdir):
     # Given a logfile with 5 lines & 3 individual logs (multi_line_log)
     log_file = os.path.join(testdata_log_dir, multi_line_log_filename)
 
@@ -168,3 +171,120 @@ def test_multi_to_single_line(
     with open(log_file, "r") as file:
         lines = len(file.readlines())
     assert lines == 3
+
+    # And it logs it
+    # TODO: These checks
+
+# TODO: Add unhappy paths
+
+
+@pytest.mark.unit
+def test_convert_log_to_csv_success(tmpdir):
+    # Given a logfile with 5 lines & 3 individual logs (multi_line_log)
+    log_file = os.path.join(testdata_log_dir, multi_line_log_filename)
+
+    # And a tmpdir (tmpdir)
+    # And the log_file is in the tmpdir
+    shutil.copy(log_file, tmpdir)
+    log_file = os.path.join(tmpdir, multi_line_log_filename)
+
+    # And it has converted the file to single lines
+    convert.multi_to_single_line(log_file)
+
+    # When it tries to convert the CSV log file to a dict
+    result = convert.convert_log_to_csv(log_file)
+
+    # Then it succeeds
+    assert type(result) == list
+    assert type(result[0]) == dict
+
+    # TODO: Improve checks
+    # And add logging
+
+# TODO: Add unhappy paths
+
+
+class MockGetNode:
+
+    @staticmethod
+    def mock_get_node():
+        return "node"
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_convert_success(
+        tmpdir, make_filename, monkeypatch,
+        motor_client_gen,
+        settings_override):
+    # Given a directory (tmpdir) & a log_file
+    log_file_name = make_filename("node", "service", ".log", False)[2:]
+    src_log_file = os.path.join(testdata_log_dir, simple_svc_template_log)
+    tgt_folder = os.path.join(tmpdir, os.path.dirname(log_file_name))
+    tgt_log_file = os.path.join(tgt_folder, os.path.basename(log_file_name))
+
+    # And a multi-line-log has been copied to the log_file
+    os.makedirs(tgt_folder, exist_ok=True)
+    shutil.copy(src_log_file, tgt_log_file)
+
+    # And a Mock get_node
+    def mock_helper_get_node(*args, **kwargs):
+        return MockGetNode.mock_get_node()
+
+    monkeypatch.setattr(convert, "get_node", mock_helper_get_node)
+
+    # And a motor_client generator
+    motor_client = await motor_client_gen
+    # And a motor_client
+    client = motor_client[0][0]
+    # And a database
+    database = motor_client[0][1]
+
+    # And a mocked database name output for logs
+    # database_log_name = settings_override.database
+
+    # And an initialized database
+    try:
+        await db.init(database, client)
+
+        # When it tries to convert the logs
+        log_list = await convert.convert(tgt_log_file)
+
+        # Then it succeeds
+        assert len(log_list) == 4
+        assert all(log.node == "node" for log in log_list)
+        assert all(log.jvm == "jvm 1" for log in log_list)
+        assert sum(log.severity == "INFO" for log in log_list) == 2
+        assert sum(log.severity == "ERROR" for log in log_list) == 1
+        assert sum(log.severity == "WARN" for log in log_list) == 1
+        assert sum(log.source == "ttl.test" for log in log_list) == 3
+        assert sum(log.source == "org.connect" for log in log_list) == 1
+        assert all(log.type in ("SMB", "async", "event", "process")
+                   for log in log_list)
+        assert all(log.datetime in (
+            datetime(2022, 7, 11, 9, 12, 2),
+            datetime(2022, 7, 11, 9, 13, 1),
+            datetime(2022, 7, 11, 9, 14, 51),
+            datetime(2022, 7, 11, 9, 15, 51)
+        ) for log in log_list)
+        assert all(log.message in (
+            "Exec proxy", "FileIO", "more messages",
+            "error doing reconnect...; java.io.IOException: org.Exception: "
+            "ErrorCode = Connection for /locks; "
+            "at ttl.test.create(lock.java:2); "
+            "at ttl.test.reconnect(lock.java:99); "
+            "at ttl.test.process(lock.java:101); "
+            "at org.processEvent(connect.java:500); "
+            "at org.run(connect.java:200); "
+            "Caused by: org.Exception: ErrorCode = Connection for /locks; "
+            "at org.Exception.create(Exception.java:122); "
+            "at org.Exception.create(Exception.java:540); "
+            "at org.exists(exists.java:2000); "
+            "at org.exists(exists.java:2079); "
+            "at ttl.test.create(Lock.java:720); "
+            "... 4 more"
+        ) for log in log_list)
+
+    finally:
+        # Set manual teardown
+        await client.drop_database(database)

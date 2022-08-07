@@ -1,0 +1,17 @@
+INFO    | jvm 1 | 2022/07/11 09:12:02 | ttl.test | SMB | Exec proxy
+WARN    | jvm 1 | 2022/07/11 09:13:01 | ttl.test | async | FileIO
+ERROR   | jvm 1 | 2022/07/11 09:14:51 | ttl.test | event | error doing reconnect...
+java.io.IOException: org.Exception: ErrorCode = Connection for /locks
+	at ttl.test.create(lock.java:2)
+	at ttl.test.reconnect(lock.java:99)
+	at ttl.test.process(lock.java:101)
+	at org.processEvent(connect.java:500)
+	at org.run(connect.java:200)
+Caused by: org.Exception: ErrorCode = Connection for /locks
+	at org.Exception.create(Exception.java:122)
+	at org.Exception.create(Exception.java:540)
+	at org.exists(exists.java:2000)
+	at org.exists(exists.java:2079)
+	at ttl.test.create(Lock.java:720)
+	... 4 more
+INFO   | jvm 1 | 2022/07/11 09:15:51 | org.connect | process | more messages

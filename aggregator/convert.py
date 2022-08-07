@@ -63,7 +63,7 @@ def multi_to_single_line(logfile: os.path) -> None:
         logger.info(f"Wrote converted logs to {logfile}")
 
 
-def convert_log_to_csv(logfile):
+def convert_log_to_csv(logfile) -> list[dict]:
     # Converts the CSV log file to a dict
     header = ["severity", "jvm", "datetime", "source", "type", "message"]
     with open(os.path.join(logfile), "r") as file:
@@ -72,14 +72,14 @@ def convert_log_to_csv(logfile):
         return list(reader)
 
 
-async def convert(logfile):
-    logger.info(f"Starting new convert coroutine for {logfile}")
+async def convert(log_file: os.path) -> list[JavaLog]:
+    logger.info(f"Starting new convert coroutine for {log_file}")
     # Work on log files in logsout
     log_list = []
-    node = get_node(logfile)
+    node = get_node(log_file)
 
-    multi_to_single_line(logfile)
-    reader = convert_log_to_csv(logfile)
+    multi_to_single_line(log_file)
+    reader = convert_log_to_csv(log_file)
 
     for dict in reader:
         for k, v in dict.items():
@@ -123,5 +123,5 @@ async def convert(logfile):
             logger.exception(f"Unexpected {err=}, {type(err)=}")
         await asyncio.sleep(0)
 
-    logger.info(f"Ending convert coroutine for {logfile} and {node}")
+    logger.info(f"Ending convert coroutine for {log_file} and {node}")
     return log_list
