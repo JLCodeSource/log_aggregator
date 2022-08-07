@@ -73,7 +73,7 @@ def _strip_whitespace(d: dict) -> dict:
     return d
 
 
-def convert_log_to_csv(logfile) -> list[dict]:
+def _convert_log_to_csv(logfile) -> list[dict]:
     # Converts the CSV log file to a dict
     header = ["severity", "jvm", "datetime", "source", "type", "message"]
     with open(os.path.join(logfile), "r") as file:
@@ -89,7 +89,7 @@ async def convert(log_file: os.path) -> list[JavaLog]:
     node = get_node(log_file)
 
     _multi_to_single_line(log_file)
-    reader = convert_log_to_csv(log_file)
+    reader = _convert_log_to_csv(log_file)
 
     for dict in reader:
 
