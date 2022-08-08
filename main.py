@@ -12,9 +12,10 @@ Variables: sourcedir
 from pyparsing import empty
 from aggregator.config import get_settings
 from aggregator.convert import convert
-from aggregator.db import init, insert_logs
+from aggregator.db import init, insert_logs, find_logs
 from aggregator.extract import extract_log, gen_zip_extract_fn_list
 from aggregator.logs import configure_logging
+from aggregator.view import display_result
 import logging
 import asyncio
 
@@ -82,6 +83,9 @@ async def main():
 
     ok = await asyncio.gather(*insert_log_fn_list)
     logger.info(f"Output from db insert: {ok}")
+
+    out = await find_logs(query={}, sort="-datetime")
+    await display_result(out)
 
 if __name__ == "__main__":
 
