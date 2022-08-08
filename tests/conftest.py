@@ -150,8 +150,11 @@ def make_logs(request, tmpdir, make_filename, testdata_log_dir):
     else:
         params = request.param
     for param in params:
+        file = os.path.splitext(param)
+        filename = file[0]
+        ext = file[1]
         log_file_name = make_filename(
-            "node", "service", ".log", False)[2:]
+            "node", filename, ext, False)[2:]
         src_log_file = os.path.join(
             testdata_log_dir, param)
         tgt_folder = os.path.join(
