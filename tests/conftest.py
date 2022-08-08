@@ -112,26 +112,6 @@ def testdata_log_dir():
 
 
 @pytest.fixture()
-def multi_line_log_filename():
-    return ("multi_line_log.log")
-
-
-@pytest.fixture()
-def simple_svc_log():
-    return ("simple_svc.log")
-
-
-@pytest.fixture()
-def bad_timestamp_log():
-    return ("bad_timestamp.log")
-
-
-@pytest.fixture()
-def one_line_log():
-    return ("one_line_log.log")
-
-
-@pytest.fixture()
 def multi_line_log():
     return("INFO | This is a log\nERROR | This is an error log\n    "
            "with multiple lines\n    and more lines\n"
@@ -160,46 +140,17 @@ def make_filename(settings_override):
     return _make_filename
 
 
-@pytest.fixture()
-def temp_one_line_log(
-        tmpdir, make_filename, testdata_log_dir, one_line_log):
+@pytest.fixture
+def make_log(request, tmpdir, make_filename, testdata_log_dir):
     # Given a directory (tmpdir) & a log_file
-    log_file_name = make_filename("node", "service", ".log", False)[2:]
-    src_log_file = os.path.join(testdata_log_dir, one_line_log)
-    tgt_folder = os.path.join(tmpdir, os.path.dirname(log_file_name))
-    tgt_log_file = os.path.join(tgt_folder, os.path.basename(log_file_name))
-
-    # And a multi-line-log has been copied to the log_file
-    os.makedirs(tgt_folder, exist_ok=True)
-    shutil.copy(src_log_file, tgt_log_file)
-    return tgt_log_file
-
-
-@pytest.fixture()
-def temp_simple_svc_log(
-    tmpdir, make_filename, testdata_log_dir, simple_svc_log
-):
-    # Given a directory (tmpdir) & a log_file
-    log_file_name = make_filename("node", "service", ".log", False)[2:]
-    src_log_file = os.path.join(testdata_log_dir, simple_svc_log)
-    tgt_folder = os.path.join(tmpdir, os.path.dirname(log_file_name))
-    tgt_log_file = os.path.join(tgt_folder, os.path.basename(log_file_name))
-
-    # And a multi-line-log has been copied to the log_file
-    os.makedirs(tgt_folder, exist_ok=True)
-    shutil.copy(src_log_file, tgt_log_file)
-    return tgt_log_file
-
-
-@pytest.fixture()
-def temp_bad_timestamp_log(
-    tmpdir, make_filename, testdata_log_dir, bad_timestamp_log
-):
-    # Given a directory (tmpdir) & a log_file
-    log_file_name = make_filename("node", "service", ".log", False)[2:]
-    src_log_file = os.path.join(testdata_log_dir, bad_timestamp_log)
-    tgt_folder = os.path.join(tmpdir, os.path.dirname(log_file_name))
-    tgt_log_file = os.path.join(tgt_folder, os.path.basename(log_file_name))
+    log_file_name = make_filename(
+        "node", "service", ".log", False)[2:]
+    src_log_file = os.path.join(
+        testdata_log_dir, request.param)
+    tgt_folder = os.path.join(
+        tmpdir, os.path.dirname(log_file_name))
+    tgt_log_file = os.path.join(
+        tgt_folder, os.path.basename(log_file_name))
 
     # And a multi-line-log has been copied to the log_file
     os.makedirs(tgt_folder, exist_ok=True)

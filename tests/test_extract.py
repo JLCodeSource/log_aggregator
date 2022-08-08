@@ -221,7 +221,7 @@ async def test_extract_successful_run(
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_extract_badzipfile(
-        logger, tmpdir, settings_override, monkeypatch):
+        logger, tmpdir, settings_override):
     # And an example filename
     zip_file = badzipfile_example
     src_dir = settings_override.get_testdatadir()

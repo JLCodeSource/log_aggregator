@@ -564,14 +564,16 @@ async def test_find_logs_successfully(
 
 @pytest.mark.asyncio
 @pytest.mark.unit
+@pytest.mark.parametrize(
+    "make_log", ["simple_svc.log"], indirect=["make_log"])
 async def test_find_logs_with_sort(
-    motor_client, temp_simple_svc_log, mock_get_node
+    motor_client, make_log, mock_get_node
 ):
     # Given a motor_client, database & db_log_name
     client, database, _ = await motor_client
 
     # And a target log file
-    tgt_log_file = temp_simple_svc_log
+    tgt_log_file = make_log
 
     # And an initialized database
     try:

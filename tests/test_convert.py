@@ -1,8 +1,6 @@
 from datetime import datetime
 import logging
-import shutil
 import pytest
-import os
 from aggregator import convert, db
 from beanie.exceptions import CollectionWasNotInitialized
 
@@ -140,15 +138,12 @@ def test_yield_matches_multi_line(logger, multi_line_log):
 
 
 @pytest.mark.unit
+@pytest.mark.parametrize(
+    "make_log", ["multi_line_log.log"], indirect=["make_log"])
 def test_multi_to_single_line(
-        tmpdir, testdata_log_dir, multi_line_log_filename):
+        make_log):
     # Given a logfile with 5 lines & 3 individual logs (multi_line_log)
-    log_file = os.path.join(testdata_log_dir, multi_line_log_filename)
-
-    # And a tmpdir (tmpdir)
-    # And the log_file is in the tmpdir
-    shutil.copy(log_file, tmpdir)
-    log_file = os.path.join(tmpdir, multi_line_log_filename)
+    log_file = make_log
 
     # When it opens the logfile
     convert._multi_to_single_line(log_file)
@@ -165,15 +160,12 @@ def test_multi_to_single_line(
 
 
 @pytest.mark.unit
+@pytest.mark.parametrize(
+    "make_log", ["multi_line_log.log"], indirect=["make_log"])
 def test_convert_log_to_csv_success(
-        tmpdir, testdata_log_dir, multi_line_log_filename):
+        make_log):
     # Given a logfile with 5 lines & 3 individual logs (multi_line_log)
-    log_file = os.path.join(testdata_log_dir, multi_line_log_filename)
-
-    # And a tmpdir (tmpdir)
-    # And the log_file is in the tmpdir
-    shutil.copy(log_file, tmpdir)
-    log_file = os.path.join(tmpdir, multi_line_log_filename)
+    log_file = make_log
 
     # And it has converted the file to single lines
     convert._multi_to_single_line(log_file)
@@ -193,13 +185,15 @@ def test_convert_log_to_csv_success(
 
 @pytest.mark.unit
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "make_log", ["one_line_log.log"], indirect=["make_log"])
 async def test_convert_collection_not_initialized(
-        logger, temp_one_line_log, mock_get_node):
+        logger, make_log, mock_get_node):
     # TODO: This test is brittle as it is dependent on being called
     # before convert_success
 
     # Given a target log file
-    tgt_log_file = temp_one_line_log
+    tgt_log_file = make_log
 
     # When it tries to convert the logs
     # Then it raises a CollectionNotInitialized error
@@ -217,10 +211,12 @@ async def test_convert_collection_not_initialized(
 
 @pytest.mark.unit
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "make_log", ["simple_svc.log"], indirect=["make_log"])
 async def test_convert_success(
-        motor_client, temp_simple_svc_log, mock_get_node):
+        motor_client, make_log, mock_get_node):
     # Given a target log file
-    tgt_log_file = temp_simple_svc_log
+    tgt_log_file = make_log
 
     # And a motor_client, database & db_log_name
     client, database, _ = await motor_client
@@ -277,10 +273,12 @@ async def test_convert_success(
 
 @pytest.mark.unit
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "make_log", ["bad_timestamp.log"], indirect=["make_log"])
 async def test_convert_to_datetime_bad_timestamp(
-        motor_client, logger, temp_bad_timestamp_log, mock_get_node):
+        motor_client, logger, make_log, mock_get_node):
     # Given a target log file
-    tgt_log_file = temp_bad_timestamp_log
+    tgt_log_file = make_log
 
     # And a motor_client, database & db_log_name
     client, database, _ = await motor_client
@@ -315,11 +313,13 @@ class MockDatetime:
 
 @pytest.mark.unit
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "make_log", ["bad_timestamp.log"], indirect=["make_log"])
 async def test_convert_bad_timestamp(
-        monkeypatch, motor_client, logger, temp_bad_timestamp_log,
+        monkeypatch, motor_client, logger, make_log,
         mock_get_node):
     # Given a target log file
-    tgt_log_file = temp_bad_timestamp_log
+    tgt_log_file = make_log
 
     # And a mock _convert_to_datetime
     def mock_convert_to_datetime(*args, **kwargs):
