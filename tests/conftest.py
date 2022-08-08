@@ -143,19 +143,31 @@ def make_filename(settings_override):
 @pytest.fixture
 def make_log(request, tmpdir, make_filename, testdata_log_dir):
     # Given a directory (tmpdir) & a log_file
-    log_file_name = make_filename(
-        "node", "service", ".log", False)[2:]
-    src_log_file = os.path.join(
-        testdata_log_dir, request.param)
-    tgt_folder = os.path.join(
-        tmpdir, os.path.dirname(log_file_name))
-    tgt_log_file = os.path.join(
-        tgt_folder, os.path.basename(log_file_name))
+    log_files = []
+    params = []
+    if isinstance(request.param, str):
+        params.append(request.param)
+    else:
+        params = request.param
+    for param in params:
+        log_file_name = make_filename(
+            "node", "service", ".log", False)[2:]
+        src_log_file = os.path.join(
+            testdata_log_dir, param)
+        tgt_folder = os.path.join(
+            tmpdir, os.path.dirname(log_file_name))
+        tgt_log_file = os.path.join(
+            tgt_folder, os.path.basename(log_file_name))
 
-    # And a multi-line-log has been copied to the log_file
-    os.makedirs(tgt_folder, exist_ok=True)
-    shutil.copy(src_log_file, tgt_log_file)
-    return tgt_log_file
+        # And a multi-line-log has been copied to the log_file
+        os.makedirs(tgt_folder, exist_ok=True)
+        shutil.copy(src_log_file, tgt_log_file)
+        log_files.append(tgt_log_file)
+
+    if len(log_files) == 1:
+        return log_files[0]
+    else:
+        return tgt_log_file
 
 
 @pytest.fixture(scope="session")
