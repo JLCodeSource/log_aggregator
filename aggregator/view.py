@@ -9,7 +9,7 @@ Functions: display_results
 from aggregator.model import JavaLog
 
 
-async def display_result(results: list[JavaLog] | None) -> None:
+async def display_result(result: list[JavaLog] | None) -> None:
     headers = (
         "ObjectId\t\t", "Node", "Severity", "JVM",
         "Timestamp", "Source", "Type", "Message"
@@ -21,17 +21,23 @@ async def display_result(results: list[JavaLog] | None) -> None:
     out = out.strip()
     out = out + "\n"
 
-    id = results.id
-    node = results.node
-    severity = results.severity
-    jvm = results.jvm
-    timestamp = results.datetime
-    source = results.source
-    type = results.type
-    message = results.message
-    out = (
-        f"{out}| {id}\t| {node}\t| {severity}\t| {jvm}\t| "
-        f"{timestamp}\t| {source}\t| {type}\t| {message}\t|"
-    )
+    results = []
+    if isinstance(result, JavaLog):
+        results.append(result)
+    else:
+        results = result
+    for result in results:
+        id = result.id
+        node = result.node
+        severity = result.severity
+        jvm = result.jvm
+        timestamp = result.datetime
+        source = result.source
+        type = result.type
+        message = result.message
+        out = (
+            f"{out}| {id}\t| {node}\t| {severity}\t| {jvm}\t| "
+            f"{timestamp}\t| {source}\t| {type}\t| {message}\t|\n"
+        )
 
     print(out)
