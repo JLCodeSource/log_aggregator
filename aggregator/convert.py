@@ -39,6 +39,7 @@ def _yield_matches(full_log: list[str]) -> str:
     # Yield matches creates a list of logs and yields the list on match
     logs = []
     for line in full_log.split("\n"):
+        # TODO: Handle empty lines
         if _line_start_match("INFO|WARN|ERROR", line):  # if line matches start
             if len(logs) > 0:  # if there's already a log
                 tmp_line = "; ".join(logs)
@@ -72,7 +73,7 @@ def _strip_whitespace(d: dict) -> dict:
     return d
 
 
-def _convert_log_to_csv(logfile) -> list[dict]:
+def _convert_log_to_csv(logfile: os.path) -> list[dict]:
     # Converts the CSV log file to a dict
     header = ["severity", "jvm", "datetime", "source", "type", "message"]
     with open(os.path.join(logfile), "r") as file:

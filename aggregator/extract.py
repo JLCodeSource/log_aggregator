@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
-def _create_log_dir(target: str):
+def _create_log_dir(target: os.path) -> None:
     # Create logs output directory
     try:
         Path(target).mkdir(parents=True, exist_ok=True)
@@ -49,7 +49,7 @@ def _create_log_dir(target: str):
     logger.debug(f"Created {target}")
 
 
-def _move_files_to_target(target: str, source: str):
+def _move_files_to_target(target: os.path, source: os.path):
     # Move log files out of System folder where they are by default
     tmp_logs_out = os.path.join(target, source)
     for filename in os.listdir(tmp_logs_out):
@@ -58,7 +58,7 @@ def _move_files_to_target(target: str, source: str):
         logger.debug(f"Moved {filename} from {tmp_logs_out} to {target}")
 
 
-def _remove_folder(target) -> None | Exception:
+def _remove_folder(target: os.path) -> None:
     # Remove System folder
     try:
         os.rmdir(target)
@@ -110,7 +110,7 @@ async def _extract(
 
 def gen_zip_extract_fn_list(
         src_dir: os.path,
-        zip_files_extract_fn_list: list | None = []) -> list | Exception:
+        zip_files_extract_fn_list: list | None = []) -> list:
     # Manages the process of extracting the logs
     # Kicks off the conversion process for each in an await
     # Added options to pass in list values for testing purposes
@@ -126,7 +126,7 @@ def gen_zip_extract_fn_list(
                 raise TypeError(TYPEERROR)
         except TypeError as err:
             logger.error(f"TypeError: {err}")
-            return err
+            raise err
 
         _create_log_dir(logs_dir)
         zip_file = os.path.join(src_dir, zip_file)
@@ -142,8 +142,7 @@ def gen_zip_extract_fn_list(
 
 
 async def extract_log(
-    extract_fn_list: list = [],
-    log_files: list = []
+    extract_fn_list: list = [], log_files: list = []
 ) -> list:
 
     try:
