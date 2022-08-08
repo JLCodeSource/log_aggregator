@@ -139,11 +139,11 @@ def test_yield_matches_multi_line(logger, multi_line_log):
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "make_log", ["multi_line_log.log"], indirect=["make_log"])
+    "make_logs", ["multi_line_log.log"], indirect=["make_logs"])
 def test_multi_to_single_line(
-        make_log):
+        make_logs):
     # Given a logfile with 5 lines & 3 individual logs (multi_line_log)
-    log_file = make_log
+    log_file = make_logs
 
     # When it opens the logfile
     convert._multi_to_single_line(log_file)
@@ -161,11 +161,11 @@ def test_multi_to_single_line(
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "make_log", ["multi_line_log.log"], indirect=["make_log"])
+    "make_logs", ["multi_line_log.log"], indirect=["make_logs"])
 def test_convert_log_to_csv_success(
-        make_log):
+        make_logs):
     # Given a logfile with 5 lines & 3 individual logs (multi_line_log)
-    log_file = make_log
+    log_file = make_logs
 
     # And it has converted the file to single lines
     convert._multi_to_single_line(log_file)
@@ -186,14 +186,14 @@ def test_convert_log_to_csv_success(
 @pytest.mark.unit
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "make_log", ["one_line_log.log"], indirect=["make_log"])
+    "make_logs", ["one_line_log.log"], indirect=["make_logs"])
 async def test_convert_collection_not_initialized(
-        logger, make_log, mock_get_node):
+        logger, make_logs, mock_get_node):
     # TODO: This test is brittle as it is dependent on being called
     # before convert_success
 
     # Given a target log file
-    tgt_log_file = make_log
+    tgt_log_file = make_logs
 
     # When it tries to convert the logs
     # Then it raises a CollectionNotInitialized error
@@ -212,11 +212,11 @@ async def test_convert_collection_not_initialized(
 @pytest.mark.unit
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "make_log", ["simple_svc.log"], indirect=["make_log"])
+    "make_logs", ["simple_svc.log"], indirect=["make_logs"])
 async def test_convert_success(
-        motor_client, make_log, mock_get_node):
+        motor_client, make_logs, mock_get_node):
     # Given a target log file
-    tgt_log_file = make_log
+    tgt_log_file = make_logs
 
     # And a motor_client, database & db_log_name
     client, database, _ = await motor_client
@@ -274,11 +274,11 @@ async def test_convert_success(
 @pytest.mark.unit
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "make_log", ["bad_timestamp.log"], indirect=["make_log"])
+    "make_logs", ["bad_timestamp.log"], indirect=["make_logs"])
 async def test_convert_to_datetime_bad_timestamp(
-        motor_client, logger, make_log, mock_get_node):
+        motor_client, logger, make_logs, mock_get_node):
     # Given a target log file
-    tgt_log_file = make_log
+    tgt_log_file = make_logs
 
     # And a motor_client, database & db_log_name
     client, database, _ = await motor_client
@@ -314,12 +314,12 @@ class MockDatetime:
 @pytest.mark.unit
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "make_log", ["bad_timestamp.log"], indirect=["make_log"])
+    "make_logs", ["bad_timestamp.log"], indirect=["make_logs"])
 async def test_convert_bad_timestamp(
-        monkeypatch, motor_client, logger, make_log,
+        monkeypatch, motor_client, logger, make_logs,
         mock_get_node):
     # Given a target log file
-    tgt_log_file = make_log
+    tgt_log_file = make_logs
 
     # And a mock _convert_to_datetime
     def mock_convert_to_datetime(*args, **kwargs):

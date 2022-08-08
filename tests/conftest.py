@@ -141,7 +141,7 @@ def make_filename(settings_override):
 
 
 @pytest.fixture
-def make_log(request, tmpdir, make_filename, testdata_log_dir):
+def make_logs(request, tmpdir, make_filename, testdata_log_dir):
     # Given a directory (tmpdir) & a log_file
     log_files = []
     params = []
@@ -167,7 +167,7 @@ def make_log(request, tmpdir, make_filename, testdata_log_dir):
     if len(log_files) == 1:
         return log_files[0]
     else:
-        return tgt_log_file
+        return log_files
 
 
 @pytest.fixture(scope="session")
