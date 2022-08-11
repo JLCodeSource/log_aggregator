@@ -185,11 +185,13 @@ def make_filename(settings_override):
         ts = 1658844081 + randrange(-100000, 100000)
 
         if ext == ".zip" and tld is True:
-            filename = f"GBLogs_{node}.domain.tld_" \
-                + f"{service}_{ts}.zip"
+            filename = (
+                f"GBLogs_{node}.domain.tld_"
+                f"{service}_{ts}.zip")
         elif ext == ".zip" and tld is False:
-            filename = f"GBLogs_{node}_" \
-                + f"{service}_{ts}.zip"
+            filename = (
+                f"GBLogs_{node}_"
+                f"{service}_{ts}.zip")
         elif ext == ".log":
             file = f"{service}{ext}"
             filename = os.path.join(settings.outdir, node, service, file)

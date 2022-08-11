@@ -32,14 +32,13 @@ settings = get_settings()
 def get_node(file: os.path) -> str:
     # Extract node name from filename
     if os.path.basename(file).endswith(".zip"):
-        node = file.split("_")[1].split(".")[0]
+        node = os.path.basename(
+            file).split("_")[1].split(".")[0]
     else:
-        # strip outdir + leading slash
-        node = file[len(settings.outdir)+1:]
         # Split by directory
-        node = node.split(os.path.sep)
+        node = file.split(os.path.sep)
         # node is first directory
-        node = node[0]
+        node = node[-3]
     logger.debug(f"node: {node} from {file}")
     return node
 
@@ -47,14 +46,13 @@ def get_node(file: os.path) -> str:
 def get_log_type(file: os.path) -> str:
     # Extract logtype from filename
     if os.path.basename(file).endswith(".zip"):
-        log_type = file.split("_")[2]
+        log_type = os.path.basename(
+            file).split("_")[2]
     else:
-        # strip outdir + leading slash
-        log_type = file[len(settings.outdir)+1:]
         # Split by directory
-        log_type = log_type.split(os.path.sep)
+        log_type = file.split(os.path.sep)
         # log_type is second directory
-        log_type = log_type[1]
+        log_type = log_type[-2]
     logger.debug(f"log_type: {log_type} from {file}")
     return log_type
 

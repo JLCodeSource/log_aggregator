@@ -32,12 +32,43 @@ def test_get_node(logger, make_filename, node, service, ext, tld):
 
 @pytest.mark.parametrize("node, service, ext, tld", filename_data)
 @pytest.mark.unit
+def test_get_node_tmpdir(
+        logger, make_filename, node, service, ext, tld, tmpdir):
+    file = make_filename(node, service, ext, tld)
+    if os.path.splitext(file)[1] == ".log":
+        filename = f"{tmpdir}{file[1:]}"
+    else:
+        filename = f"{tmpdir}{os.path.sep}{file}"
+    assert helper.get_node(filename) == node
+    assert logger.record_tuples == [
+        (module_name, logging.DEBUG, f"node: {node} from {filename}")
+    ]
+
+
+@pytest.mark.parametrize("node, service, ext, tld", filename_data)
+@pytest.mark.unit
 def test_get_log_type(logger, make_filename, node, service, ext, tld):
     file = make_filename(node, service, ext, tld)
     assert helper.get_log_type(file) == service
     assert logger.record_tuples == [
         (module_name, logging.DEBUG,
          f"log_type: {service} from {file}")
+    ]
+
+
+@pytest.mark.parametrize("node, service, ext, tld", filename_data)
+@pytest.mark.unit
+def test_get_log_type_tmpdir(
+        logger, make_filename, node, service, ext, tld, tmpdir):
+    file = make_filename(node, service, ext, tld)
+    if os.path.splitext(file)[1] == ".log":
+        filename = f"{tmpdir}{file[1:]}"
+    else:
+        filename = f"{tmpdir}{os.path.sep}{file}"
+    assert helper.get_log_type(filename) == service
+    assert logger.record_tuples == [
+        (module_name, logging.DEBUG,
+         f"log_type: {service} from {filename}")
     ]
 
 
