@@ -7,9 +7,25 @@ Summary: view displays the output of any find requests
 Functions: display_results
 """
 from aggregator.model import JavaLog
+from aggregator.config import get_settings
+import logging
+
+settings = get_settings()
+logger = logging.getLogger(__name__)
 
 
-async def display_result(result: list[JavaLog] | None) -> None:
+async def display_result(result: list[JavaLog] | None,
+                         database: str | None = settings.database) -> None:
+    results = []
+    if isinstance(result, JavaLog):
+        results.append(result)
+    else:
+        results = result
+
+    num_logs = len(results)
+
+    logger.info(f"Started display_results coroutine for {num_logs} logs"
+                f"from db: {database}")
     headers = (
         "ObjectId\t\t", "Node", "Severity", "JVM",
         "Timestamp", "Source", "Type", "Message"
@@ -21,11 +37,6 @@ async def display_result(result: list[JavaLog] | None) -> None:
     out = out.strip()
     out = out + "\n"
 
-    results = []
-    if isinstance(result, JavaLog):
-        results.append(result)
-    else:
-        results = result
     for result in results:
         id = result.id
         node = result.node

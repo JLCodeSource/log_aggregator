@@ -4,6 +4,7 @@ import beanie
 from bson import ObjectId
 import pytest
 import logging
+import motor
 from aggregator import db, convert
 from pymongo.errors import ServerSelectionTimeoutError, InvalidOperation
 from aggregator.model import JavaLog
@@ -35,32 +36,30 @@ class MockJavaLog:
 
 @pytest.mark.asyncio
 @pytest.mark.unit
-async def test_init(motor_client, logger, add_one):
-    # Given a motor_client & database
-    client, database, _ = await motor_client
+async def test_init(motor_conn, logger, add_one):
+    # Given a motor_conn & database
+    database, conn = await motor_conn
 
     try:
         # When it tries to init the database
-        ok = await db.init(database, client)
+        client = await db.init(database, conn)
 
         # And it adds a log
         await add_one
 
-        # Then it returns ok
-        assert ok == "ok"
-        # And it creates a database
+        # Then it creates a database
         assert database in await client.list_database_names()
         # And the logger logs it
         assert logger.record_tuples == [
             (module_name, logging.INFO,
-                f"Initializing beanie with {database} using {client}"
+                f"Initializing beanie with {database} using {conn}"
              ),
             (module_name, logging.INFO,
-                f"Initialized beanie with {database} using {client}"
+                f"Initialized beanie with {database} using {conn}"
              ),
             (module_name, logging.INFO,
                 f"Completed initialization of beanie with {database}"
-                f" using {client}"
+                f" using {conn}"
              ),
         ]
 
@@ -73,7 +72,7 @@ async def test_init(motor_client, logger, add_one):
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_init_server_timeout(
-        motor_client, monkeypatch, logger):
+        motor_conn, monkeypatch, logger):
     # Given a mock init_beanie_server_timeout to target the test database
     def mock_beanie_server_timeout(*args, **kwargs):
         return MockBeanie.beanie_server_timeout()
@@ -81,18 +80,18 @@ async def test_init_server_timeout(
     monkeypatch.setattr(beanie, "init_beanie",
                         mock_beanie_server_timeout)
 
-    # And a motor_client & database
-    client, database, _ = await motor_client
+    # And a motor_conn & database
+    database, conn = await motor_conn
 
     # When it tries to init the database
     # It raises a ServerSelectionTimeoutError
     try:
         with pytest.raises(ServerSelectionTimeoutError):
-            await db.init(database, client)
+            await db.init(database, conn)
 
         assert logger.record_tuples == [
             (module_name, logging.INFO,
-             f"Initializing beanie with {database} using {client}"
+             f"Initializing beanie with {database} using {conn}"
              ),
             (module_name, logging.FATAL,
              "ServerSelectionTimeoutError: Server was unreachable "
@@ -101,26 +100,19 @@ async def test_init_server_timeout(
 
     finally:
         # Set manual teardown
+        client = motor.motor_asyncio.AsyncIOMotorClient(conn)
         await client.drop_database(database)
-
-
-def count_items(list, item):
-    items = 0
-    for element in list:
-        if element == item:
-            items = items + 1
-    return items
 
 
 @pytest.mark.asyncio
 @pytest.mark.unit
-async def test_insert_logs_success(motor_client, logger):
-    # Given a motor_client & database
-    client, database, _ = await motor_client
+async def test_insert_logs_success(motor_conn, logger):
+    # Given a motor_conn & database
+    database, conn = await motor_conn
 
     # And an initialized  database
     try:
-        await db.init(database, client)
+        client = await db.init(database, conn)
 
         # And 2 logs
         log = JavaLog(
@@ -150,11 +142,11 @@ async def test_insert_logs_success(motor_client, logger):
             levels.append(recorded_log[1])
             messages.append(recorded_log[2])
 
-        count_logs = count_items(messages, f"Inserted {log}")
+        count_logs = pytest.helpers.count_items(messages, f"Inserted {log}")
 
-        count_debugs = count_items(levels, logging.DEBUG)
+        count_debugs = pytest.helpers.count_items(levels, logging.DEBUG)
 
-        count_infos = count_items(levels, logging.INFO)
+        count_infos = pytest.helpers.count_items(levels, logging.INFO)
 
         # The logger logs modules
         assert all(module == module_name for module in modules)
@@ -188,7 +180,7 @@ async def test_insert_logs_success(motor_client, logger):
 @ pytest.mark.asyncio
 @ pytest.mark.unit
 async def test_insert_logs_servertimeout(
-        motor_client, logger, monkeypatch):
+        motor_conn, logger, monkeypatch):
     # Given a mock javalog_server_timeout to target the test database
     def mock_insert_logs_server_timeout(*args, **kwargs):
         return MockJavaLog.insert_many_server_timeout()
@@ -196,24 +188,24 @@ async def test_insert_logs_servertimeout(
     monkeypatch.setattr(JavaLog, "insert_many",
                         mock_insert_logs_server_timeout)
 
-    # And a motor_client & database
-    client, database, database_log_name = await motor_client
+    # And a motor_cobnn & database
+    database, conn = await motor_conn
 
     # And an initialized  database
     try:
-        await db.init(database, client)
+        client = await db.init(database, conn)
 
         # When it tries to save the logs
         # Then it raises a ServerSelectionTimeoutError
         with pytest.raises(ServerSelectionTimeoutError):
-            await db.insert_logs([wrong_id])
+            await db.insert_logs([wrong_id], database)
 
         # And the logger logs the error
         assert logger.record_tuples[-2] == (
             module_name, logging.ERROR,
             f"ErrorType: <class 'pymongo.errors.ServerSelectionTimeoutError'>"
             f" - coroutine insert_logs for "
-            f"1 logs failed for db: {database_log_name}"
+            f"1 logs failed for db: {database}"
         )
 
     finally:
@@ -224,7 +216,7 @@ async def test_insert_logs_servertimeout(
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_insert_logs_invalid_operation_error(
-        motor_client, logger, monkeypatch):
+        motor_conn, logger, monkeypatch):
     # Given a MockJavaLog
     def mock_javalog_raises_invalid_operation(*args, **kwargs):
         return MockJavaLog.insert_many_invalid(*args, **kwargs)
@@ -232,12 +224,12 @@ async def test_insert_logs_invalid_operation_error(
     monkeypatch.setattr(JavaLog, "insert_many",
                         mock_javalog_raises_invalid_operation)
 
-    # And a motor_client, database & db_logname
-    client, database, database_log_name = await motor_client
+    # And a motor_conn & database
+    database, conn = await motor_conn
 
     # And an initialized database
     try:
-        await db.init(database, client)
+        client = await db.init(database, conn)
 
         # And 2 logs
         log = JavaLog(
@@ -251,25 +243,25 @@ async def test_insert_logs_invalid_operation_error(
         )
 
         logs = []
-        for i in range(2):
+        for _ in range(2):
             logs.append(log)
 
     # When it tries to save the logs
     # Then it raises a InvalidOperation
         with pytest.raises(InvalidOperation):
-            await db.insert_logs(logs)
+            await db.insert_logs(logs, database)
 
         # And the logger logs the error
         assert logger.record_tuples[-2] == (
             module_name, logging.ERROR,
             "ErrorType: <class 'pymongo.errors.InvalidOperation'> "
             f"- coroutine insert_logs for {len(logs)} logs failed for db: "
-            f"{database_log_name}"
+            f"{database}"
         )
         assert logger.record_tuples[-1] == (
             module_name, logging.INFO,
             f"Ending insert_logs coroutine for {len(logs)} logs into db: "
-            f"{database_log_name}"
+            f"{database}"
         )
 
     finally:
@@ -280,16 +272,16 @@ async def test_insert_logs_invalid_operation_error(
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_insert_logs_none(
-        motor_client, logger):
-    # Given a motor_client, database & db_log_name
-    client, database, database_log_name = await motor_client
+        motor_conn, logger):
+    # Given a motor_conn & database
+    database, conn = await motor_conn
     # And an initialized database
     try:
-        await db.init(database, client)
+        client = await db.init(database, conn)
 
         # When it tries to insert None logs
         # Then it returns None
-        result = await db.insert_logs()
+        result = await db.insert_logs(database=database)
 
         assert result is None
 
@@ -297,12 +289,12 @@ async def test_insert_logs_none(
         assert logger.record_tuples[-2] == (
             module_name, logging.WARNING,
             "Started insert_logs coroutine for None logs into db: "
-            f"{database_log_name}"
+            f"{database}"
         )
         assert logger.record_tuples[-1] == (
             module_name, logging.WARNING,
             f"Ending insert_logs coroutine for None logs into db: "
-            f"{database_log_name}"
+            f"{database}"
         )
 
     finally:
@@ -313,13 +305,13 @@ async def test_insert_logs_none(
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_get_log_successfully(
-        motor_client, get_datetime, logger):
-    # Given a motor_client, database & db_log_name
-    client, database, database_log_name = await motor_client
+        motor_conn, get_datetime, logger):
+    # Given a motor_conn & database
+    database, conn = await motor_conn
 
     # And an initialized database
     try:
-        await db.init(database, client)
+        client = await db.init(database, conn)
 
         # And 2 logs
         log = JavaLog(
@@ -337,10 +329,10 @@ async def test_get_log_successfully(
             logs.append(log)
 
         # And it has saved the logs
-        result = await db.insert_logs(logs)
+        result = await db.insert_logs(logs, database)
 
         # When it tries to get the log
-        returned_log = await db.get_log(result.inserted_ids[0])
+        returned_log = await db.get_log(result.inserted_ids[0], database)
 
         # Then the returned_log matches the log
         assert returned_log.node == log.node
@@ -355,16 +347,16 @@ async def test_get_log_successfully(
         assert logger.record_tuples[-3] == (
             module_name, logging.INFO,
             f"Starting get_log coroutine for {result.inserted_ids[0]} "
-            f"from db: {database_log_name}"
+            f"from db: {database}"
         )
         assert logger.record_tuples[-2] == (
             module_name, logging.INFO,
-            f"Got {result.inserted_ids[0]} from db: {database_log_name}"
+            f"Got {result.inserted_ids[0]} from db: {database}"
         )
         assert logger.record_tuples[-1] == (
             module_name, logging.INFO,
             f"Ending get_log coroutine for {result.inserted_ids[0]} from db: "
-            f"{database_log_name}"
+            f"{database}"
         )
 
     finally:
@@ -375,31 +367,31 @@ async def test_get_log_successfully(
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_get_log_none(
-        motor_client,
+        motor_conn,
         logger):
-    # Given a motor_client, database & db_log_name
-    client, database, database_log_name = await motor_client
+    # Given a motor_conn & database
+    database, conn = await motor_conn
 
     # And an initialized database
     try:
-        await db.init(database, client)
+        client = await db.init(database, conn)
 
         # When it tries to get the logs with a NoneType
         # Then it raises an error
         with pytest.raises(ValidationError):
-            await db.get_log()
+            await db.get_log(database=database)
 
         # And the logger logs it
         assert logger.record_tuples[-2] == (
             module_name, logging.ERROR,
             f"Error: <class 'pydantic.error_wrappers.ValidationError'> "
             f"- get_log coroutine for None failed for db: "
-            f"{database_log_name}"
+            f"{database}"
         )
         assert logger.record_tuples[-1] == (
             module_name, logging.INFO,
             f"Ending get_log coroutine for None from db: "
-            f"{database_log_name}"
+            f"{database}"
         )
 
     finally:
@@ -410,25 +402,26 @@ async def test_get_log_none(
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_get_log_wrong_id(
-        motor_client,
+        motor_conn,
         logger):
-    # Given a motor_client, database & db_log_name
-    client, database, database_log_name = await motor_client
+    # Given a motor_conn & database
+    database, conn = await motor_conn
     # And a missing log_id
     log_id = wrong_id
 
     # And an initialized database
     try:
-        await db.init(database, client)
+        client = await db.init(database, conn)
 
         # When it tries to get the logs with a missing log
-        returned_log = await db.get_log("608da169eb9e17281f0ab2ff")
+        returned_log = await db.get_log(
+            "608da169eb9e17281f0ab2ff", database)
 
         # Then the logger logs it
         assert logger.record_tuples[-2][0] == module_name
         assert logger.record_tuples[-2][1] == logging.INFO
         assert logger.record_tuples[-2][2].startswith(
-            f"When getting {log_id} from db {database_log_name} found "
+            f"When getting {log_id} from db {database} found "
             f"{returned_log}"
         )
 
@@ -440,32 +433,30 @@ async def test_get_log_wrong_id(
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_get_log_server_timeout(
-        motor_client,
-        logger,
-        monkeypatch):
+        motor_conn, logger, monkeypatch):
     # Given a mock javalog_server_timeout to target the test database
     def mock_javalog_server_timeout(*args, **kwargs):
         return MockJavaLog.insert_many_server_timeout()
 
     monkeypatch.setattr(JavaLog, "get",
                         mock_javalog_server_timeout)
-    # And a motor_client, database & db_log_name
-    client, database, database_log_name = await motor_client
+    # And a motor_conn & database
+    database, conn = await motor_conn
 
     # And an initialized database
     try:
-        await db.init(database, client)
+        client = await db.init(database, conn)
 
         # When it tries to get the logs with a missing log
         with pytest.raises(ServerSelectionTimeoutError):
-            await db.get_log(wrong_id)
+            await db.get_log(wrong_id, database)
 
         # And the logger logs the error
         assert logger.record_tuples[-2] == (
             module_name, logging.ERROR,
             f"Error: <class 'pymongo.errors.ServerSelectionTimeoutError'> "
             f"- get_log coroutine for {wrong_id} "
-            f"failed for db: {database_log_name}"
+            f"failed for db: {database}"
         )
 
     finally:
@@ -476,14 +467,14 @@ async def test_get_log_server_timeout(
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_find_logs_successfully(
-    motor_client, get_datetime, logger
+    motor_conn, get_datetime, logger
 ):
-    # Given a motor_client, database & db_log_name
-    client, database, database_log_name = await motor_client
+    # Given a motor_conn & database
+    database, conn = await motor_conn
 
     # And an initialized database
     try:
-        await db.init(database, client)
+        client = await db.init(database, conn)
 
         # And 2 logs
         log = JavaLog(
@@ -501,13 +492,13 @@ async def test_find_logs_successfully(
             logs.append(log)
 
         # And it has saved the logs
-        await db.insert_logs(logs)
+        await db.insert_logs(logs, database)
 
         # And it has a query
         query = (JavaLog.node == "testnode")
 
         # When it tries to find the logs
-        result = await db.find_logs(query)
+        result = await db.find_logs(query, database=database)
 
         # Then it returns both logs
         assert len(result) == 2
@@ -526,14 +517,9 @@ async def test_find_logs_successfully(
 
         # And the logger logs it
         # Get lists of types
-        modules = []
-        levels = []
-        messages = []
-
-        for recorded_log in logger.record_tuples:
-            modules.append(recorded_log[0])
-            levels.append(recorded_log[1])
-            messages.append(recorded_log[2])
+        modules, levels, messages = pytest.helpers.log_recorder(
+            logger.record_tuples
+        )
 
         count_infos = 0
         for level in levels:
@@ -548,13 +534,13 @@ async def test_find_logs_successfully(
         # And logger includes expected values
         assert any((s == f"Starting find_logs coroutine for "
                     f"query: {query} & sort: None "
-                    f"from db: {database_log_name}" for s in messages))
+                    f"from db: {database}" for s in messages))
         assert any((s == f"Found 2 logs in find_logs coroutine for "
                     f"query: {query} & sort: None "
-                    f"from db: {database_log_name}")
+                    f"from db: {database}")
                    for s in messages)
         assert any((s == f"Ending find_logs coroutine for query: {query} "
-                    f"& sort: None from db: {database_log_name}")
+                    f"& sort: None from db: {database}")
                    for s in messages)
 
     finally:
@@ -567,17 +553,17 @@ async def test_find_logs_successfully(
 @pytest.mark.parametrize(
     "make_logs", ["simple_svc.log"], indirect=["make_logs"])
 async def test_find_logs_with_sort(
-    motor_client, make_logs, mock_get_node
+    motor_conn, make_logs, mock_get_node
 ):
     # Given a motor_client, database & db_log_name
-    client, database, _ = await motor_client
+    database, conn = await motor_conn
 
     # And a target log file
     tgt_log_file = make_logs
 
     # And an initialized database
     try:
-        await db.init(database, client)
+        await db.init(database, conn)
 
         # And some logs
         logs = await convert.convert(tgt_log_file)
@@ -640,4 +626,5 @@ async def test_find_logs_with_sort(
 
     finally:
         # Set manual teardown
+        client = motor.motor_asyncio.AsyncIOMotorClient(conn)
         await client.drop_database(database)

@@ -13,10 +13,10 @@ module_name = "view"
 @pytest.mark.parametrize(
     "make_logs", ["one_line_log.log"], indirect=["make_logs"])
 async def test_view_display_result_one_line_success(
-    motor_client, make_logs, mock_get_node
+    motor_conn, make_logs, mock_get_node
 ):
-    # Given a motor_client
-    client, database, _ = await motor_client
+    # Given a motor_conn
+    database, conn = await motor_conn
 
     # And a target log file
     tgt_log_file = make_logs
@@ -29,17 +29,17 @@ async def test_view_display_result_one_line_success(
 
     # And an initialized database
     try:
-        await db.init(database, client)
+        client = await db.init(database, conn)
 
         # And a log
         logs = await convert.convert(tgt_log_file)
 
         # And it has saved the log
-        ids = await db.insert_logs(logs)
+        ids = await db.insert_logs(logs, database)
         id = ids.inserted_ids[0]
 
         # And it gets the log
-        result = await db.get_log(id)
+        result = await db.get_log(id, database)
 
         # And it has a StringIO to capture output
         capturedOutput = io.StringIO()
@@ -52,7 +52,7 @@ async def test_view_display_result_one_line_success(
         )
 
         # When it tries to display the logs
-        await view.display_result(result)
+        await view.display_result(result, database)
 
         # Then the logs are displayed
         sys.stdout = sys.__stdout__
@@ -70,11 +70,11 @@ async def test_view_display_result_one_line_success(
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_view_display_result_multi_line_success(
-    motor_client, make_logs, mock_get_node, logger,
+    motor_conn, make_logs, mock_get_node, logger,
     settings_override
 ):
-    # Given a motor_client
-    client, database, _ = await motor_client
+    # Given a motor_conn
+    database, conn = await motor_conn
 
     # And target log files
     logs = make_logs
@@ -83,7 +83,7 @@ async def test_view_display_result_multi_line_success(
 
     # And an initialized database
     try:
-        await db.init(database, client)
+        client = await db.init(database, conn)
 
         # And a log
         logs = await convert.convert(log_in)
@@ -111,14 +111,14 @@ async def test_view_display_result_multi_line_success(
         out = content
 
         # When it tries to display the logs
-        await view.display_result(results)
+        await view.display_result(results, database)
 
         # Then the logger logs it
         num_logs = len(results)
         logger.record_tuples[0] == (
             module_name, logging.INFO,
             f"Started display_results coroutine for {num_logs} logs from db: "
-            f"{settings_override.database}"
+            f"{database}"
         )
 
         # Then the logs are displayed

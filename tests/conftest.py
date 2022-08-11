@@ -6,7 +6,7 @@ import asyncio
 import shutil
 import pytest
 import logging
-import motor
+# import motor
 import string
 import os
 import random
@@ -14,6 +14,67 @@ from aggregator import config, convert
 from aggregator.model import JavaLog
 # from beanie import init_beanie
 from datetime import datetime
+
+
+TEST_DATABASE = "test-logs"
+
+
+EXAMPLE_GEN = (  # Row 1
+    (
+        "INFO", "jvm 1", "2022/07/11 09:12:02", "ttl.test", "SMB", "Exec proxy"
+    ),
+    (  # Row 2
+        "INFO", "jvm 1", "2022/07/11 09:12:55",
+        "SecondaryMonitor -> {path: /path/secondary}"
+    ),
+    (  # Row 3
+        "WARN", "jvm 1", "2022/07/11 09:13:01", "ttl.test", "async", "FileIO"
+    ),
+)
+
+
+@pytest.helpers.register
+def gen_log(logs):
+    # Given a tmpdir and a filename
+    log = ""
+    for row in logs:
+        for field in row:
+            log = f"{log} {field}\t|"
+        log = f"{log}\n"
+    filename = "./fanapiserivce.log"
+    with open(filename, "w") as f:
+        f.write(log)
+
+
+@pytest.helpers.register
+def tmp_database():
+    choices = string.ascii_lowercase + string.digits
+    postfix = "".join(random.choices(choices, k=4))
+    database = TEST_DATABASE
+    database = f"{database}-{postfix}"
+    return database
+
+
+@pytest.helpers.register
+def log_recorder(recorded_tuples):
+    modules = []
+    levels = []
+    messages = []
+    for recorded_log in recorded_tuples:
+        modules.append(recorded_log[0])
+        levels.append(recorded_log[1])
+        messages.append(recorded_log[2])
+
+    return modules, levels, messages
+
+
+@pytest.helpers.register
+def count_items(list, item):
+    items = 0
+    for element in list:
+        if element == item:
+            items = items + 1
+    return items
 
 
 class MockGetNode:
@@ -35,7 +96,7 @@ def mock_get_node(monkeypatch):
 @pytest.fixture()
 def settings_override():
     settings = config.get_settings()
-    settings.database = "test-logs"
+    settings.database = TEST_DATABASE
     settings.log_level = logging.DEBUG
     settings.testing = True
     settings.sourcedir = "./testsource/zips"
@@ -48,39 +109,12 @@ def get_datetime():
 
 
 @pytest.fixture()
-async def motor_client_values(settings_override):
-    choices = string.ascii_lowercase + string.digits
-    postfix = "".join(random.choices(choices, k=4))
-    client = motor.motor_asyncio.AsyncIOMotorClient(
-        settings_override.get_connection())
-    database = settings_override.get_database()
-    database = f"{database}-{postfix}"
-
-    test_motor_client = [client, database]
-    yield test_motor_client
-
-    client.drop_database(database)
-
-
-@pytest.fixture()
-async def motor_client_gen(motor_client_values):
-    return [i async for i in motor_client_values]
-
-
-@pytest.fixture()
-async def motor_client(motor_client_gen, settings_override):
+async def motor_conn(settings_override):
     # Given a motor_client generator
-    motor_client = await motor_client_gen
-    # And a motor_client
-    client = motor_client[0][0]
-    # And a database
-    database = motor_client[0][1]
-
-    # And a mocked database name output for logs
-    database_log_name = settings_override.database
-
+    database = tmp_database()
+    connection = settings_override.connection
     # It returns client, database & db_logname
-    return client, database, database_log_name
+    return database, connection
 
 
 @pytest.fixture()
@@ -173,7 +207,7 @@ def make_logs(request, tmpdir, make_filename, testdata_log_dir):
         return log_files
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def event_loop():
     try:
         loop = asyncio.get_running_loop()
@@ -181,16 +215,3 @@ def event_loop():
         loop = asyncio.new_event_loop()
     yield loop
     loop.close()
-
-
-@pytest.helpers.register
-def log_recorder(recorded_tuples):
-    modules = []
-    levels = []
-    messages = []
-    for recorded_log in recorded_tuples:
-        modules.append(recorded_log[0])
-        levels.append(recorded_log[1])
-        messages.append(recorded_log[2])
-
-    return modules, levels, messages

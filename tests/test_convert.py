@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+import motor
 import pytest
 from aggregator import convert, db
 from beanie.exceptions import CollectionWasNotInitialized
@@ -134,6 +135,11 @@ def test_yield_matches_multi_line(
         )
 
 
+# @pytest.mark.unit
+# def test_yield_matches_starts_with_whitespace():
+#    pass
+
+
 @pytest.mark.unit
 @pytest.mark.parametrize(
     "make_logs", ["multi_line_log.log"], indirect=["make_logs"])
@@ -211,16 +217,16 @@ async def test_convert_collection_not_initialized(
 @pytest.mark.parametrize(
     "make_logs", ["simple_svc.log"], indirect=["make_logs"])
 async def test_convert_success(
-        motor_client, make_logs, mock_get_node):
+        motor_conn, make_logs, mock_get_node):
     # Given a target log file
     tgt_log_file = make_logs
 
     # And a motor_client, database & db_log_name
-    client, database, _ = await motor_client
+    database, conn = await motor_conn
 
     # And an initialized database
     try:
-        await db.init(database, client)
+        await db.init(database, conn)
 
         # When it tries to convert the logs
         log_list = await convert.convert(tgt_log_file)
@@ -265,6 +271,7 @@ async def test_convert_success(
 
     finally:
         # Set manual teardown
+        client = motor.motor_asyncio.AsyncIOMotorClient(conn)
         await client.drop_database(database)
 
 
@@ -273,16 +280,16 @@ async def test_convert_success(
 @pytest.mark.parametrize(
     "make_logs", ["bad_timestamp.log"], indirect=["make_logs"])
 async def test_convert_to_datetime_bad_timestamp(
-        motor_client, logger, make_logs, mock_get_node):
+        motor_conn, logger, make_logs, mock_get_node):
     # Given a target log file
     tgt_log_file = make_logs
 
     # And a motor_client, database & db_log_name
-    client, database, _ = await motor_client
+    database, conn = await motor_conn
 
     # And an initialized database
     try:
-        await db.init(database, client)
+        await db.init(database, conn)
 
         # When it tries to convert the logs
         await convert.convert(tgt_log_file)
@@ -296,6 +303,7 @@ async def test_convert_to_datetime_bad_timestamp(
 
     finally:
         # Set manual teardown
+        client = motor.motor_asyncio.AsyncIOMotorClient(conn)
         await client.drop_database(database)
 
 
@@ -313,7 +321,7 @@ class MockDatetime:
 @pytest.mark.parametrize(
     "make_logs", ["bad_timestamp.log"], indirect=["make_logs"])
 async def test_convert_bad_timestamp(
-        monkeypatch, motor_client, logger, make_logs,
+        monkeypatch, motor_conn, logger, make_logs,
         mock_get_node):
     # Given a target log file
     tgt_log_file = make_logs
@@ -326,11 +334,11 @@ async def test_convert_bad_timestamp(
         convert, "_convert_to_datetime", mock_convert_to_datetime)
 
     # And a motor_client, database & db_log_name
-    client, database, _ = await motor_client
+    database, conn = await motor_conn
 
     # And an initialized database
     try:
-        await db.init(database, client)
+        await db.init(database, conn)
 
         # When it tries to convert the logs:
         await convert.convert(tgt_log_file)
@@ -345,4 +353,5 @@ async def test_convert_bad_timestamp(
 
     finally:
         # Set manual teardown
+        client = motor.motor_asyncio.AsyncIOMotorClient(conn)
         await client.drop_database(database)
