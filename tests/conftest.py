@@ -1,6 +1,7 @@
 """
 This module contains shared fixtures, steps and hooks.
 """
+from pathlib import Path
 from random import randrange
 import asyncio
 import shutil
@@ -34,16 +35,39 @@ EXAMPLE_GEN = (  # Row 1
 
 
 @pytest.helpers.register
-def gen_log(logs):
-    # Given a tmpdir and a filename
+def gen_tmp_log_dir(tmpdir: os.path,
+                    target: os.path = "System"):
+    Path(os.path.join(
+        tmpdir, target)).mkdir(parents=True, exist_ok=True)
+
+
+@pytest.helpers.register
+def gen_log_file(logs: tuple[tuple[str]], log_file: os.path):
+    # Given a set of log data and
     log = ""
     for row in logs:
         for field in row:
             log = f"{log} {field}\t|"
         log = f"{log}\n"
-    filename = "./fanapiserivce.log"
-    with open(filename, "w") as f:
+    with open(log_file, "w") as f:
         f.write(log)
+
+
+@pytest.helpers.register
+def gen_zip_file(log_dir: os.path,
+                 zip_file: os.path,
+                 target: os.path = "System"):
+
+    if target not in log_dir:
+        gen_tmp_log_dir(log_dir, target)
+
+    log_files = []
+    for log in os.listdir(log_dir):
+        log_files.append(log)
+        shutil.move(log, target)
+
+    shutil.make_archive(
+        zip_file, "zip", os.path.join(log_dir, target))
 
 
 @pytest.helpers.register
