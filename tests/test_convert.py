@@ -135,9 +135,32 @@ def test_yield_matches_multi_line(
         )
 
 
-# @pytest.mark.unit
-# def test_yield_matches_starts_with_whitespace():
-#    pass
+@pytest.mark.unit
+def test_yield_matches_starts_with_whitespace():
+    # Given a log that starts with a whitespace
+    log = " INFO | This is a log"
+
+    # When it checks for a match
+    logs = convert._yield_matches(log)
+    # Then it returns the log
+    assert next(logs) == [log.strip()]
+
+
+@pytest.mark.unit
+def test_yield_matches_ignores_empty_lines():
+    # Given a log with whitespace & lines
+    log = (" INFO | log stuff\n\n\n\n"
+           " WARN | more logs \n\n\n"
+           " INFO | moar logs\n\n\n")
+
+    # When it checks for a match
+    logs = list(convert._yield_matches(log))
+
+    # Then it returns the log
+    assert len(logs) == 3
+    assert logs[0] == "INFO | log stuff"
+    assert logs[1] == "WARN | more logs"
+    assert logs[2] == "INFO | moar logs"
 
 
 @pytest.mark.unit

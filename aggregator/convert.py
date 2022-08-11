@@ -39,16 +39,20 @@ def _yield_matches(full_log: list[str]) -> str:
     # Yield matches creates a list of logs and yields the list on match
     logs = []
     for line in full_log.split("\n"):
-        # TODO: Handle empty lines
+        line = line.strip()
+        if line == "":
+            continue
         if _line_start_match("INFO|WARN|ERROR", line):  # if line matches start
             if len(logs) > 0:  # if there's already a log
-                tmp_line = "; ".join(logs)
-                yield tmp_line  # yield the log
+                logs = "; ".join(logs)
+                yield logs  # yield the log
                 logs = []  # and set the log back to nothing
-        logs.append(line.strip())  # add current line to log (list)
+        logs.append(line)  # add current line to log (list)
         logger.debug(f"Appended: {line} to list")
 
-    yield line
+    if len(logs) > 0:  # if there's already a log
+        logs = "; ".join(logs)
+    yield logs
 
 
 def _multi_to_single_line(logfile: os.path) -> None:
