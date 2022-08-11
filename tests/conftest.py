@@ -181,3 +181,16 @@ def event_loop():
         loop = asyncio.new_event_loop()
     yield loop
     loop.close()
+
+
+@pytest.helpers.register
+def log_recorder(recorded_tuples):
+    modules = []
+    levels = []
+    messages = []
+    for recorded_log in recorded_tuples:
+        modules.append(recorded_log[0])
+        levels.append(recorded_log[1])
+        messages.append(recorded_log[2])
+
+    return modules, levels, messages

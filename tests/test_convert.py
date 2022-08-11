@@ -95,7 +95,8 @@ def test_yield_matches_one_line(logger):
 
 
 @pytest.mark.unit
-def test_yield_matches_multi_line(logger, multi_line_log):
+def test_yield_matches_multi_line(
+        logger, multi_line_log):
     # Given a multiline error log that starts with ERROR
     logs = multi_line_log
     # And the logs split by line
@@ -117,13 +118,9 @@ def test_yield_matches_multi_line(logger, multi_line_log):
     assert log_list[2] == "INFO | And this is a separate log"
 
     # And the logger logs it
-    modules = []
-    levels = []
-    messages = []
-    for recorded_log in logger.record_tuples:
-        modules.append(recorded_log[0])
-        levels.append(recorded_log[1])
-        messages.append(recorded_log[2])
+
+    modules, levels, messages = pytest.helpers.log_recorder(
+        logger.record_tuples)
 
     # And the logger logs modules & levels
     assert all(module == module_name for module in modules)
