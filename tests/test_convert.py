@@ -130,7 +130,7 @@ def test_yield_matches_multi_line(
     # And the logger logs lines
     for line in lines:
         assert any(
-            message == f"Appended: {line} to list" for
+            message == f"Appended: {line.strip()} to list" for
             message in messages
         )
 
@@ -141,9 +141,9 @@ def test_yield_matches_starts_with_whitespace():
     log = " INFO | This is a log"
 
     # When it checks for a match
-    logs = convert._yield_matches(log)
+    logs = list(convert._yield_matches(log))
     # Then it returns the log
-    assert next(logs) == [log.strip()]
+    assert logs[0] == log.strip()
 
 
 @pytest.mark.unit
