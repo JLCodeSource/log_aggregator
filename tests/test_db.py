@@ -2,16 +2,19 @@ from datetime import datetime
 from pydantic import ValidationError
 import beanie
 from bson import ObjectId
+from pytest_mock_resources import create_mongo_fixture
 import pytest
 import logging
 import motor
 from aggregator import db, convert
 from pymongo.errors import ServerSelectionTimeoutError, InvalidOperation
 from aggregator.model import JavaLog
+from .conftest import mock_get_node
 
 
 module_name = "aggregator.db"
 wrong_id = "608da169eb9e17281f0ab2ff"
+mongo = create_mongo_fixture()
 
 
 class MockBeanie:
@@ -627,4 +630,27 @@ async def test_find_logs_with_sort(
     finally:
         # Set manual teardown
         client = motor.motor_asyncio.AsyncIOMotorClient(conn)
+        await client.drop_database(database)
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+@pytest.mark.mock
+async def test_db_pmr(motor_conn, add_one):
+    # Given a motor_conn & database
+    database, conn = await motor_conn
+
+    try:
+        # When it tries to init the database
+        client = await db.init(database, conn)
+
+        # And it adds a log
+        await add_one
+
+        # Then it creates a database
+        assert database in await client.list_database_names()
+
+    finally:
+        # Set Manual Teardown
+
         await client.drop_database(database)

@@ -3,6 +3,7 @@ This module contains shared fixtures, steps and hooks.
 """
 from pathlib import Path
 from random import randrange
+from pytest_mock_resources import create_mongo_fixture
 import asyncio
 import shutil
 import pytest
@@ -18,7 +19,7 @@ from datetime import datetime
 
 
 TEST_DATABASE = "test-logs"
-
+pmr_mongo = create_mongo_fixture()
 
 EXAMPLE_GEN = (  # Row 1
     (
@@ -117,31 +118,49 @@ def mock_get_node(monkeypatch):
     monkeypatch.setattr(convert, "get_node", mock_get_node)
 
 
+@pytest.fixture
+def pmr_mongo_credentials(pmr_mongo):
+    pmr_credentials = pmr_mongo.pmr_credentials
+    return pmr_credentials
+
+
 @pytest.fixture()
-def settings_override():
+def settings_override(pmr_mongo_credentials):
+    username = pmr_mongo_credentials.username
+    password = pmr_mongo_credentials.password
+    host = pmr_mongo_credentials.host
+    port = pmr_mongo_credentials.port
+    database = pmr_mongo_credentials.database
+    authsource = pmr_mongo_credentials.database
     settings = config.get_settings()
-    settings.database = TEST_DATABASE
+    settings.connection = (
+        f"mongodb://{username}:{password}@"
+        f"{host}:{port}/?authMechanism=DEFAULT&"
+        f"authSource={authsource}"
+    )
+    settings.database = database
     settings.log_level = logging.DEBUG
     settings.testing = True
     settings.sourcedir = "./testsource/zips"
     return settings
 
 
-@pytest.fixture()
+@ pytest.fixture()
 def get_datetime():
     return datetime(2022, 8, 6, 12, 1, 1)
 
 
-@pytest.fixture()
+@ pytest.fixture()
 async def motor_conn(settings_override):
     # Given a motor_client generator
-    database = tmp_database()
+    # database = tmp_database()
+    database = settings_override.database
     connection = settings_override.connection
     # It returns client, database & db_logname
     return database, connection
 
 
-@pytest.fixture()
+@ pytest.fixture()
 async def add_one():
 
     # And adds a log
@@ -154,29 +173,29 @@ async def add_one():
         type="fanapiservice",
         message="This is a log"
     )
-    await JavaLog.insert_one(log)
-    await asyncio.sleep(1)
+    result = await JavaLog.insert_one(log)
+    return result
 
 
-@pytest.fixture()
+@ pytest.fixture()
 def logger(caplog):
     caplog.set_level(logging.DEBUG)
     return caplog
 
 
-@pytest.fixture()
+@ pytest.fixture()
 def testdata_log_dir():
     return ("./testsource/logs/")
 
 
-@pytest.fixture()
+@ pytest.fixture()
 def multi_line_log():
     return("INFO | This is a log\nERROR | This is an error log\n    "
            "with multiple lines\n    and more lines\n"
            "INFO | And this is a separate log")
 
 
-@pytest.fixture()
+@ pytest.fixture()
 def make_filename(settings_override):
 
     settings = settings_override
@@ -200,7 +219,7 @@ def make_filename(settings_override):
     return _make_filename
 
 
-@pytest.fixture
+@ pytest.fixture
 def make_logs(request, tmpdir, make_filename, testdata_log_dir):
     # Given a directory (tmpdir) & a log_file
     log_files = []
@@ -233,7 +252,7 @@ def make_logs(request, tmpdir, make_filename, testdata_log_dir):
         return log_files
 
 
-@pytest.fixture()
+@ pytest.fixture()
 def event_loop():
     try:
         loop = asyncio.get_running_loop()
