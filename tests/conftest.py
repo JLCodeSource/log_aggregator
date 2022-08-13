@@ -72,15 +72,6 @@ def gen_zip_file(log_dir: os.path,
 
 
 @pytest.helpers.register
-def tmp_database():
-    choices = string.ascii_lowercase + string.digits
-    postfix = "".join(random.choices(choices, k=4))
-    database = TEST_DATABASE
-    database = f"{database}-{postfix}"
-    return database
-
-
-@pytest.helpers.register
 def log_recorder(recorded_tuples):
     modules = []
     levels = []
