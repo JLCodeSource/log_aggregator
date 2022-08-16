@@ -86,7 +86,7 @@ async def main() -> None:
         logger.error(f"{err}")
 
     convert_fn_list: list[Coroutine[Any, Any, list[JavaLog]]] = []
-    for log_list in log_file_list:
+    for log_list in log_file_list:  # type: ignore
         for file in log_list:
             convert_fn_list.append(convert(file))
 
