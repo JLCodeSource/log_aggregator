@@ -3,6 +3,7 @@ import os
 from typing import Callable
 
 import pytest
+from hypothesis import given, strategies as st
 
 from aggregator import config, helper
 
@@ -120,3 +121,28 @@ def test_get_log_dir(
             f"outdir: {out} from {settings_override.outdir}, {node}, {service}",
         )
     ]
+
+
+class TestWithInferredStrategies:
+    """Test all functions from helper with inferred Hypothesis strategies."""
+
+    def test_get_node(self) -> None:
+        @given(file=st.text())
+        def execute(**kwargs) -> None:
+            helper.get_node(**kwargs)
+
+        execute()
+
+    def test_get_log_type(self) -> None:
+        @given(file=st.text())
+        def execute(**kwargs) -> None:
+            helper.get_log_type(**kwargs)
+
+        execute()
+
+    def test_get_log_dir(self) -> None:
+        @given(node=st.text(), log_type=st.text())
+        def execute(**kwargs) -> None:
+            helper.get_log_dir(**kwargs)
+
+        execute()
