@@ -22,9 +22,8 @@ from aggregator.convert import convert
 from aggregator.db import find_logs, init, insert_logs
 from aggregator.extract import extract_log, gen_zip_extract_fn_list
 from aggregator.logs import configure_logging
-from aggregator.view import display_result
-
 from aggregator.model import JavaLog
+from aggregator.view import display_result
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -76,8 +75,7 @@ async def main() -> None:
     try:
         log_file_list: list[str] = await extract_log(zip_extract_coros)
         if log_file_list is None or log_file_list is empty:
-            raise Exception(
-                f"Failed to get log_files from {settings.sourcedir}")
+            raise Exception(f"Failed to get log_files from {settings.sourcedir}")
     except Exception as err:
         logger.error(f"{err}")
 

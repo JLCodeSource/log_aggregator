@@ -82,7 +82,7 @@ async def test_init(
 
     finally:
         # Set Manual Teardown
-        client: AsyncIOMotorClient = await db.init(database, conn)
+        client = await db.init(database, conn)
         await client.drop_database(database)
 
 
@@ -95,7 +95,7 @@ async def test_init_server_timeout(
 ) -> None:
     # Given a mock init_beanie_server_timeout to target the test database
     def mock_beanie_server_timeout(*args, **kwargs) -> NoReturn:
-        return MockBeanie.beanie_server_timeout()
+        raise MockBeanie.beanie_server_timeout()
 
     monkeypatch.setattr(beanie, "init_beanie", mock_beanie_server_timeout)
 
@@ -126,7 +126,7 @@ async def test_init_server_timeout(
 
     finally:
         # Set manual teardown
-        client: AsyncIOMotorClient = AsyncIOMotorClient(conn)
+        client = AsyncIOMotorClient(conn)
         await client.drop_database(database)
 
 
@@ -214,7 +214,7 @@ async def test_insert_logs_success(
         assert isinstance(result.inserted_ids[0], ObjectId)
         assert isinstance(result.inserted_ids[1], ObjectId)
     finally:
-        client: AsyncIOMotorClient = await db.init(database, conn)
+        client = await db.init(database, conn)
         # Set manual teardown
         await client.drop_database(database)
 
@@ -228,7 +228,7 @@ async def test_insert_logs_servertimeout(
 ) -> None:
     # Given a mock javalog_server_timeout to target the test database
     def mock_insert_logs_server_timeout(*args, **kwargs) -> NoReturn:
-        return MockJavaLog.insert_many_server_timeout()
+        raise MockJavaLog.insert_many_server_timeout()
 
     monkeypatch.setattr(JavaLog, "insert_many", mock_insert_logs_server_timeout)
 
@@ -256,7 +256,7 @@ async def test_insert_logs_servertimeout(
         )
 
     finally:
-        client: AsyncIOMotorClient = await db.init(database, conn)
+        client = await db.init(database, conn)
         # Set manual teardown
         await client.drop_database(database)
 
@@ -270,7 +270,7 @@ async def test_insert_logs_invalid_operation_error(
 ) -> None:
     # Given a MockJavaLog
     def mock_javalog_raises_invalid_operation(*args, **kwargs) -> NoReturn:
-        return MockJavaLog.insert_many_invalid(*args, **kwargs)
+        raise MockJavaLog.insert_many_invalid(*args, **kwargs)
 
     monkeypatch.setattr(JavaLog, "insert_many", mock_javalog_raises_invalid_operation)
 
@@ -319,7 +319,7 @@ async def test_insert_logs_invalid_operation_error(
         )
 
     finally:
-        client: AsyncIOMotorClient = await db.init(database, conn)
+        client = await db.init(database, conn)
         # Set manual teardown
         await client.drop_database(database)
 
@@ -356,7 +356,7 @@ async def test_insert_logs_none(
         )
 
     finally:
-        client: AsyncIOMotorClient = await db.init(database, conn)
+        client = await db.init(database, conn)
         # Set manual teardown
         await client.drop_database(database)
 
@@ -431,7 +431,7 @@ async def test_get_log_successfully(
         )
 
     finally:
-        client: AsyncIOMotorClient = await db.init(database, conn)
+        client = await db.init(database, conn)
         # Set manual teardown
         await client.drop_database(database)
 
@@ -470,7 +470,7 @@ async def test_get_log_none(
         )
 
     finally:
-        client: AsyncIOMotorClient = await db.init(database, conn)
+        client = await db.init(database, conn)
         # Set manual teardown
         await client.drop_database(database)
 
@@ -504,7 +504,7 @@ async def test_get_log_wrong_id(
         )
 
     finally:
-        client: AsyncIOMotorClient = await db.init(database, conn)
+        client = await db.init(database, conn)
         # Set manual teardown
         await client.drop_database(database)
 
@@ -518,7 +518,7 @@ async def test_get_log_server_timeout(
 ) -> None:
     # Given a mock javalog_server_timeout to target the test database
     def mock_javalog_server_timeout(*args, **kwargs) -> NoReturn:
-        return MockJavaLog.insert_many_server_timeout()
+        raise MockJavaLog.insert_many_server_timeout()
 
     monkeypatch.setattr(JavaLog, "get", mock_javalog_server_timeout)
     # And a motor_conn & database
@@ -547,7 +547,7 @@ async def test_get_log_server_timeout(
         )
 
     finally:
-        client: AsyncIOMotorClient = await db.init(database, conn)
+        client = await db.init(database, conn)
         # Set manual teardown
         await client.drop_database(database)
 
@@ -617,7 +617,7 @@ async def test_find_logs_successfully(
         count_infos: int = 0
         for level in lvls:
             if level == logging.INFO:
-                count_infos: int = count_infos + 1
+                count_infos = count_infos + 1
 
         # The logger logs modules
         assert all(module == module_name for module in mods)
@@ -650,7 +650,7 @@ async def test_find_logs_successfully(
         )
 
     finally:
-        client: AsyncIOMotorClient = await db.init(database, conn)
+        client = await db.init(database, conn)
         # Set manual teardown
         await client.drop_database(database)
 
@@ -703,7 +703,7 @@ async def test_find_logs_with_sort(
 
     finally:
         # Set manual teardown
-        client: AsyncIOMotorClient = motor.motor_asyncio.AsyncIOMotorClient(conn)
+        client = motor.motor_asyncio.AsyncIOMotorClient(conn)
         await client.drop_database(database)
 
 

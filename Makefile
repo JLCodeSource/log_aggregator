@@ -15,16 +15,16 @@ test: py.test tests -vv
 
 ## Lint
 lint:
-	flake8 main.py aggregator tests || exit 1
-	isort --check-only --diff main.py aggregator tests || exit 1
-	black --check main.py aggregator tests || exit 1
-	mypy main.py aggregator tests || exit 1
+	flake8 aggregator tests || exit 1
+	isort --check-only --diff aggregator tests || exit 1
+	black --check aggregator tests || exit 1
+	mypy aggregator tests || exit 1
 
 # pydocstyle src tests || exit 1	
 
 format:
-	isort main.py aggregator tests
-	black main.py aggregator tests
+	isort aggregator tests
+	black aggregator tests
 
 ## Build
 # build-package:

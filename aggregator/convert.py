@@ -41,21 +41,21 @@ def _yield_matches(full_log: str) -> Generator:
     # Yield matches creates a list of logs and yields the list on match
     log_tmp: list[str] = []
     for line in full_log.split("\n"):
-        line: str = line.strip()
+        line = line.strip()
         if line == "":
             continue
         if _line_start_match("INFO|WARN|ERROR", line):  # if line matches start
             if len(log_tmp) > 0:  # if there's already a log
                 log: str = "; ".join(log_tmp)
                 yield log  # yield the log
-                log_tmp: list[str] = []  # and set the log back to nothing
+                log_tmp = []  # and set the log back to nothing
         log_tmp.append(line)  # add current line to log (list)
         logger.debug(f"Appended: {line} to list")
 
     if len(log_tmp) > 0:  # if there's already a log
-        log: str = "; ".join(log_tmp)
+        log = "; ".join(log_tmp)
     else:
-        log: str = log_tmp[0]
+        log = log_tmp[0]
     yield log
 
 
@@ -83,11 +83,9 @@ def _strip_whitespace(d: dict) -> dict:
 
 def _convert_log_to_csv(logfile: str) -> list[dict[str | Any, str | Any]]:
     # Converts the CSV log file to a dict
-    header: list[str] = ["severity", "jvm",
-                         "datetime", "source", "type", "message"]
+    header: list[str] = ["severity", "jvm", "datetime", "source", "type", "message"]
     with open(os.path.join(logfile), "r") as file:
-        reader: csv.DictReader = csv.DictReader(
-            file, delimiter="|", fieldnames=header)
+        reader: csv.DictReader = csv.DictReader(file, delimiter="|", fieldnames=header)
         logger.info(f"Opened {logfile} as csv.dictReader")
         return list(reader)
 
@@ -112,7 +110,7 @@ async def convert(log_file: str) -> list[JavaLog]:
 
     for d in reader:
 
-        d: dict[str | Any, str | Any] = _strip_whitespace(d)
+        d = _strip_whitespace(d)
 
         d["node"] = node
 

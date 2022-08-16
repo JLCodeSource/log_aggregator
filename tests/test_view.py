@@ -69,7 +69,7 @@ async def test_view_display_result_one_line_success(
         # assert result == capturedOutput.getvalue()
 
     finally:
-        client: AsyncIOMotorClient = AsyncIOMotorClient(conn)
+        client = AsyncIOMotorClient(conn)
         await client.drop_database(database)
 
 
@@ -119,7 +119,7 @@ async def test_view_display_result_multi_line_success(
         with open(log_out, "r") as f:
             content: str = f.read()
             for i in range(len(results)):
-                content: str = content.replace(f"objectid{i}", str(results[i].id))
+                content = content.replace(f"objectid{i}", str(results[i].id))
 
         # And the expected output is
         out: str = content
@@ -143,5 +143,5 @@ async def test_view_display_result_multi_line_success(
         """
 
     finally:
-        client: AsyncIOMotorClient = AsyncIOMotorClient(conn)
+        client = AsyncIOMotorClient(conn)
         await client.drop_database(database)

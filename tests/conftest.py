@@ -31,8 +31,7 @@ EXAMPLE_GEN = (  # Row 1
         "2022/07/11 09:12:55",
         "SecondaryMonitor -> {path: /path/secondary}",
     ),
-    ("WARN", "jvm 1", "2022/07/11 09:13:01",
-     "ttl.test", "async", "FileIO"),  # Row 3
+    ("WARN", "jvm 1", "2022/07/11 09:13:01", "ttl.test", "async", "FileIO"),  # Row 3
 )
 
 
@@ -41,8 +40,7 @@ def gen_tmp_log_dir(
     tmpdir: Union[str, bytes, os.PathLike],
     target: Union[str, bytes, os.PathLike] = "System",
 ) -> None:
-    Path(os.path.join(str(tmpdir), str(target))).mkdir(
-        parents=True, exist_ok=True)
+    Path(os.path.join(str(tmpdir), str(target))).mkdir(parents=True, exist_ok=True)
 
 
 @pytest.helpers.register  # type: ignore
@@ -53,8 +51,8 @@ def gen_log_file(
     log: str = ""
     for row in logs:
         for field in row:
-            log: str = f"{log} {field}\t|"
-        log: str = f"{log}\n"
+            log = f"{log} {field}\t|"
+        log = f"{log}\n"
     with open(log_file, "w") as f:
         f.write(log)
 
@@ -74,8 +72,7 @@ def gen_zip_file(
         log_files.append(log)
         shutil.move(str(log), str(target))
 
-    shutil.make_archive(str(zip_file), "zip",
-                        os.path.join(str(log_dir), str(target)))
+    shutil.make_archive(str(zip_file), "zip", os.path.join(str(log_dir), str(target)))
 
 
 @pytest.helpers.register  # type: ignore
@@ -96,7 +93,7 @@ def count_items(list, item) -> int:
     items: int = 0
     for element in list:
         if element == item:
-            items: int = items + 1
+            items = items + 1
     return items
 
 
@@ -137,7 +134,7 @@ def tmp_database() -> str:
     choices: LiteralString = string.ascii_lowercase + string.digits
     postfix: str = "".join(random.choices(choices, k=4))
     database: str = TEST_DATABASE
-    database: str = f"{database}-{postfix}"
+    database = f"{database}-{postfix}"
     return database
 
 
@@ -235,10 +232,10 @@ def make_filename(settings_override: config.Settings) -> object:
         if ext == ".zip" and tld is True:
             filename: str = f"GBLogs_{node}.domain.tld_" f"{service}_{ts}.zip"
         elif ext == ".zip" and tld is False:
-            filename: str = f"GBLogs_{node}_" f"{service}_{ts}.zip"
+            filename = f"GBLogs_{node}_" f"{service}_{ts}.zip"
         elif ext == ".log":
             file: str = f"{service}{ext}"
-            filename: str = os.path.join(settings.outdir, node, service, file)
+            filename = os.path.join(settings.outdir, node, service, file)
         else:
             return None
         return str(filename)
@@ -254,19 +251,17 @@ def make_logs(request, tmpdir, make_filename, testdata_log_dir) -> str | list[st
     if isinstance(request.param, str):
         params.append(request.param)
     else:
-        params: list[str] = request.param
+        params = request.param
     for param in params:
         file: tuple[str, str] = os.path.splitext(param)
         filename: str = file[0]
         ext: str = file[1]
-        log_file_name: str | None = make_filename(
-            "node", filename, ext, False)[2:]
+        log_file_name: str | None = make_filename("node", filename, ext, False)[2:]
         if log_file_name is None:
             continue
         src_log_file: str = os.path.join(testdata_log_dir, param)
         tgt_folder: str = os.path.join(tmpdir, os.path.dirname(log_file_name))
-        tgt_log_file: str = os.path.join(
-            tgt_folder, os.path.basename(log_file_name))
+        tgt_log_file: str = os.path.join(tgt_folder, os.path.basename(log_file_name))
 
         # And a multi-line-log has been copied to the log_file
         os.makedirs(tgt_folder, exist_ok=True)
@@ -284,6 +279,6 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
     try:
         loop: asyncio.AbstractEventLoop = asyncio.get_running_loop()
     except RuntimeError:
-        loop: asyncio.AbstractEventLoop = asyncio.new_event_loop()
+        loop = asyncio.new_event_loop()
     yield loop
     loop.close()

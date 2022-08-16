@@ -7,6 +7,7 @@ Summary: view displays the output of any find requests
 Functions: display_results
 """
 import logging
+from datetime import datetime
 
 from beanie import PydanticObjectId
 
@@ -26,7 +27,7 @@ async def display_result(
     elif isinstance(result, JavaLog):
         results.append(result)
     else:
-        results: list[JavaLog] = result
+        results = result
 
     num_logs = len(results)
 
@@ -45,20 +46,20 @@ async def display_result(
     )
     out: str = "| "
     for head in headers:
-        out: str = f"{out}{head}\t| "
+        out = f"{out}{head}\t| "
 
-    out: str = out.strip()
-    out: str = out + "\n"
+    out = out.strip()
+    out = out + "\n"
 
     for result in results:
         id: PydanticObjectId | None = result.id
-        node = result.node
-        severity = result.severity
-        jvm = result.jvm
-        timestamp = result.datetime
-        source = result.source
-        type = result.type
-        message = result.message
+        node: str = result.node
+        severity: str = result.severity
+        jvm: str | None = result.jvm
+        timestamp: datetime = result.datetime
+        source: str | None = result.source
+        type: str | None = result.type
+        message: str = result.message
         out = (
             f"{out}| {id}\t| {node}\t| {severity}\t| {jvm}\t| "
             f"{timestamp}\t| {source}\t| {type}\t| {message}\t|\n"

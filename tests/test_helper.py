@@ -54,7 +54,7 @@ def test_get_node_tmpdir(
     if os.path.splitext(file)[1] == ".log":
         filename: str = f"{tmpdir}{file[1:]}"
     else:
-        filename: str = f"{tmpdir}{os.path.sep}{file}"
+        filename = f"{tmpdir}{os.path.sep}{file}"
     assert helper.get_node(filename) == node
     assert logger.record_tuples == [
         (module_name, logging.DEBUG, f"node: {node} from {filename}")
@@ -93,7 +93,7 @@ def test_get_log_type_tmpdir(
     if os.path.splitext(file)[1] == ".log":
         filename: str = f"{tmpdir}{file[1:]}"
     else:
-        filename: str = f"{tmpdir}{os.path.sep}{file}"
+        filename = f"{tmpdir}{os.path.sep}{file}"
     assert helper.get_log_type(filename) == service
     assert logger.record_tuples == [
         (module_name, logging.DEBUG, f"log_type: {service} from {filename}")

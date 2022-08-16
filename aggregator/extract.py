@@ -98,7 +98,7 @@ async def _extract(
         _remove_folder(os.path.join(target_dir, "System"))
 
         for filename in os.listdir(target_dir):
-            filename: str = os.path.join(target_dir, filename)
+            filename = os.path.join(target_dir, filename)
             log_files.append(filename)
 
     logger.info(f"Ending extraction coroutine for {zip_file}")
@@ -125,7 +125,7 @@ def gen_zip_extract_fn_list(
             raise err
 
         _create_log_dir(logs_dir)
-        zip_file: str = os.path.join(src_dir, zip_file)
+        zip_file = os.path.join(src_dir, zip_file)
 
         try:
             zip_files_extract_fn_list.append(  # type: ignore

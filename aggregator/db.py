@@ -118,7 +118,7 @@ async def find_logs(
     if sort is None:
         result: list[JavaLog] = await JavaLog.find(query).to_list()
     else:
-        result: list[JavaLog] = await JavaLog.find(query).sort(sort).to_list()
+        result = await JavaLog.find(query).sort(sort).to_list()
     logger.info(
         f"Found {len(result)} logs in find_logs coroutine for "
         f"query: {query} & sort: {sort} from db: "

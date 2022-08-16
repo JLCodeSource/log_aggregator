@@ -38,8 +38,7 @@ def test_create_log_dir(
     # And it is a directory
     assert os.path.isdir(str(tmpdir))
     # And the logger logs success
-    assert logger.record_tuples == [
-        (module_name, logging.DEBUG, f"Created {tmpdir}")]
+    assert logger.record_tuples == [(module_name, logging.DEBUG, f"Created {tmpdir}")]
 
 
 class MockPath:
@@ -64,7 +63,7 @@ def test_create_log_dir_parents_false(
 ) -> None:
     # Given a log dir as a subdirectory without a parent
     def mock_mkdir_fnf(*args, **kwargs) -> NoReturn:
-        return MockPath.mkdir_fnf()
+        raise MockPath.mkdir_fnf()
 
     monkeypatch.setattr(Path, "mkdir", mock_mkdir_fnf)
 
@@ -91,7 +90,7 @@ def test_create_log_dir_exist_ok_false(
 ) -> None:
     # Given a log_directory file that already exists
     def mock_mkdir_fee(*args, **kwargs) -> NoReturn:
-        return MockPath.mkdir_fee()
+        raise MockPath.mkdir_fee()
 
     monkeypatch.setattr(Path, "mkdir", mock_mkdir_fee)
 
@@ -155,8 +154,7 @@ def test_remove_folder(
     assert os.path.exists(str(tmpdir)) is False
 
     # And the logger logs the removal
-    assert logger.record_tuples == [
-        (module_name, logging.DEBUG, f"Removed {tmpdir}")]
+    assert logger.record_tuples == [(module_name, logging.DEBUG, f"Removed {tmpdir}")]
 
 
 @pytest.mark.unit
@@ -216,7 +214,7 @@ async def test_extract_successful_run(
     # When it iterates through the Zip
     for filename in MockZip.namelist():
         if filename.endswith(extension):
-            log_file: str = filename
+            log_file = filename
     # And it tries to extract a file
     await extract._extract(tgt_zip, str(tmpdir), extension)
 
@@ -441,7 +439,7 @@ async def test_gen_extract_fn_list_None_list(
     # When it tries to extract the zip function list
     # Then it raises a TypeError
     with pytest.raises(AttributeError):
-        await extract.gen_zip_extract_fn_list(str(tmpdir), None)
+        extract.gen_zip_extract_fn_list(str(tmpdir), None)
 
     # And the logger logs it
     assert logger.record_tuples[-1] == (
