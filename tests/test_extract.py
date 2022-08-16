@@ -321,7 +321,7 @@ async def test_gen_extract_fn_list(
 @pytest.mark.mock
 @pytest.mark.mutmut
 @pytest.mark.unit
-async def test_gen_extract_fn_list_none(
+async def test_gen_extract_fn_list_empty(
     logger: pytest.LogCaptureFixture,
     monkeypatch: pytest.MonkeyPatch,
     tmpdir: pytest.TempdirFactory,
@@ -335,13 +335,13 @@ async def test_gen_extract_fn_list_none(
     # When it tries to extract files without a list of functions
     coro_list: list[Coroutine[Any, Any, list[str]]] | None = []
     # Then it raises an AttributeError
-    with pytest.raises(AttributeError):
+    with pytest.raises(FileNotFoundError):
         coro_list = extract.gen_zip_extract_fn_list(str(tmpdir), coro_list)
         assert coro_list is not None
         for coro in coro_list:
             await coro
     # And the logger logs an AttributeError
-    assert logger.record_tuples[-1][2].startswith("Attribute Error:")
+    assert logger.record_tuples[-1][2].startswith("FileNotFoundError:")
 
 
 @pytest.mark.parametrize(
@@ -563,11 +563,13 @@ async def test_extract_log_asyncio_gather_type(
     extract_fn_list.append(extract._extract(file, str(tmpdir)))
 
     # When it tries to extract the log
-    await asyncio.gather(*extract_fn_list)
+    # it raises a FileNotFound Error
+    with pytest.raises(FileNotFoundError):
+        await asyncio.gather(*extract_fn_list)
 
     # And the logger logs it
     assert logger.record_tuples[-1] == (
         module_name,
         logging.ERROR,
-        "ErrorType: <class 'FileNotFoundError'> - asyncio gather failed",
+        f"FileNotFoundError: {file} is not a file",
     )
