@@ -83,9 +83,11 @@ def _strip_whitespace(d: dict) -> dict:
 
 def _convert_log_to_csv(logfile: str) -> list[dict[str | Any, str | Any]]:
     # Converts the CSV log file to a dict
-    header: list[str] = ["severity", "jvm", "datetime", "source", "type", "message"]
+    header: list[str] = ["severity", "jvm",
+                         "datetime", "source", "type", "message"]
     with open(os.path.join(logfile), "r") as file:
-        reader: csv.DictReader = csv.DictReader(file, delimiter="|", fieldnames=header)
+        reader: csv.DictReader = csv.DictReader(
+            file, delimiter="|", fieldnames=header)
         logger.info(f"Opened {logfile} as csv.dictReader")
         return list(reader)
 

@@ -31,7 +31,8 @@ EXAMPLE_GEN = (  # Row 1
         "2022/07/11 09:12:55",
         "SecondaryMonitor -> {path: /path/secondary}",
     ),
-    ("WARN", "jvm 1", "2022/07/11 09:13:01", "ttl.test", "async", "FileIO"),  # Row 3
+    ("WARN", "jvm 1", "2022/07/11 09:13:01",
+     "ttl.test", "async", "FileIO"),  # Row 3
 )
 
 
@@ -40,7 +41,8 @@ def gen_tmp_log_dir(
     tmpdir: Union[str, bytes, os.PathLike],
     target: Union[str, bytes, os.PathLike] = "System",
 ) -> None:
-    Path(os.path.join(str(tmpdir), str(target))).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(str(tmpdir), str(target))).mkdir(
+        parents=True, exist_ok=True)
 
 
 @pytest.helpers.register  # type: ignore
@@ -72,7 +74,8 @@ def gen_zip_file(
         log_files.append(log)
         shutil.move(str(log), str(target))
 
-    shutil.make_archive(str(zip_file), "zip", os.path.join(str(log_dir), str(target)))
+    shutil.make_archive(str(zip_file), "zip",
+                        os.path.join(str(log_dir), str(target)))
 
 
 @pytest.helpers.register  # type: ignore
@@ -256,12 +259,14 @@ def make_logs(request, tmpdir, make_filename, testdata_log_dir) -> str | list[st
         file: tuple[str, str] = os.path.splitext(param)
         filename: str = file[0]
         ext: str = file[1]
-        log_file_name: str | None = make_filename("node", filename, ext, False)[2:]
+        log_file_name: str | None = make_filename(
+            "node", filename, ext, False)[2:]
         if log_file_name is None:
             continue
         src_log_file: str = os.path.join(testdata_log_dir, param)
         tgt_folder: str = os.path.join(tmpdir, os.path.dirname(log_file_name))
-        tgt_log_file: str = os.path.join(tgt_folder, os.path.basename(log_file_name))
+        tgt_log_file: str = os.path.join(
+            tgt_folder, os.path.basename(log_file_name))
 
         # And a multi-line-log has been copied to the log_file
         os.makedirs(tgt_folder, exist_ok=True)

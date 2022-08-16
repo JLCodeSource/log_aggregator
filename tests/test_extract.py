@@ -38,7 +38,8 @@ def test_create_log_dir(
     # And it is a directory
     assert os.path.isdir(str(tmpdir))
     # And the logger logs success
-    assert logger.record_tuples == [(module_name, logging.DEBUG, f"Created {tmpdir}")]
+    assert logger.record_tuples == [
+        (module_name, logging.DEBUG, f"Created {tmpdir}")]
 
 
 class MockPath:
@@ -154,7 +155,8 @@ def test_remove_folder(
     assert os.path.exists(str(tmpdir)) is False
 
     # And the logger logs the removal
-    assert logger.record_tuples == [(module_name, logging.DEBUG, f"Removed {tmpdir}")]
+    assert logger.record_tuples == [
+        (module_name, logging.DEBUG, f"Removed {tmpdir}")]
 
 
 @pytest.mark.unit
@@ -439,7 +441,7 @@ async def test_gen_extract_fn_list_None_list(
     # When it tries to extract the zip function list
     # Then it raises a TypeError
     with pytest.raises(AttributeError):
-        await extract.gen_zip_extract_fn_list(str(tmpdir), None)  # type: ignore
+        await extract.gen_zip_extract_fn_list(str(tmpdir), None)
 
     # And the logger logs it
     assert logger.record_tuples[-1] == (
@@ -482,7 +484,7 @@ async def test_extract_log_returns_log_files(
     assert logger.record_tuples[1] == (
         module_name,
         logging.INFO,
-        f"Extracted *service.log generating System/fanapiservice.log at " f"{tmpdir}",
+        f"Extracted *service.log generating System/fanapiservice.log at {tmpdir}",
     )
 
 
