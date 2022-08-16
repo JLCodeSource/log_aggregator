@@ -16,7 +16,7 @@
                 "${file}"
             ],
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": false
         },
         {
             "name": "Python: main.py",

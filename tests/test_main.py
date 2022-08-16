@@ -3,7 +3,7 @@ import pytest
 import logging
 import asyncio
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 """ @pytest.mark.asyncio(scope="session")

@@ -7,20 +7,23 @@ Summary: view displays the output of any find requests
 Functions: display_results
 """
 from aggregator.model import JavaLog
-from aggregator.config import get_settings
+from aggregator.config import Settings, get_settings
+from beanie import PydanticObjectId
 import logging
 
-settings = get_settings()
-logger = logging.getLogger(__name__)
+settings: Settings = get_settings()
+logger: logging.Logger = logging.getLogger(__name__)
 
 
-async def display_result(result: list[JavaLog] | None,
+async def display_result(result: list[JavaLog] | JavaLog | None,
                          database: str | None = settings.database) -> None:
-    results = []
-    if isinstance(result, JavaLog):
+    results: list[JavaLog] = []
+    if result is None:
+        return None
+    elif isinstance(result, JavaLog):
         results.append(result)
     else:
-        results = result
+        results: list[JavaLog] = result
 
     num_logs = len(results)
 
@@ -30,15 +33,15 @@ async def display_result(result: list[JavaLog] | None,
         "ObjectId\t\t", "Node", "Severity", "JVM",
         "Timestamp", "Source", "Type", "Message"
     )
-    out = "| "
+    out: str = "| "
     for head in headers:
-        out = f"{out}{head}\t| "
+        out: str = f"{out}{head}\t| "
 
-    out = out.strip()
-    out = out + "\n"
+    out: str = out.strip()
+    out: str = out + "\n"
 
     for result in results:
-        id = result.id
+        id: PydanticObjectId | None = result.id
         node = result.node
         severity = result.severity
         jvm = result.jvm

@@ -8,29 +8,29 @@ Functions: configureLogging
 Classes: OneLineExceptionFormatter
 """
 import logging
+from typing import TextIO
 
-from aggregator.config import get_settings
+from aggregator.config import Settings, get_settings
 
 
 class OneLineExceptionFormatter(logging.Formatter):
-    def format(self, record):
-        result = super().format(record)
+    def format(self, record) -> str:
+        result: str = super().format(record)
         if record.exc_text:
-            result = result.replace("\n", " ; ")
-            result = result.replace("  ", "")
-            trace = result.split(" ; Traceback")
+            result: str = result.replace("\n", " ; ")
+            result: str = result.replace("  ", "")
+            trace: list[str] = result.split(" ; Traceback")
             if len(trace) > 0:
-                result = trace
-                result = result[0]
+                result: str = trace[0]
         return result
 
 
-def configure_logging():
-    handler = logging.StreamHandler()
-    format = "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
-    formatter = OneLineExceptionFormatter(format)
+def configure_logging() -> None:
+    handler: logging.StreamHandler[TextIO] = logging.StreamHandler()
+    format: str = "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
+    formatter: OneLineExceptionFormatter = OneLineExceptionFormatter(format)
     handler.setFormatter(formatter)
-    logger = logging.getLogger()
-    settings = get_settings()
+    logger: logging.Logger = logging.getLogger()
+    settings: Settings = get_settings()
     logger.setLevel(settings.log_level)
     logger.addHandler(handler)

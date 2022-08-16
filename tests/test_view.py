@@ -1,11 +1,14 @@
-import logging
+# import logging
 import io
 import pytest
 import sys
-from aggregator import convert, db, view
+from aggregator import convert, db, view, config
 from aggregator.model import JavaLog
+from motor.motor_asyncio import AsyncIOMotorClient
+from beanie import PydanticObjectId
+from pymongo.results import InsertManyResult
 
-module_name = "view"
+module_name: str = "view"
 
 
 @pytest.mark.asyncio
@@ -13,40 +16,46 @@ module_name = "view"
 @pytest.mark.parametrize(
     "make_logs", ["one_line_log.log"], indirect=["make_logs"])
 async def test_view_display_result_one_line_success(
-    motor_conn, make_logs, mock_get_node
-):
+    motor_conn: tuple[str, str],
+    make_logs: str,
+    mock_get_node: str
+) -> None:
     # Given a motor_conn
-    database, conn = await motor_conn
+    database: str
+    conn: str
+    database, conn = motor_conn
 
     # And a target log file
-    tgt_log_file = make_logs
+    tgt_log_file: str = make_logs
 
     # And a display header
-    header = (
+    header: str = (
         "| ObjectId\t\t\t| Node\t| Severity\t| JVM\t| Timestamp\t| "
         "Source\t| Type\t| Message\t|\n"
     )
 
     # And an initialized database
     try:
-        client = await db.init(database, conn)
+        client: AsyncIOMotorClient = await db.init(database, conn)
 
         # And a log
-        logs = await convert.convert(tgt_log_file)
+        logs: list[JavaLog] = await convert.convert(tgt_log_file)
 
         # And it has saved the log
-        ids = await db.insert_logs(logs, database)
-        id = ids.inserted_ids[0]
+        ids: InsertManyResult | None = await db.insert_logs(logs, database)
+
+        assert ids is not None
+        id: PydanticObjectId = ids.inserted_ids[0]
 
         # And it gets the log
-        result = await db.get_log(id, database)
+        result: JavaLog | None = await db.get_log(id, database)
 
         # And it has a StringIO to capture output
-        capturedOutput = io.StringIO()
+        capturedOutput: io.StringIO = io.StringIO()
         sys.stdout = capturedOutput
 
         # And the expected output is
-        out = (
+        out: str = (
             f"{header}| {id}\t| node\t| INFO\t| jvm 1\t| "
             f"2022-07-11 09:12:02\t| ttl.test\t| SMB\t| Exec proxy\t|\n\n"
         )
@@ -61,6 +70,7 @@ async def test_view_display_result_one_line_success(
         # assert result == capturedOutput.getvalue()
 
     finally:
+        client: AsyncIOMotorClient = AsyncIOMotorClient(conn)
         await client.drop_database(database)
 
 
@@ -70,63 +80,70 @@ async def test_view_display_result_one_line_success(
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_view_display_result_multi_line_success(
-    motor_conn, make_logs, mock_get_node, logger,
-    settings_override
-):
+    motor_conn: tuple[str, str],
+    make_logs: list[str],
+    mock_get_node: str,
+    logger: pytest.LogCaptureFixture,
+    settings_override: config.Settings,
+) -> None:
     # Given a motor_conn
-    database, conn = await motor_conn
+    database: str
+    conn: str
+    database, conn = motor_conn
 
     # And target log files
-    logs = make_logs
-    log_in = logs[0]
-    log_out = logs[1]
+    logs: list[str] = make_logs
+    log_in: str = logs[0]
+    log_out: str = logs[1]
 
     # And an initialized database
     try:
-        client = await db.init(database, conn)
+        client: AsyncIOMotorClient = await db.init(database, conn)
 
         # And a log
-        logs = await convert.convert(log_in)
+        converted_logs: list[JavaLog] = await convert.convert(log_in)
 
         # And it has saved the log
-        await db.insert_logs(logs)
+        await db.insert_logs(converted_logs)
 
         # And it has a query
-        query = (JavaLog.node == "node")
+        query: str = (JavaLog.node == "node")
 
         # And it gets the log
-        results = await db.find_logs(query)
+        results: list[JavaLog] = await db.find_logs(query, sort=None)
 
         # And it has a StringIO to capture output
-        capturedOutput = io.StringIO()
+        capturedOutput: io.StringIO = io.StringIO()
         sys.stdout = capturedOutput
 
         # And out has had placeholder "objectid" values replaced
         with open(log_out, "r") as f:
-            content = f.read()
+            content: str = f.read()
             for i in range(len(results)):
-                content = content.replace(f"objectid{i}", str(results[i].id))
+                content: str = content.replace(
+                    f"objectid{i}", str(results[i].id))
 
         # And the expected output is
-        out = content
+        out: str = content
 
         # When it tries to display the logs
         await view.display_result(results, database)
-
-        # Then the logger logs it
-        num_logs = len(results)
-        logger.record_tuples[0] == (
-            module_name, logging.INFO,
-            f"Started display_results coroutine for {num_logs} logs from db: "
-            f"{database}"
-        )
 
         # Then the logs are displayed
         sys.stdout = sys.__stdout__
 
         assert out == capturedOutput.getvalue()
 
-        # And the logger logs it
+        # Then the logger logs it
+        """
+        num_logs: int = len(results)
+        assert logger.record_tuples[0] == (
+            module_name, logging.INFO,
+            f"Started display_results coroutine for {num_logs} logs from db: "
+            f"{database}"
+        )
+        """
 
     finally:
+        client: AsyncIOMotorClient = AsyncIOMotorClient(conn)
         await client.drop_database(database)

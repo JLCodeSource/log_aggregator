@@ -14,6 +14,7 @@ import logging
 import os
 import re
 from datetime import datetime
+from typing import Any, Generator
 
 from pydantic import ValidationError
 from beanie.exceptions import CollectionWasNotInitialized
@@ -21,13 +22,13 @@ from pymongo.errors import ServerSelectionTimeoutError
 from aggregator.helper import get_node
 from aggregator.model import JavaLog
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def _line_start_match(match: str, string: str) -> bool:
     # Returns true if the beginning of the string matches match
     try:
-        matches = bool(re.match(match, string))
+        matches: bool = bool(re.match(match, string))
         logger.debug(f"Matches: {matches} from {match} with '{string}'")
     except TypeError as err:
         logger.warning(f"TypeError: {err}")
@@ -35,31 +36,33 @@ def _line_start_match(match: str, string: str) -> bool:
     return matches
 
 
-def _yield_matches(full_log: list[str]) -> str:
+def _yield_matches(full_log: str) -> Generator:
     # Yield matches creates a list of logs and yields the list on match
-    logs = []
+    log_tmp: list[str] = []
     for line in full_log.split("\n"):
-        line = line.strip()
+        line: str = line.strip()
         if line == "":
             continue
         if _line_start_match("INFO|WARN|ERROR", line):  # if line matches start
-            if len(logs) > 0:  # if there's already a log
-                logs = "; ".join(logs)
-                yield logs  # yield the log
-                logs = []  # and set the log back to nothing
-        logs.append(line)  # add current line to log (list)
+            if len(log_tmp) > 0:  # if there's already a log
+                log: str = "; ".join(log_tmp)
+                yield log  # yield the log
+                log_tmp: list[str] = []  # and set the log back to nothing
+        log_tmp.append(line)  # add current line to log (list)
         logger.debug(f"Appended: {line} to list")
 
-    if len(logs) > 0:  # if there's already a log
-        logs = "; ".join(logs)
-    yield logs
+    if len(log_tmp) > 0:  # if there's already a log
+        log: str = "; ".join(log_tmp)
+    else:
+        log: str = log_tmp[0]
+    yield log
 
 
-def _multi_to_single_line(logfile: os.path) -> None:
+def _multi_to_single_line(logfile: str) -> None:
     # multiToSingleLine converts multiline to single line logs
-    data = open(logfile).read()
+    data: str = open(logfile).read()
     logger.info(f"Opened {logfile} for reading")
-    logs = list(_yield_matches(data))
+    logs: list[str] = list(_yield_matches(data))
 
     with open(os.path.join(logfile), "w") as file:
         for line in logs:
@@ -77,57 +80,59 @@ def _strip_whitespace(d: dict) -> dict:
     return d
 
 
-def _convert_log_to_csv(logfile: os.path) -> list[dict]:
+def _convert_log_to_csv(logfile: str) -> list[dict[str | Any, str | Any]]:
     # Converts the CSV log file to a dict
-    header = ["severity", "jvm", "datetime", "source", "type", "message"]
+    header: list[str] = [
+        "severity", "jvm", "datetime", "source", "type", "message"]
     with open(os.path.join(logfile), "r") as file:
-        reader = csv.DictReader(file, delimiter="|", fieldnames=header)
+        reader: csv.DictReader = csv.DictReader(
+            file, delimiter="|", fieldnames=header)
         logger.info(f"Opened {logfile} as csv.dictReader")
         return list(reader)
 
 
 def _convert_to_datetime(timestamp: str) -> datetime:
     try:
-        timestamp = datetime.strptime(timestamp, "%Y/%m/%d %H:%M:%S")
+        dt: datetime = datetime.strptime(timestamp, "%Y/%m/%d %H:%M:%S")
     except ValueError as err:
         logger.exception(f"ValueError: {err}")
-        return err
-    return timestamp
+        raise err
+    return dt
 
 
-async def convert(log_file: os.path) -> list[JavaLog]:
+async def convert(log_file: str) -> list[JavaLog]:
     logger.info(f"Starting new convert coroutine for {log_file}")
     # Work on log files in logsout
-    log_list = []
-    node = get_node(log_file)
+    log_list: list[JavaLog] = []
+    node: str = get_node(log_file)
 
     _multi_to_single_line(log_file)
-    reader = _convert_log_to_csv(log_file)
+    reader: list[dict[str | Any, str | Any]] = _convert_log_to_csv(log_file)
 
-    for dict in reader:
+    for d in reader:
 
-        dict = _strip_whitespace(dict)
+        d: dict[str | Any, str | Any] = _strip_whitespace(d)
 
-        dict["node"] = node
+        d["node"] = node
 
         if (
-            dict["message"] is None
-            and dict["type"] is None
-            and not dict["source"] is None
+            d["message"] is None
+            and d["type"] is None
+            and not d["source"] is None
         ):
-            dict["message"] = dict["source"]
-            dict["source"] = None
+            d["message"] = d["source"]
+            d["source"] = None
 
         try:
-            timestamp = _convert_to_datetime(dict["datetime"])
-            log = JavaLog(
-                node=dict["node"],
-                severity=dict["severity"],
-                jvm=dict["jvm"],
+            timestamp: datetime = _convert_to_datetime(d["datetime"])
+            log: JavaLog = JavaLog(
+                node=d["node"],
+                severity=d["severity"],
+                jvm=d["jvm"],
                 datetime=timestamp,
-                source=dict["source"],
-                type=dict["type"],
-                message=dict["message"],
+                source=d["source"],
+                type=d["type"],
+                message=d["message"],
             )
             log_list.append(log)
             logger.debug(f"Appended {log} to log_list")

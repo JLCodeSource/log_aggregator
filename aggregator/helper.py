@@ -23,42 +23,42 @@ Functions: getNode, getLogType, getLogOutputDir,
 
 import logging
 import os
-from aggregator.config import get_settings
+from aggregator.config import Settings, get_settings
 
-logger = logging.getLogger(__name__)
-settings = get_settings()
+logger: logging.Logger = logging.getLogger(__name__)
+settings: Settings = get_settings()
 
 
-def get_node(file: os.path) -> str:
+def get_node(file: str) -> str:
     # Extract node name from filename
     if os.path.basename(file).endswith(".zip"):
-        node = os.path.basename(
+        node: str = os.path.basename(
             file).split("_")[1].split(".")[0]
     else:
         # Split by directory
-        node = file.split(os.path.sep)
+        node_split: list[str] = file.split(os.path.sep)
         # node is first directory
-        node = node[-3]
+        node: str = node_split[-3]
     logger.debug(f"node: {node} from {file}")
     return node
 
 
-def get_log_type(file: os.path) -> str:
+def get_log_type(file: str) -> str:
     # Extract logtype from filename
     if os.path.basename(file).endswith(".zip"):
-        log_type = os.path.basename(
+        log_type: str = os.path.basename(
             file).split("_")[2]
     else:
         # Split by directory
-        log_type = file.split(os.path.sep)
+        log_type_split: list[str] = file.split(os.path.sep)
         # log_type is second directory
-        log_type = log_type[-2]
+        log_type: str = log_type_split[-2]
     logger.debug(f"log_type: {log_type} from {file}")
     return log_type
 
 
-def get_log_dir(node: str, log_type: str) -> os.path:
+def get_log_dir(node: str, log_type: str) -> str:
     # Return the output dir as a path
-    out = os.path.join(settings.outdir, node, log_type)
+    out: str = os.path.join(settings.outdir, node, log_type)
     logger.debug(f"outdir: {out} from {settings.outdir}, {node}, {log_type}")
     return out
