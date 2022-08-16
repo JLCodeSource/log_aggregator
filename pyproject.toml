@@ -37,6 +37,7 @@ pytest-mock-resources = "^2.4.3"
 hypothesis = "^6.54.3"
 icontract-hypothesis = "^1.1.7"
 mypy = "^0.971"
+motor-stubs = "^1.7.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

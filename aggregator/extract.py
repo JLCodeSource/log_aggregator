@@ -139,7 +139,7 @@ def gen_zip_extract_fn_list(
 
 
 async def extract_log(
-    extract_fn_list: list[Coroutine[Any, Any, list[str]]] | None = None,
+    extract_fn_list: list[Coroutine[Any, Any, list[str]]],
     log_files: list[str] = [],
 ) -> list[str]:
 

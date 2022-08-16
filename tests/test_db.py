@@ -5,6 +5,7 @@ from typing import Any, Coroutine, Literal, NoReturn
 import beanie
 import motor.motor_asyncio
 import pytest
+from beanie import PydanticObjectId
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import ValidationError
@@ -16,7 +17,7 @@ from aggregator import convert, db
 from aggregator.model import JavaLog
 
 module_name: Literal["aggregator.db"] = "aggregator.db"
-wrong_id: str = "608da169eb9e17281f0ab2ff"
+wrong_id: PydanticObjectId = PydanticObjectId("608da169eb9e17281f0ab2ff")
 mongo = create_mongo_fixture()
 
 
@@ -485,7 +486,7 @@ async def test_get_log_wrong_id(
     conn: str
     database, conn = motor_conn
     # And a missing log_id
-    log_id: str = wrong_id
+    log_id: PydanticObjectId = wrong_id
 
     # And an initialized database
     try:
@@ -527,7 +528,7 @@ async def test_get_log_server_timeout(
     database, conn = motor_conn
 
     # And an id
-    log_id: str = wrong_id
+    log_id: PydanticObjectId = wrong_id
 
     # And an initialized database
     try:

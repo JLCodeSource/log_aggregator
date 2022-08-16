@@ -278,6 +278,15 @@ class MockNone:
         return None
 
 
+class MockEmpty:
+    # Mock that returns empty for testing
+
+    @staticmethod
+    def get_empty(*args, **kwargs) -> list:
+        lst = []  # type: ignore
+        return lst
+
+
 class MockDir:
     # Mock that returns an example directory output
 
@@ -324,11 +333,10 @@ async def test_gen_extract_fn_list_none(
     monkeypatch.setattr(os, "listdir", mock_listdir)
 
     # When it tries to extract files without a list of functions
+    coro_list: list[Coroutine[Any, Any, list[str]]] | None = []
     # Then it raises an AttributeError
     with pytest.raises(AttributeError):
-        coro_list: list[
-            Coroutine[Any, Any, list[str]]
-        ] | None = extract.gen_zip_extract_fn_list(str(tmpdir), None)
+        coro_list = extract.gen_zip_extract_fn_list(str(tmpdir), coro_list)
         assert coro_list is not None
         for coro in coro_list:
             await coro
@@ -490,19 +498,22 @@ async def test_extract_log_returns_log_files(
 @pytest.mark.mock
 @pytest.mark.mutmut
 @pytest.mark.unit
-async def test_extract_log_asyncio_returns_none(
+async def test_extract_log_asyncio_returns_empty(
     logger: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # Given a mock asyncio gather gunction
-    def mock_asyncio_gather_get_none(*args, **kwargs) -> None:
-        return MockNone.get_none(*args)
+    # Given a mock asyncio gather function
+    def mock_asyncio_gather_get_empty(*args, **kwargs) -> list:
+        return MockEmpty.get_empty(*args)
 
-    monkeypatch.setattr(asyncio, "gather", mock_asyncio_gather_get_none)
+    monkeypatch.setattr(asyncio, "gather", mock_asyncio_gather_get_empty)
+
+    # And a mock list
+    lst: list[Coroutine[Any, Any, list[str]]] = []
 
     # When it tries to extract the log
     # Then it raises an error
     with pytest.raises(TypeError):
-        await extract.extract_log(None)
+        await extract.extract_log(lst)
 
     # And the logger logs it
     assert logger.record_tuples[-1] == (
@@ -529,6 +540,30 @@ async def test_extract_log_asyncio_returns_FnF(
     # Then it raises an error
     with pytest.raises(FileNotFoundError):
         await extract.extract_log(extract_fn_list)
+
+    # And the logger logs it
+    assert logger.record_tuples[-1] == (
+        module_name,
+        logging.ERROR,
+        "ErrorType: <class 'FileNotFoundError'> - asyncio gather failed",
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.mock
+@pytest.mark.mutmut
+@pytest.mark.unit
+async def test_extract_log_asyncio_gather_type(
+    logger: pytest.LogCaptureFixture, tmpdir: pytest.TempdirFactory
+) -> None:
+    # Given a non file
+    file: str = os.path.join(str(tmpdir), non_file)
+    # And a mock zip_file_extract_fn_list
+    extract_fn_list: list[Coroutine[Any, Any, list[str]]] = []
+    extract_fn_list.append(extract._extract(file, str(tmpdir)))
+
+    # When it tries to extract the log
+    await asyncio.gather(*extract_fn_list)
 
     # And the logger logs it
     assert logger.record_tuples[-1] == (

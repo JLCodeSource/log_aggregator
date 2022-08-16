@@ -33,7 +33,11 @@ async def init(
     try:
         client: AsyncIOMotorClient = motor.motor_asyncio.AsyncIOMotorClient(connection)
 
-        await beanie.init_beanie(database=client[database], document_models=[JavaLog])
+        await beanie.init_beanie(
+            database=client[database],
+            document_models=[JavaLog]  # type: ignore
+            # TODO: Investigate mypy issue
+        )
         logger.info(f"Initialized beanie with {database} using {connection}")
     except ServerSelectionTimeoutError as err:
         logger.fatal(

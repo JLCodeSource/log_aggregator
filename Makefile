@@ -9,16 +9,17 @@ install:
 	poetry install
 
 ## Test
-test: py.test tests -vv
-	py.test --cov --cov-report html
-	py.test --mccabe
+test: 
+	pytest -vv
+	pytest --cov --cov-report html
+	pytest --mccabe
 
 ## Lint
 lint:
 	flake8 aggregator tests || exit 1
 	isort --check-only --diff aggregator tests || exit 1
 	black --check aggregator tests || exit 1
-	mypy aggregator tests || exit 1
+	dmypy run -- aggregator tests || exit 1
 
 # pydocstyle src tests || exit 1	
 

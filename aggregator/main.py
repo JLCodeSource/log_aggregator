@@ -11,7 +11,7 @@ Variables: sourcedir
 
 import asyncio
 import logging
-from typing import Any, Coroutine
+from typing import Any, Coroutine, cast
 
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.results import InsertManyResult
@@ -67,9 +67,15 @@ async def main() -> None:
         exit()
 
     # Create list of configured extraction functions for zip extraction
-    zip_extract_coros: list[
+    gen_zip_extract_coros: list[
         Coroutine[Any, Any, list[str]]
     ] | None = gen_zip_extract_fn_list(settings.sourcedir)
+    if gen_zip_extract_coros is None:
+        raise ValueError
+    else:
+        zip_extract_coros: list[Coroutine[Any, Any, list[str]]] = cast(
+            list[Coroutine[Any, Any, list[str]]], gen_zip_extract_coros
+        )
 
     # Extact logs from source directory
     try:
@@ -101,4 +107,4 @@ if __name__ == "__main__":
 
     configure_logging()
 
-    asyncio.run(main())
+    asyncio.run(main())  # type: ignore #TODO: Update main startup
