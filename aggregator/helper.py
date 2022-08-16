@@ -23,6 +23,7 @@ Functions: getNode, getLogType, getLogOutputDir,
 
 import logging
 import os
+
 from aggregator.config import Settings, get_settings
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -32,13 +33,12 @@ settings: Settings = get_settings()
 def get_node(file: str) -> str:
     # Extract node name from filename
     if os.path.basename(file).endswith(".zip"):
-        node: str = os.path.basename(
-            file).split("_")[1].split(".")[0]
+        node: str = os.path.basename(file).split("_")[1].split(".")[0]
     else:
         # Split by directory
         node_split: list[str] = file.split(os.path.sep)
         # node is first directory
-        node: str = node_split[-3]
+        node = node_split[-3]
     logger.debug(f"node: {node} from {file}")
     return node
 
@@ -46,13 +46,12 @@ def get_node(file: str) -> str:
 def get_log_type(file: str) -> str:
     # Extract logtype from filename
     if os.path.basename(file).endswith(".zip"):
-        log_type: str = os.path.basename(
-            file).split("_")[2]
+        log_type: str = os.path.basename(file).split("_")[2]
     else:
         # Split by directory
         log_type_split: list[str] = file.split(os.path.sep)
         # log_type is second directory
-        log_type: str = log_type_split[-2]
+        log_type = log_type_split[-2]
     logger.debug(f"log_type: {log_type} from {file}")
     return log_type
 

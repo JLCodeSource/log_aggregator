@@ -16,9 +16,10 @@ import re
 from datetime import datetime
 from typing import Any, Generator
 
-from pydantic import ValidationError
 from beanie.exceptions import CollectionWasNotInitialized
+from pydantic import ValidationError
 from pymongo.errors import ServerSelectionTimeoutError
+
 from aggregator.helper import get_node
 from aggregator.model import JavaLog
 
@@ -82,11 +83,9 @@ def _strip_whitespace(d: dict) -> dict:
 
 def _convert_log_to_csv(logfile: str) -> list[dict[str | Any, str | Any]]:
     # Converts the CSV log file to a dict
-    header: list[str] = [
-        "severity", "jvm", "datetime", "source", "type", "message"]
+    header: list[str] = ["severity", "jvm", "datetime", "source", "type", "message"]
     with open(os.path.join(logfile), "r") as file:
-        reader: csv.DictReader = csv.DictReader(
-            file, delimiter="|", fieldnames=header)
+        reader: csv.DictReader = csv.DictReader(file, delimiter="|", fieldnames=header)
         logger.info(f"Opened {logfile} as csv.dictReader")
         return list(reader)
 
@@ -115,11 +114,7 @@ async def convert(log_file: str) -> list[JavaLog]:
 
         d["node"] = node
 
-        if (
-            d["message"] is None
-            and d["type"] is None
-            and not d["source"] is None
-        ):
+        if d["message"] is None and d["type"] is None and not d["source"] is None:
             d["message"] = d["source"]
             d["source"] = None
 
@@ -138,10 +133,7 @@ async def convert(log_file: str) -> list[JavaLog]:
             logger.debug(f"Appended {log} to log_list")
         except (ValueError, ValidationError) as err:
             logger.exception(f"Error {type(err)} {err}")
-        except (
-            CollectionWasNotInitialized,
-            ServerSelectionTimeoutError
-        ) as err:
+        except (CollectionWasNotInitialized, ServerSelectionTimeoutError) as err:
             logger.fatal(f"Error: {err=}, {type(err)=}")
             raise err
         except BaseException as err:

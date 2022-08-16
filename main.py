@@ -9,31 +9,38 @@ Functions: main, init, extractLog
 Variables: sourcedir
 """
 
+import asyncio
+import logging
+from typing import Any, Coroutine
+
+from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo.results import InsertManyResult
 from pyparsing import empty
-from aggregator.config import get_settings
+
+from aggregator.config import Settings, get_settings
 from aggregator.convert import convert
-from aggregator.db import init, insert_logs, find_logs
+from aggregator.db import find_logs, init, insert_logs
 from aggregator.extract import extract_log, gen_zip_extract_fn_list
 from aggregator.logs import configure_logging
 from aggregator.view import display_result
-import logging
-import asyncio
 
-logger = logging.getLogger(__name__)
+from .aggregator.model import JavaLog
+
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Aggregator:
-    def __init__(self, func):
+    def __init__(self, func) -> None:
         self._func = func
 
-    def __call__(self):
+    def __call__(self) -> object:
         return self._func()
 
 
-async def init_app():
+async def init_app() -> tuple[AsyncIOMotorClient, Settings]:
     try:
-        settings = get_settings()
-        assert (settings is not empty), "Failed to get settings"
+        settings: Settings = get_settings()
+        assert settings is not empty, "Failed to get settings"
     except AssertionError as err:
         logger.fatal(f"AssertionError: {err}")
         exit()
@@ -46,46 +53,50 @@ async def init_app():
     logger.debug(f"Database: {settings.database}")
     logger.info(f"Log Level: {settings.log_level}")
     # Init database
-    init_db = asyncio.create_task(init())
-    result = await init_db
+    init_db: asyncio.Task[AsyncIOMotorClient] = asyncio.create_task(init())
+    result: AsyncIOMotorClient = await init_db
     return result, settings
 
 
 @Aggregator
-async def main():
+async def main() -> None:
 
-    ok, settings = await init_app()
-    if not ok == "ok":
+    client: AsyncIOMotorClient
+    settings: Settings
+    client, settings = await init_app()
+    if not isinstance(client, AsyncIOMotorClient):
         exit()
 
     # Create list of configured extraction functions for zip extraction
-    log_file_list = gen_zip_extract_fn_list(settings.sourcedir)
+    zip_extract_coros: list[
+        Coroutine[Any, Any, list[str]]
+    ] | None = gen_zip_extract_fn_list(settings.sourcedir)
 
     # Extact logs from source directory
     try:
-        log_file_list = await extract_log(log_file_list)
+        log_file_list: list[str] = await extract_log(zip_extract_coros)
         if log_file_list is None or log_file_list is empty:
-            raise Exception(
-                f"Failed to get log_files from {settings.sourcedir}")
+            raise Exception(f"Failed to get log_files from {settings.sourcedir}")
     except Exception as err:
         logger.error(f"{err}")
 
-    convert_fn_list = []
+    convert_fn_list: list[Coroutine[Any, Any, list[JavaLog]]] = []
     for log_list in log_file_list:
         for file in log_list:
             convert_fn_list.append(convert(file))
 
-    converted_log_lists = await asyncio.gather(*convert_fn_list)
+    converted_log_lists: list[list[JavaLog]] = await asyncio.gather(*convert_fn_list)
 
-    insert_log_fn_list = []
+    insert_log_fn_list: list[Coroutine[Any, Any, InsertManyResult | None]] = []
     for log_lists in converted_log_lists:
         insert_log_fn_list.append(insert_logs(log_lists))
 
-    ok = await asyncio.gather(*insert_log_fn_list)
+    ok: list[InsertManyResult] | None = await asyncio.gather(*insert_log_fn_list)
     logger.info(f"Output from db insert: {ok}")
 
-    out = await find_logs(query={}, sort="-datetime")
+    out: list[JavaLog] = await find_logs(query={}, sort="-datetime")
     await display_result(out)
+
 
 if __name__ == "__main__":
 

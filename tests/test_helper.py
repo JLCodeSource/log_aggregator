@@ -1,9 +1,10 @@
 import logging
-from typing import Callable
-import pytest
 import os
-from aggregator import config, helper
+from typing import Callable
 
+import pytest
+
+from aggregator import config, helper
 
 settings: config.Settings = config.get_settings()
 
@@ -24,12 +25,13 @@ filename_data: list[tuple[str, str, str, bool]] = [
 @pytest.mark.parametrize("node, service, ext, tld", filename_data)
 @pytest.mark.unit
 def test_get_node(
-        logger: pytest.LogCaptureFixture,
-        make_filename: Callable[[str, str, str, bool], str],
-        node: str,
-        service: str,
-        ext: str,
-        tld: bool) -> None:
+    logger: pytest.LogCaptureFixture,
+    make_filename: Callable[[str, str, str, bool], str],
+    node: str,
+    service: str,
+    ext: str,
+    tld: bool,
+) -> None:
     file: str = make_filename(node, service, ext, tld)
     assert helper.get_node(file) == node
     assert logger.record_tuples == [
@@ -40,13 +42,14 @@ def test_get_node(
 @pytest.mark.parametrize("node, service, ext, tld", filename_data)
 @pytest.mark.unit
 def test_get_node_tmpdir(
-        logger: pytest.LogCaptureFixture,
-        make_filename: Callable[[str, str, str, bool], str],
-        node: str,
-        service: str,
-        ext: str,
-        tld: bool,
-        tmpdir: pytest.TempdirFactory) -> None:
+    logger: pytest.LogCaptureFixture,
+    make_filename: Callable[[str, str, str, bool], str],
+    node: str,
+    service: str,
+    ext: str,
+    tld: bool,
+    tmpdir: pytest.TempdirFactory,
+) -> None:
     file: str = make_filename(node, service, ext, tld)
     if os.path.splitext(file)[1] == ".log":
         filename: str = f"{tmpdir}{file[1:]}"
@@ -61,30 +64,31 @@ def test_get_node_tmpdir(
 @pytest.mark.parametrize("node, service, ext, tld", filename_data)
 @pytest.mark.unit
 def test_get_log_type(
-        logger: pytest.LogCaptureFixture,
-        make_filename: Callable[[str, str, str, bool], str],
-        node: str,
-        service: str,
-        ext: str,
-        tld: bool) -> None:
+    logger: pytest.LogCaptureFixture,
+    make_filename: Callable[[str, str, str, bool], str],
+    node: str,
+    service: str,
+    ext: str,
+    tld: bool,
+) -> None:
     file: str = make_filename(node, service, ext, tld)
     assert helper.get_log_type(file) == service
     assert logger.record_tuples == [
-        (module_name, logging.DEBUG,
-         f"log_type: {service} from {file}")
+        (module_name, logging.DEBUG, f"log_type: {service} from {file}")
     ]
 
 
 @pytest.mark.parametrize("node, service, ext, tld", filename_data)
 @pytest.mark.unit
 def test_get_log_type_tmpdir(
-        logger: pytest.LogCaptureFixture,
-        make_filename: Callable[[str, str, str, bool], str],
-        node: str,
-        service: str,
-        ext: str,
-        tld: bool,
-        tmpdir: pytest.TempdirFactory) -> None:
+    logger: pytest.LogCaptureFixture,
+    make_filename: Callable[[str, str, str, bool], str],
+    node: str,
+    service: str,
+    ext: str,
+    tld: bool,
+    tmpdir: pytest.TempdirFactory,
+) -> None:
     file: str = make_filename(node, service, ext, tld)
     if os.path.splitext(file)[1] == ".log":
         filename: str = f"{tmpdir}{file[1:]}"
@@ -92,23 +96,27 @@ def test_get_log_type_tmpdir(
         filename: str = f"{tmpdir}{os.path.sep}{file}"
     assert helper.get_log_type(filename) == service
     assert logger.record_tuples == [
-        (module_name, logging.DEBUG,
-         f"log_type: {service} from {filename}")
+        (module_name, logging.DEBUG, f"log_type: {service} from {filename}")
     ]
 
 
 @pytest.mark.parametrize("node, service, ext, tld", filename_data)
 @pytest.mark.unit
 def test_get_log_dir(
-        logger: pytest.LogCaptureFixture,
-        settings_override: config.Settings,
-        node: str,
-        service: str,
-        ext: str,
-        tld: bool) -> None:
+    logger: pytest.LogCaptureFixture,
+    settings_override: config.Settings,
+    node: str,
+    service: str,
+    ext: str,
+    tld: bool,
+) -> None:
     out: str = os.path.join(settings_override.outdir, node, service)
     test: str = helper.get_log_dir(node, service)
     assert test == out
     assert logger.record_tuples == [
-        (module_name, logging.DEBUG,
-         f"outdir: {out} from {settings_override.outdir}, {node}, {service}")]
+        (
+            module_name,
+            logging.DEBUG,
+            f"outdir: {out} from {settings_override.outdir}, {node}, {service}",
+        )
+    ]

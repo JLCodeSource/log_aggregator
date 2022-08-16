@@ -17,11 +17,11 @@ class OneLineExceptionFormatter(logging.Formatter):
     def format(self, record) -> str:
         result: str = super().format(record)
         if record.exc_text:
-            result: str = result.replace("\n", " ; ")
-            result: str = result.replace("  ", "")
+            result = result.replace("\n", " ; ")
+            result = result.replace("  ", "")
             trace: list[str] = result.split(" ; Traceback")
             if len(trace) > 0:
-                result: str = trace[0]
+                result = trace[0]
         return result
 
 

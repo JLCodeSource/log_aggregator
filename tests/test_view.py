@@ -1,24 +1,23 @@
 # import logging
 import io
-import pytest
 import sys
-from aggregator import convert, db, view, config
-from aggregator.model import JavaLog
-from motor.motor_asyncio import AsyncIOMotorClient
+
+import pytest
 from beanie import PydanticObjectId
+from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.results import InsertManyResult
+
+from aggregator import config, convert, db, view
+from aggregator.model import JavaLog
 
 module_name: str = "view"
 
 
 @pytest.mark.asyncio
 @pytest.mark.unit
-@pytest.mark.parametrize(
-    "make_logs", ["one_line_log.log"], indirect=["make_logs"])
+@pytest.mark.parametrize("make_logs", ["one_line_log.log"], indirect=["make_logs"])
 async def test_view_display_result_one_line_success(
-    motor_conn: tuple[str, str],
-    make_logs: str,
-    mock_get_node: str
+    motor_conn: tuple[str, str], make_logs: str, mock_get_node: str
 ) -> None:
     # Given a motor_conn
     database: str
@@ -75,8 +74,8 @@ async def test_view_display_result_one_line_success(
 
 
 @pytest.mark.parametrize(
-    "make_logs", [("two_line_svc.log", "two_line_svc_out.log")],
-    indirect=["make_logs"])
+    "make_logs", [("two_line_svc.log", "two_line_svc_out.log")], indirect=["make_logs"]
+)
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_view_display_result_multi_line_success(
@@ -107,7 +106,7 @@ async def test_view_display_result_multi_line_success(
         await db.insert_logs(converted_logs)
 
         # And it has a query
-        query: str = (JavaLog.node == "node")
+        query: str = JavaLog.node == "node"
 
         # And it gets the log
         results: list[JavaLog] = await db.find_logs(query, sort=None)
@@ -120,8 +119,7 @@ async def test_view_display_result_multi_line_success(
         with open(log_out, "r") as f:
             content: str = f.read()
             for i in range(len(results)):
-                content: str = content.replace(
-                    f"objectid{i}", str(results[i].id))
+                content: str = content.replace(f"objectid{i}", str(results[i].id))
 
         # And the expected output is
         out: str = content

@@ -20,8 +20,8 @@ class Settings(BaseSettings):
     environment: str = os.getenv("ENVIRONMENT", "dev")
     testing: bool = bool(os.getenv("TESTING", 0))
     connection: str = os.getenv(
-        "DATABASE_URL",
-        "mongodb://root:example@localhost:27017/?authMechanism=DEFAULT")
+        "DATABASE_URL", "mongodb://root:example@localhost:27017/?authMechanism=DEFAULT"
+    )
     sourcedir: str = os.getenv("SOURCE", "./testsource/zips")
     outdir: str = os.getenv("OUT", "./out")
     testdatadir: str = os.getenv("TESTDATA", "./testsource")
@@ -43,8 +43,7 @@ class Settings(BaseSettings):
         if len(conn_log_split) > 1:
             url_scheme: str = conn_log_split[0].split("//")[0]
             url_address: str = conn_log_split[1]
-            conn_log: str = (f"{url_scheme}//username:password@"
-                             f"{url_address}")
+            conn_log = f"{url_scheme}//username:password@" f"{url_address}"
         return conn_log
 
     def get_sourcedir(self) -> str:

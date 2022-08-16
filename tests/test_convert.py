@@ -1,22 +1,19 @@
-from csv import DictReader
-from datetime import datetime
 import logging
+from datetime import datetime
 from typing import Any, Literal
-import motor.motor_asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
-import pytest
-from aggregator import convert, db
-from beanie.exceptions import CollectionWasNotInitialized
 
+import pytest
+from beanie.exceptions import CollectionWasNotInitialized
+from motor.motor_asyncio import AsyncIOMotorClient
+
+from aggregator import convert, db
 from aggregator.model import JavaLog
 
-
-module_name: Literal['aggregator.convert'] = "aggregator.convert"
+module_name: Literal["aggregator.convert"] = "aggregator.convert"
 
 
 @pytest.mark.unit
-def test_lineStartMatch_matches(
-        logger: pytest.LogCaptureFixture) -> None:
+def test_lineStartMatch_matches(logger: pytest.LogCaptureFixture) -> None:
     # Given a string to match (INFO)
     # And a string that matches (INFO | j |)
     # When it tries to match
@@ -25,14 +22,12 @@ def test_lineStartMatch_matches(
 
     # And the logger logs it
     assert logger.record_tuples == [
-        (module_name, logging.DEBUG,
-         "Matches: True from INFO with 'INFO | j |'")
+        (module_name, logging.DEBUG, "Matches: True from INFO with 'INFO | j |'")
     ]
 
 
 @pytest.mark.unit
-def test_line_start_match_no_match(
-        logger: pytest.LogCaptureFixture) -> None:
+def test_line_start_match_no_match(logger: pytest.LogCaptureFixture) -> None:
     # Given a string to match (INFO)
     # And a string that doesn't matches (xyz)
     # When it tries to match
@@ -41,14 +36,12 @@ def test_line_start_match_no_match(
 
     # And the logger logs it
     assert logger.record_tuples == [
-        (module_name, logging.DEBUG,
-         "Matches: False from INFO with 'xyz'")
+        (module_name, logging.DEBUG, "Matches: False from INFO with 'xyz'")
     ]
 
 
 @pytest.mark.unit
-def test_line_start_match_non_string_arg1(
-        logger: pytest.LogCaptureFixture) -> None:
+def test_line_start_match_non_string_arg1(logger: pytest.LogCaptureFixture) -> None:
     # Given a non-string to match (1)
     # When it tries to match
     # Then it raises a TypeError
@@ -57,14 +50,14 @@ def test_line_start_match_non_string_arg1(
 
     # And logs a warning
     assert logger.record_tuples[0] == (
-        module_name, logging.WARNING,
-        "TypeError: first argument must be string or compiled pattern"
+        module_name,
+        logging.WARNING,
+        "TypeError: first argument must be string or compiled pattern",
     )
 
 
 @pytest.mark.unit
-def test_line_start_match_non_string_arg2(
-        logger: pytest.LogCaptureFixture) -> None:
+def test_line_start_match_non_string_arg2(logger: pytest.LogCaptureFixture) -> None:
     # Given a non-string to match (1)
     # When it tries to match
     # Then it raises a TypeError
@@ -73,14 +66,14 @@ def test_line_start_match_non_string_arg2(
 
     # And logs a warning
     assert logger.record_tuples[0] == (
-        module_name, logging.WARNING,
-        "TypeError: expected string or bytes-like object"
+        module_name,
+        logging.WARNING,
+        "TypeError: expected string or bytes-like object",
     )
 
 
 @pytest.mark.unit
-def test_yield_matches_one_line(
-        logger: pytest.LogCaptureFixture) -> None:
+def test_yield_matches_one_line(logger: pytest.LogCaptureFixture) -> None:
     # Given 2 single line logs in a list of logs that starts with INFO
     logs: str = "INFO | This is a log\nINFO | This is another log"
 
@@ -95,20 +88,21 @@ def test_yield_matches_one_line(
 
     # And the logger logs it
     assert logger.record_tuples[1] == (
-        module_name, logging.DEBUG,
-        f"Appended: {log_list[0]} to list"
+        module_name,
+        logging.DEBUG,
+        f"Appended: {log_list[0]} to list",
     )
     assert logger.record_tuples[3] == (
-        module_name, logging.DEBUG,
-        f"Appended: {log_list[1]} to list"
-
+        module_name,
+        logging.DEBUG,
+        f"Appended: {log_list[1]} to list",
     )
 
 
 @pytest.mark.unit
 def test_yield_matches_multi_line(
-        logger: pytest.LogCaptureFixture,
-        multi_line_log: str) -> None:
+    logger: pytest.LogCaptureFixture, multi_line_log: str
+) -> None:
     # Given a multiline error log that starts with ERROR
     logs: str = multi_line_log
     # And the logs split by line
@@ -122,8 +116,7 @@ def test_yield_matches_multi_line(
 
     # And the multi-line log is yielded
     assert log_list[1] == (
-        "ERROR | This is an error log; with multiple lines; "
-        "and more lines"
+        "ERROR | This is an error log; with multiple lines; " "and more lines"
     )
 
     # And the single line log at the end is yielded
@@ -133,8 +126,9 @@ def test_yield_matches_multi_line(
     modules: list[str]
     levels: list[int]
     messages: list[str]
-    modules, levels, messages = pytest.helpers.log_recorder(   # type: ignore
-        logger.record_tuples)
+    modules, levels, messages = pytest.helpers.log_recorder(  # type: ignore
+        logger.record_tuples
+    )
 
     # And the logger logs modules & levels
     assert all(module == module_name for module in modules)
@@ -143,8 +137,7 @@ def test_yield_matches_multi_line(
     # And the logger logs lines
     for line in lines:
         assert any(
-            message == f"Appended: {line.strip()} to list" for
-            message in messages
+            message == f"Appended: {line.strip()} to list" for message in messages
         )
 
 
@@ -162,9 +155,9 @@ def test_yield_matches_starts_with_whitespace() -> None:
 @pytest.mark.unit
 def test_yield_matches_ignores_empty_lines() -> None:
     # Given a log with whitespace & lines
-    log: str = (" INFO | log stuff\n\n\n\n"
-                " WARN | more logs \n\n\n"
-                " INFO | moar logs\n\n\n")
+    log: str = (
+        " INFO | log stuff\n\n\n\n" " WARN | more logs \n\n\n" " INFO | moar logs\n\n\n"
+    )
 
     # When it checks for a match
     logs: list[str] = list(convert._yield_matches(log))
@@ -177,10 +170,8 @@ def test_yield_matches_ignores_empty_lines() -> None:
 
 
 @pytest.mark.unit
-@pytest.mark.parametrize(
-    "make_logs", ["multi_line_log.log"], indirect=["make_logs"])
-def test_multi_to_single_line(
-        make_logs: str) -> None:
+@pytest.mark.parametrize("make_logs", ["multi_line_log.log"], indirect=["make_logs"])
+def test_multi_to_single_line(make_logs: str) -> None:
     # Given a logfile with 5 lines & 3 individual logs (multi_line_log)
     log_file: str = make_logs
 
@@ -195,14 +186,13 @@ def test_multi_to_single_line(
     # And it logs it
     # TODO: These checks
 
+
 # TODO: Add unhappy paths
 
 
 @pytest.mark.unit
-@pytest.mark.parametrize(
-    "make_logs", ["multi_line_log.log"], indirect=["make_logs"])
-def test_convert_log_to_csv_success(
-        make_logs: str) -> None:
+@pytest.mark.parametrize("make_logs", ["multi_line_log.log"], indirect=["make_logs"])
+def test_convert_log_to_csv_success(make_logs: str) -> None:
     # Given a logfile with 5 lines & 3 individual logs (multi_line_log)
     log_file: str = make_logs
 
@@ -210,9 +200,7 @@ def test_convert_log_to_csv_success(
     convert._multi_to_single_line(log_file)
 
     # When it tries to convert the CSV log file to a dict
-    result: list[
-        dict[str | Any, str | Any]
-    ] = convert._convert_log_to_csv(log_file)
+    result: list[dict[str | Any, str | Any]] = convert._convert_log_to_csv(log_file)
 
     # Then it succeeds
     assert type(result) == list
@@ -221,17 +209,16 @@ def test_convert_log_to_csv_success(
     # TODO: Improve checks
     # And add logging
 
+
 # TODO: Add unhappy paths
 
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "make_logs", ["one_line_log.log"], indirect=["make_logs"])
+@pytest.mark.parametrize("make_logs", ["one_line_log.log"], indirect=["make_logs"])
 async def test_convert_collection_not_initialized(
-        logger: pytest.LogCaptureFixture,
-        make_logs: str,
-        mock_get_node: str) -> None:
+    logger: pytest.LogCaptureFixture, make_logs: str, mock_get_node: str
+) -> None:
     # TODO: This test is brittle as it is dependent on being called
     # before convert_success
 
@@ -254,12 +241,10 @@ async def test_convert_collection_not_initialized(
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "make_logs", ["simple_svc.log"], indirect=["make_logs"])
+@pytest.mark.parametrize("make_logs", ["simple_svc.log"], indirect=["make_logs"])
 async def test_convert_success(
-        motor_conn: tuple[str, str],
-        make_logs: str,
-        mock_get_node: str) -> None:
+    motor_conn: tuple[str, str], make_logs: str, mock_get_node: str
+) -> None:
     # Given a target log file
     tgt_log_file: str = make_logs
 
@@ -284,34 +269,44 @@ async def test_convert_success(
         assert sum(log.severity == "WARN" for log in log_list) == 1
         assert sum(log.source == "ttl.test" for log in log_list) == 3
         assert sum(log.source == "org.connect" for log in log_list) == 1
-        assert all(log.type in ("SMB", "async", "event", "process", None)
-                   for log in log_list)
-        assert all(log.datetime in (
-            datetime(2022, 7, 11, 9, 12, 2),
-            datetime(2022, 7, 11, 9, 12, 55),
-            datetime(2022, 7, 11, 9, 13, 1),
-            datetime(2022, 7, 11, 9, 14, 51),
-            datetime(2022, 7, 11, 9, 15, 51)
-        ) for log in log_list)
-        assert all(log.message in (
-            "Exec proxy", "FileIO", "more messages",
-            "SecondaryMonitor -> {path: /path/secondary, "
-            "number: 2361852362752}",
-            "error doing reconnect...; java.io.IOException: org.Exception: "
-            "ErrorCode = Connection for /locks; "
-            "at ttl.test.create(lock.java:2); "
-            "at ttl.test.reconnect(lock.java:99); "
-            "at ttl.test.process(lock.java:101); "
-            "at org.processEvent(connect.java:500); "
-            "at org.run(connect.java:200); "
-            "Caused by: org.Exception: ErrorCode = Connection for /locks; "
-            "at org.Exception.create(Exception.java:122); "
-            "at org.Exception.create(Exception.java:540); "
-            "at org.exists(exists.java:2000); "
-            "at org.exists(exists.java:2079); "
-            "at ttl.test.create(Lock.java:720); "
-            "... 4 more"
-        ) for log in log_list)
+        assert all(
+            log.type in ("SMB", "async", "event", "process", None) for log in log_list
+        )
+        assert all(
+            log.datetime
+            in (
+                datetime(2022, 7, 11, 9, 12, 2),
+                datetime(2022, 7, 11, 9, 12, 55),
+                datetime(2022, 7, 11, 9, 13, 1),
+                datetime(2022, 7, 11, 9, 14, 51),
+                datetime(2022, 7, 11, 9, 15, 51),
+            )
+            for log in log_list
+        )
+        assert all(
+            log.message
+            in (
+                "Exec proxy",
+                "FileIO",
+                "more messages",
+                "SecondaryMonitor -> {path: /path/secondary, " "number: 2361852362752}",
+                "error doing reconnect...; java.io.IOException: org.Exception: "
+                "ErrorCode = Connection for /locks; "
+                "at ttl.test.create(lock.java:2); "
+                "at ttl.test.reconnect(lock.java:99); "
+                "at ttl.test.process(lock.java:101); "
+                "at org.processEvent(connect.java:500); "
+                "at org.run(connect.java:200); "
+                "Caused by: org.Exception: ErrorCode = Connection for /locks; "
+                "at org.Exception.create(Exception.java:122); "
+                "at org.Exception.create(Exception.java:540); "
+                "at org.exists(exists.java:2000); "
+                "at org.exists(exists.java:2079); "
+                "at ttl.test.create(Lock.java:720); "
+                "... 4 more",
+            )
+            for log in log_list
+        )
 
     finally:
         # Set manual teardown
@@ -321,13 +316,13 @@ async def test_convert_success(
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "make_logs", ["bad_timestamp.log"], indirect=["make_logs"])
+@pytest.mark.parametrize("make_logs", ["bad_timestamp.log"], indirect=["make_logs"])
 async def test_convert_to_datetime_bad_timestamp(
-        motor_conn: tuple[str, str],
-        logger: pytest.LogCaptureFixture,
-        make_logs: str,
-        mock_get_node: str) -> None:
+    motor_conn: tuple[str, str],
+    logger: pytest.LogCaptureFixture,
+    make_logs: str,
+    mock_get_node: str,
+) -> None:
     # Given a target log file
     tgt_log_file: str = make_logs
 
@@ -345,9 +340,10 @@ async def test_convert_to_datetime_bad_timestamp(
 
         # Then it logs an exception
         assert logger.record_tuples[10] == (
-            module_name, logging.ERROR,
+            module_name,
+            logging.ERROR,
             "ValueError: time data '2022/07/1x 09:12:02' "
-            "does not match format '%Y/%m/%d %H:%M:%S'"
+            "does not match format '%Y/%m/%d %H:%M:%S'",
         )
 
     finally:
@@ -357,33 +353,32 @@ async def test_convert_to_datetime_bad_timestamp(
 
 
 class MockDatetime:
-
     @staticmethod
-    def bad_timestamp() -> Literal['2022/07/1x 09:12:02']:
+    def bad_timestamp() -> Literal["2022/07/1x 09:12:02"]:
         return "2022/07/1x 09:12:02"
+
 
 # TODO: Test for file with trailing empty line
 
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "make_logs", ["bad_timestamp.log"], indirect=["make_logs"])
+@pytest.mark.parametrize("make_logs", ["bad_timestamp.log"], indirect=["make_logs"])
 async def test_convert_bad_timestamp(
-        monkeypatch: pytest.MonkeyPatch,
-        motor_conn: tuple[str, str],
-        logger: pytest.LogCaptureFixture,
-        make_logs: str,
-        mock_get_node: str) -> None:
+    monkeypatch: pytest.MonkeyPatch,
+    motor_conn: tuple[str, str],
+    logger: pytest.LogCaptureFixture,
+    make_logs: str,
+    mock_get_node: str,
+) -> None:
     # Given a target log file
     tgt_log_file: str = make_logs
 
     # And a mock _convert_to_datetime
-    def mock_convert_to_datetime(*args, **kwargs) -> Literal['2022/07/1x 09:12:02']:
+    def mock_convert_to_datetime(*args, **kwargs) -> Literal["2022/07/1x 09:12:02"]:
         return MockDatetime.bad_timestamp()
 
-    monkeypatch.setattr(
-        convert, "_convert_to_datetime", mock_convert_to_datetime)
+    monkeypatch.setattr(convert, "_convert_to_datetime", mock_convert_to_datetime)
 
     # And a motor_client, database & db_log_name
     database: str

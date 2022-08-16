@@ -22,17 +22,15 @@ Functions: createLogsOutputDir, extract, extractLog
 import asyncio
 import logging
 import os
-from typing import Any, Coroutine
 import zipfile
-
 from pathlib import Path
 from shutil import move
+from typing import Any, Coroutine, Literal
 
 from aggregator import helper
 from aggregator.config import Settings, get_settings
 
-
-READ: str = "r"
+READ: Literal["r"] = "r"
 TYPEERROR: str = "Value should not be None"
 DEFAULT_LOG_EXTENSION: str = "service.log"
 
@@ -54,8 +52,7 @@ def _move_files_to_target(target: str, source: str) -> None:
     # Move log files out of System folder where they are by default
     tmp_logs_out: str = os.path.join(target, source)
     for filename in os.listdir(tmp_logs_out):
-        move(os.path.join(tmp_logs_out, filename),
-             os.path.join(target, filename))
+        move(os.path.join(tmp_logs_out, filename), os.path.join(target, filename))
         logger.debug(f"Moved {filename} from {tmp_logs_out} to {target}")
 
 
@@ -70,8 +67,8 @@ def _remove_folder(target: str) -> None:
 
 
 async def _extract(
-        zip_file: str, target_dir: str,
-        extension: str = DEFAULT_LOG_EXTENSION) -> list[str]:
+    zip_file: str, target_dir: str, extension: str = DEFAULT_LOG_EXTENSION
+) -> list[str]:
 
     logger.info(f"Starting extraction coroutine for {zip_file}")
     log_files: list[str] = []
@@ -92,8 +89,7 @@ async def _extract(
                 await asyncio.sleep(0)
                 zf.extract(filename, target_dir)
                 logger.info(
-                    f"Extracted *{extension} generating {filename} at "
-                    f"{target_dir}"
+                    f"Extracted *{extension} generating {filename} at {target_dir}"
                 )
 
         # TODO: Extract move_files_to_target & remove_folder
@@ -110,15 +106,9 @@ async def _extract(
 
 
 def gen_zip_extract_fn_list(
-        src_dir: str,
-        zip_files_extract_fn_list: list[
-            Coroutine[Any, Any, list[str]
-                      ]
-        ] | None = []
-    ) -> list[
-    Coroutine[Any, Any, list[str]
-              ]
-] | None:
+    src_dir: str,
+    zip_files_extract_fn_list: list[Coroutine[Any, Any, list[str]]] | None = [],
+) -> list[Coroutine[Any, Any, list[str]]] | None:
     # Manages the process of extracting the logs
     # Kicks off the conversion process for each in an await
     # Added options to pass in list values for testing purposes
@@ -128,9 +118,7 @@ def gen_zip_extract_fn_list(
             node: str = helper.get_node(zip_file)
             log_type: str = helper.get_log_type(zip_file)
             logs_dir: str = helper.get_log_dir(node, log_type)
-            if node is None or \
-                    log_type is None or \
-                    logs_dir is None:
+            if node is None or log_type is None or logs_dir is None:
                 raise TypeError(TYPEERROR)
         except TypeError as err:
             logger.error(f"TypeError: {err}")
@@ -140,8 +128,9 @@ def gen_zip_extract_fn_list(
         zip_file: str = os.path.join(src_dir, zip_file)
 
         try:
-            zip_files_extract_fn_list.append(   # type: ignore
-                _extract(zip_file, logs_dir))
+            zip_files_extract_fn_list.append(  # type: ignore
+                _extract(zip_file, logs_dir)
+            )
         except AttributeError as err:
             logger.error(f"Attribute Error: {err}")
             raise err
@@ -151,7 +140,7 @@ def gen_zip_extract_fn_list(
 
 async def extract_log(
     extract_fn_list: list[Coroutine[Any, Any, list[str]]] | None = None,
-    log_files: list[str] = []
+    log_files: list[str] = [],
 ) -> list[str]:
 
     try:

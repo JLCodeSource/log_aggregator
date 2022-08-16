@@ -1,6 +1,7 @@
-import pytest
 import logging
 import os
+
+import pytest
 
 from aggregator.config import Settings
 
@@ -8,8 +9,7 @@ settings: Settings = Settings()
 
 
 @pytest.mark.unit
-def test_settings_get_environment(
-        settings_override: Settings) -> None:
+def test_settings_get_environment(settings_override: Settings) -> None:
     # Given a set of settings (settings_override)
     # When you check the environment value
     env: str = settings_override.get_environment()
@@ -18,8 +18,7 @@ def test_settings_get_environment(
     assert env == "dev"
 
 
-def test_settings_get_testing_from_test_conf(
-        settings_override: Settings) -> None:
+def test_settings_get_testing_from_test_conf(settings_override: Settings) -> None:
     # Given a set of settings (settings_override)
     # When you check the environment value
     env: bool = settings_override.get_testing()
@@ -33,16 +32,20 @@ def test_settings_get_testing_from_test_conf(
     [
         (settings.get_environment(), "dev"),
         (settings.get_testing(), False),
-        (settings.get_connection(),
-         "mongodb://root:example@localhost:27017/?authMechanism=DEFAULT"),
-        (settings.get_connection_log(),
-         "mongodb://username:password@localhost:27017/?authMechanism=DEFAULT"),
+        (
+            settings.get_connection(),
+            "mongodb://root:example@localhost:27017/?authMechanism=DEFAULT",
+        ),
+        (
+            settings.get_connection_log(),
+            "mongodb://username:password@localhost:27017/?authMechanism=DEFAULT",
+        ),
         (settings.get_sourcedir(), "./testsource/zips"),
         (settings.get_outdir(), "./out"),
         (settings.get_testdatadir(), "./testsource"),
         (settings.get_database(), "logs"),
         (settings.get_log_level(), logging.INFO),
-    ]
+    ],
 )
 def test_settings_funcs(func: object, value: str | bool | int) -> None:
     assert func == value
