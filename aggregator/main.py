@@ -57,6 +57,30 @@ async def init_app() -> tuple[AsyncIOMotorClient, Settings]:
     return result, settings
 
 
+def _get_zip_extract_coro_list(
+    settings: Settings,
+) -> list[Coroutine[Any, Any, list[str]]]:
+    zip_coro_list: list[Coroutine[Any, Any, list[str]]] = []
+    gen_zip_extract_fn_list(settings.sourcedir, zip_coro_list)
+    if zip_coro_list is None:
+        raise ValueError
+    else:
+        coro_list: list[Coroutine[Any, Any, list[str]]] = cast(
+            list[Coroutine[Any, Any, list[str]]], zip_coro_list
+        )
+    return coro_list
+
+
+def _get_convert_coro_list(
+    convert_coro_list: list[Coroutine[Any, Any, list[JavaLog]]] = [],
+    log_file_list: list[str] = [],
+) -> list[Coroutine[Any, Any, list[JavaLog]]]:
+    for log_list in log_file_list:  # type: ignore
+        for file in log_list:
+            convert_coro_list.append(convert(file))
+    return convert_coro_list
+
+
 @Aggregator
 async def main() -> None:
 
@@ -67,30 +91,24 @@ async def main() -> None:
         exit()
 
     # Create list of configured extraction functions for zip extraction
-    gen_zip_extract_coros: list[
-        Coroutine[Any, Any, list[str]]
-    ] | None = gen_zip_extract_fn_list(settings.sourcedir)
-    if gen_zip_extract_coros is None:
-        raise ValueError
-    else:
-        zip_extract_coros: list[Coroutine[Any, Any, list[str]]] = cast(
-            list[Coroutine[Any, Any, list[str]]], gen_zip_extract_coros
-        )
+    zip_coro_list: list[Coroutine[Any, Any, list[str]]] = _get_zip_extract_coro_list(
+        settings
+    )
 
     # Extact logs from source directory
     try:
-        log_file_list: list[str] = await extract_log(zip_extract_coros)
+        log_file_list: list[str] = await extract_log(zip_coro_list)
         if log_file_list is None or log_file_list is empty:
             raise Exception(f"Failed to get log_files from {settings.sourcedir}")
     except Exception as err:
         logger.error(f"{err}")
 
-    convert_fn_list: list[Coroutine[Any, Any, list[JavaLog]]] = []
-    for log_list in log_file_list:  # type: ignore
-        for file in log_list:
-            convert_fn_list.append(convert(file))
+    convert_coro_list: list[Coroutine[Any, Any, list[JavaLog]]] = []
+    convert_coro_list = _get_convert_coro_list(
+        convert_coro_list, log_file_list  # type: ignore
+    )
 
-    converted_log_lists: list[list[JavaLog]] = await asyncio.gather(*convert_fn_list)
+    converted_log_lists: list[list[JavaLog]] = await asyncio.gather(*convert_coro_list)
 
     insert_log_fn_list: list[Coroutine[Any, Any, InsertManyResult | None]] = []
     for log_lists in converted_log_lists:

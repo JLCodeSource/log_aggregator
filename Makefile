@@ -12,7 +12,7 @@ install:
 test: 
 	pytest -vv
 	pytest --cov --cov-report html
-	pytest --mccabe
+	pytest --mccabe -vv
 
 ## Lint
 lint:
