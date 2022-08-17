@@ -1,6 +1,7 @@
 # import logging
 import io
 import sys
+from pathlib import Path
 
 import pytest
 from beanie import PydanticObjectId
@@ -25,7 +26,7 @@ async def test_view_display_result_one_line_success(
     database, conn = motor_conn
 
     # And a target log file
-    tgt_log_file: str = make_logs
+    tgt_log_file: Path = Path(make_logs)
 
     # And a display header
     header: str = (
@@ -92,8 +93,8 @@ async def test_view_display_result_multi_line_success(
 
     # And target log files
     logs: list[str] = make_logs
-    log_in: str = logs[0]
-    log_out: str = logs[1]
+    log_in: Path = Path(logs[0])
+    log_out: Path = Path(logs[1])
 
     # And an initialized database
     try:

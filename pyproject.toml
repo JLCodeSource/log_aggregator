@@ -6,6 +6,10 @@ markers = [
     "integration: integration tests",
     "mutmut: tests made for mutmut",
 ]
+[tool.mypy]
+exclude = [
+    ".+site-packages/hypothesis/.+",
+]
 [tool.poetry]
 name = "log-aggregator"
 version = "0.1.0"

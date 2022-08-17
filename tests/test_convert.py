@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Literal
 
 import pytest
@@ -173,7 +174,7 @@ def test_yield_matches_ignores_empty_lines() -> None:
 @pytest.mark.parametrize("make_logs", ["multi_line_log.log"], indirect=["make_logs"])
 def test_multi_to_single_line(make_logs: str) -> None:
     # Given a logfile with 5 lines & 3 individual logs (multi_line_log)
-    log_file: str = make_logs
+    log_file: Path = Path(make_logs)
 
     # When it opens the logfile
     convert._multi_to_single_line(log_file)
@@ -192,9 +193,9 @@ def test_multi_to_single_line(make_logs: str) -> None:
 
 @pytest.mark.unit
 @pytest.mark.parametrize("make_logs", ["multi_line_log.log"], indirect=["make_logs"])
-def test_convert_log_to_csv_success(make_logs: str) -> None:
+def test_convert_log_to_csv_success(make_logs: Path) -> None:
     # Given a logfile with 5 lines & 3 individual logs (multi_line_log)
-    log_file: str = make_logs
+    log_file: Path = make_logs
 
     # And it has converted the file to single lines
     convert._multi_to_single_line(log_file)
@@ -217,13 +218,13 @@ def test_convert_log_to_csv_success(make_logs: str) -> None:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("make_logs", ["one_line_log.log"], indirect=["make_logs"])
 async def test_convert_collection_not_initialized(
-    logger: pytest.LogCaptureFixture, make_logs: str, mock_get_node: str
+    logger: pytest.LogCaptureFixture, make_logs: Path, mock_get_node: str
 ) -> None:
     # TODO: This test is brittle as it is dependent on being called
     # before convert_success
 
     # Given a target log file
-    tgt_log_file: str = make_logs
+    tgt_log_file: Path = make_logs
 
     # When it tries to convert the logs
     # Then it raises a CollectionNotInitialized error
@@ -243,10 +244,10 @@ async def test_convert_collection_not_initialized(
 @pytest.mark.asyncio
 @pytest.mark.parametrize("make_logs", ["simple_svc.log"], indirect=["make_logs"])
 async def test_convert_success(
-    motor_conn: tuple[str, str], make_logs: str, mock_get_node: str
+    motor_conn: tuple[str, str], make_logs: Path, mock_get_node: str
 ) -> None:
     # Given a target log file
-    tgt_log_file: str = make_logs
+    tgt_log_file: Path = make_logs
 
     # And a motor_client, database & db_log_name
     database: str
@@ -320,11 +321,11 @@ async def test_convert_success(
 async def test_convert_to_datetime_bad_timestamp(
     motor_conn: tuple[str, str],
     logger: pytest.LogCaptureFixture,
-    make_logs: str,
+    make_logs: Path,
     mock_get_node: str,
 ) -> None:
     # Given a target log file
-    tgt_log_file: str = make_logs
+    tgt_log_file: Path = make_logs
 
     # And a motor_client, database & db_log_name
     database: str
@@ -368,11 +369,11 @@ async def test_convert_bad_timestamp(
     monkeypatch: pytest.MonkeyPatch,
     motor_conn: tuple[str, str],
     logger: pytest.LogCaptureFixture,
-    make_logs: str,
+    make_logs: Path,
     mock_get_node: str,
 ) -> None:
     # Given a target log file
-    tgt_log_file: str = make_logs
+    tgt_log_file: Path = make_logs
 
     # And a mock _convert_to_datetime
     def mock_convert_to_datetime(*args, **kwargs) -> Literal["2022/07/1x 09:12:02"]:

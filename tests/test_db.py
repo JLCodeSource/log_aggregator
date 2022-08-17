@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Coroutine, Literal, NoReturn
 
 import beanie
@@ -660,7 +661,7 @@ async def test_find_logs_successfully(
 @pytest.mark.unit
 @pytest.mark.parametrize("make_logs", ["simple_svc.log"], indirect=["make_logs"])
 async def test_find_logs_with_sort(
-    motor_conn: tuple[str, str], make_logs: str, mock_get_node: str
+    motor_conn: tuple[str, str], make_logs: Path, mock_get_node: str
 ) -> None:
     # Given a motor_client, database & db_log_name
     database: str
@@ -668,7 +669,7 @@ async def test_find_logs_with_sort(
     database, conn = motor_conn
 
     # And a target log file
-    tgt_log_file: str = make_logs
+    tgt_log_file: Path = make_logs
 
     # And an initialized database
     try:

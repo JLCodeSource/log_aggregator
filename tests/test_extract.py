@@ -10,35 +10,35 @@ from zipfile import BadZipFile, ZipFile
 import pytest
 
 from aggregator import config, extract, helper  # noqa
+from aggregator.helper import LOG_LOGTYPE_PATTERN, ZIP_NODE_PATTERN
 
-filename_example: str = "GBLogs_-n11_fanapiservice_1657563227839.zip"
-badzipfile_example: str = "not_a_zip.zip"
-non_file: str = "non_file.zip"
+filename_example: Path = Path("GBLogs_-n11_fanapiservice_1657563227839.zip")
+badzipfile_example: Path = Path("not_a_zip.zip")
+non_file: Path = Path("non_file.zip")
 
-sourcedir_example: list[str] = [
-    "GBLogs_-n11_fanapiservice_1657563227839.zip",
-    "GBLogs_-n16_fanapiservice_1657563218539.zip",
+sourcedir_example: list[Path] = [
+    Path("GBLogs_-n11_fanapiservice_1657563227839.zip"),
+    Path("GBLogs_-n16_fanapiservice_1657563218539.zip"),
 ]
+
 
 module_name: str = "aggregator.extract"
 
 
 @pytest.mark.mock
 @pytest.mark.unit
-def test_create_log_dir(
-    logger: pytest.LogCaptureFixture, tmpdir: pytest.TempdirFactory
-) -> None:
+def test_create_log_dir(logger: pytest.LogCaptureFixture, tmp_path: Path) -> None:
     # Given a (viable) log directory (tmpdir)
 
     # When it tries to create that directory
-    extract._create_log_dir(str(tmpdir))
+    extract._create_log_dir(tmp_path)
 
     # Then it succeeds
-    assert os.path.exists(str(tmpdir))
+    assert os.path.exists(tmp_path)
     # And it is a directory
-    assert os.path.isdir(str(tmpdir))
+    assert os.path.isdir(tmp_path)
     # And the logger logs success
-    assert logger.record_tuples == [(module_name, logging.DEBUG, f"Created {tmpdir}")]
+    assert logger.record_tuples == [(module_name, logging.DEBUG, f"Created {tmp_path}")]
 
 
 class MockPath:
@@ -58,7 +58,7 @@ class MockPath:
 @pytest.mark.unit
 def test_create_log_dir_parents_false(
     logger: pytest.LogCaptureFixture,
-    tmpdir: pytest.TempdirFactory,
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # Given a log dir as a subdirectory without a parent
@@ -70,7 +70,7 @@ def test_create_log_dir_parents_false(
     # When it attempts to create the log dir
     # Then raises a FileNotFoundError
     with pytest.raises(FileNotFoundError):
-        extract._create_log_dir(os.path.join(str(tmpdir), "no_parent", "sub"))
+        extract._create_log_dir(Path(os.path.join(tmp_path, "no_parent", "sub")))
 
     # And the logger logs the error
     assert logger.record_tuples[0] == (
@@ -85,7 +85,7 @@ def test_create_log_dir_parents_false(
 @pytest.mark.unit
 def test_create_log_dir_exist_ok_false(
     logger: pytest.LogCaptureFixture,
-    tmpdir: pytest.TempdirFactory,
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # Given a log_directory file that already exists
@@ -97,7 +97,7 @@ def test_create_log_dir_exist_ok_false(
     # When it attempts to create the directory
     # Then it raises a FileExistsError
     with pytest.raises(FileExistsError):
-        extract._create_log_dir(str(tmpdir))
+        extract._create_log_dir(tmp_path)
 
     # And the logger logs the error
     assert logger.record_tuples[0] == (
@@ -108,26 +108,24 @@ def test_create_log_dir_exist_ok_false(
 
 
 @pytest.mark.unit
-def test_move_files_to_target(
-    logger: pytest.LogCaptureFixture, tmpdir: pytest.TempdirFactory
-) -> None:
+def test_move_files_to_target(logger: pytest.LogCaptureFixture, tmp_path: Path) -> None:
     # Given a filename
     filename: str = "test.txt"
     # And a source directory
-    system: str = os.path.join(str(tmpdir), "System")
+    system: Path = Path(os.path.join(tmp_path, "System"))
     os.mkdir(system)
     file: str = os.path.join(system, filename)
     # And a target path
-    target: str = os.path.join(str(tmpdir), filename)
+    target: str = os.path.join(tmp_path, filename)
     # And content in the file
     with open(file, "w") as f:
         f.write("text to test")
 
     # When it moves files to target
-    extract._move_files_to_target(str(tmpdir), system)
+    extract._move_files_to_target(tmp_path, system)
 
     # Then the file will be in the source directory
-    assert filename in os.listdir(str(tmpdir))
+    assert filename in os.listdir(tmp_path)
     # And the content of the file will remain as above
     with open(target, "r") as f:
         assert f.read() == "text to test"
@@ -137,37 +135,33 @@ def test_move_files_to_target(
     assert logger.record_tuples[0] == (
         module_name,
         logging.DEBUG,
-        f"Moved {filename} from {system} to {tmpdir}",
+        f"Moved {filename} from {system} to {tmp_path}",
     )
 
 
 @pytest.mark.unit
-def test_remove_folder(
-    logger: pytest.LogCaptureFixture, tmpdir: pytest.TempdirFactory
-) -> None:
+def test_remove_folder(logger: pytest.LogCaptureFixture, tmp_path: Path) -> None:
     # Given a folder (tmpdir)
 
     # When it tries to remove the folder
-    extract._remove_folder(str(tmpdir))
+    extract._remove_folder(tmp_path)
 
     # Then the folder no longer exists
-    assert os.path.exists(str(tmpdir)) is False
+    assert os.path.exists(tmp_path) is False
 
     # And the logger logs the removal
-    assert logger.record_tuples == [(module_name, logging.DEBUG, f"Removed {tmpdir}")]
+    assert logger.record_tuples == [(module_name, logging.DEBUG, f"Removed {tmp_path}")]
 
 
 @pytest.mark.unit
-def test_remove_folder_fnf(
-    logger: pytest.LogCaptureFixture, tmpdir: pytest.TempdirFactory
-) -> None:
+def test_remove_folder_fnf(logger: pytest.LogCaptureFixture, tmp_path: Path) -> None:
     # Given a non-existent temp dir
-    os.rmdir(str(tmpdir))
+    os.rmdir(tmp_path)
 
     # When it tries to remove the folder
     # Then it raises a FileNotFoundError
     with pytest.raises(FileNotFoundError):
-        extract._remove_folder(str(tmpdir))
+        extract._remove_folder(tmp_path)
 
     # And the logger logs it
     assert logger.record_tuples[0][0] == module_name
@@ -190,7 +184,7 @@ class MockZip:
 @pytest.mark.integration
 async def test_extract_successful_run(
     logger: pytest.LogCaptureFixture,
-    tmpdir: pytest.TempdirFactory,
+    tmp_path: Path,
     settings_override: config.Settings,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -201,11 +195,11 @@ async def test_extract_successful_run(
     monkeypatch.setattr(ZipFile, "namelist", mock_zip_namelist)
 
     # And an example filename
-    zip_file: str = filename_example
-    src_dir: str = settings_override.get_sourcedir()
-    src_file: str = os.path.join(src_dir, zip_file)
-    tgt_zip: str = os.path.join(str(tmpdir), zip_file)
-    shutil.copy(src_file, str(tmpdir))
+    zip_file: Path = filename_example
+    src_dir: Path = settings_override.get_sourcedir()
+    src_file: Path = Path(os.path.join(src_dir, zip_file))
+    tgt_zip: Path = Path(os.path.join(tmp_path, zip_file))
+    shutil.copy(src_file, tmp_path)
     # And an example extension
     extension: str = "service.log"
     # And an empty log_filename
@@ -216,10 +210,10 @@ async def test_extract_successful_run(
         if filename.endswith(extension):
             log_file = filename
     # And it tries to extract a file
-    await extract._extract(tgt_zip, str(tmpdir), extension)
+    await extract._extract(tgt_zip, tmp_path, extension)
 
     # Then it extracts the file
-    target_log: str = os.path.join(str(tmpdir), os.path.basename(log_file))
+    target_log: Path = Path(os.path.join(tmp_path, os.path.basename(log_file)))
     assert os.path.exists(target_log)
     # And the logger logs the start of the coroutine
     logs: list[tuple[str, int, str]] = logger.record_tuples
@@ -232,7 +226,7 @@ async def test_extract_successful_run(
     assert logs[1] == (
         module_name,
         logging.INFO,
-        f"Extracted *{extension} generating {log_file} at {tmpdir}",
+        f"Extracted *{extension} generating {log_file} at {tmp_path}",
     )
     # And the logger logs the end of the coroutine
     assert logs[-1] == (
@@ -247,20 +241,20 @@ async def test_extract_successful_run(
 @pytest.mark.integration
 async def test_extract_badzipfile(
     logger: pytest.LogCaptureFixture,
-    tmpdir: pytest.TempdirFactory,
+    tmp_path: Path,
     settings_override: config.Settings,
 ) -> None:
     # And an example filename
-    zip_file: str = badzipfile_example
-    src_dir: str = settings_override.get_testdatadir()
-    src_file: str = os.path.join(src_dir, zip_file)
-    tgt_file: str = os.path.join(str(tmpdir), zip_file)
-    shutil.copy(src_file, str(tmpdir))
+    zip_file: Path = badzipfile_example
+    src_dir: Path = settings_override.get_testdatadir()
+    src_file: Path = Path(os.path.join(src_dir, zip_file))
+    tgt_file: Path = Path(os.path.join(tmp_path, zip_file))
+    shutil.copy(src_file, tmp_path)
 
     # When it tries to extract the zip
     # Then it raises
     with pytest.raises(BadZipFile):
-        await extract._extract(tgt_file, str(tmpdir))
+        await extract._extract(tgt_file, tmp_path)
 
     # And it logs the error
     assert logger.record_tuples[-1] == (
@@ -291,7 +285,7 @@ class MockDir:
     # Mock that returns an example directory output
 
     @staticmethod
-    def listdir(dir: str) -> list[str]:
+    def listdir(dir: Path) -> list[Path]:
         return sourcedir_example
 
 
@@ -299,18 +293,18 @@ class MockDir:
 @pytest.mark.mock
 @pytest.mark.unit
 async def test_gen_extract_fn_list(
-    monkeypatch: pytest.MonkeyPatch, tmpdir: pytest.TempdirFactory
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     # Given a mock example source directory
-    def mock_listdir(*args, **kwargs) -> list[str]:
-        return MockDir.listdir(str(tmpdir))
+    def mock_listdir(*args, **kwargs) -> list[Path]:
+        return MockDir.listdir(tmp_path)
 
     monkeypatch.setattr(os, "listdir", mock_listdir)
 
     # When it tries to generate the extract files list
     zip_files_extract_fn_list: list[
-        Coroutine[Any, Any, list[str]]
-    ] | None = extract.gen_zip_extract_fn_list(str(tmpdir))
+        Coroutine[Any, Any, list[Path]]
+    ] | None = extract.gen_zip_extract_fn_list(tmp_path)
 
     # Then it returns a list of functions
     assert zip_files_extract_fn_list is not None
@@ -324,19 +318,19 @@ async def test_gen_extract_fn_list(
 async def test_gen_extract_fn_list_empty(
     logger: pytest.LogCaptureFixture,
     monkeypatch: pytest.MonkeyPatch,
-    tmpdir: pytest.TempdirFactory,
+    tmp_path: Path,
 ) -> None:
     # Given an example source directory with zip files
-    def mock_listdir(*args, **kwargs) -> list[str]:
-        return MockDir.listdir(str(tmpdir))
+    def mock_listdir(*args, **kwargs) -> list[Path]:
+        return MockDir.listdir(tmp_path)
 
     monkeypatch.setattr(os, "listdir", mock_listdir)
 
     # When it tries to extract files without a list of functions
-    coro_list: list[Coroutine[Any, Any, list[str]]] | None = []
+    coro_list: list[Coroutine[Any, Any, list[Path]]] | None = []
     # Then it raises an AttributeError
     with pytest.raises(FileNotFoundError):
-        coro_list = extract.gen_zip_extract_fn_list(str(tmpdir), coro_list)
+        coro_list = extract.gen_zip_extract_fn_list(tmp_path, coro_list)
         assert coro_list is not None
         for coro in coro_list:
             await coro
@@ -349,17 +343,17 @@ async def test_gen_extract_fn_list_empty(
     [
         (
             MockNone.get_none(),
-            helper.get_log_type(filename_example),
+            helper.get_log_type(filename_example, LOG_LOGTYPE_PATTERN),
             helper.get_log_dir("node", "fanapiservice"),
         ),
         (
-            helper.get_node(filename_example),
+            helper.get_node(filename_example, ZIP_NODE_PATTERN),
             MockNone.get_none(),
             helper.get_log_dir("node", "fanapiservice"),
         ),
         (
-            helper.get_node(filename_example),
-            helper.get_log_type(filename_example),
+            helper.get_node(filename_example, ZIP_NODE_PATTERN),
+            helper.get_log_type(filename_example, LOG_LOGTYPE_PATTERN),
             MockNone.get_none(),
         ),
     ],
@@ -370,15 +364,15 @@ async def test_gen_extract_fn_list_empty(
 @pytest.mark.unit
 async def test_gen_extract_fn_list_helper_none_returns(
     logger: pytest.LogCaptureFixture,
-    tmpdir: pytest.TempdirFactory,
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     get_node: str,
     get_log_type: str,
-    get_log_dir: str,
+    get_log_dir: Path,
 ) -> None:
     # Given a source directory
-    def mock_listdir(*args, **kwargs) -> list[str]:
-        return MockDir.listdir(str(tmpdir))
+    def mock_listdir(*args, **kwargs) -> list[Path]:
+        return MockDir.listdir(tmp_path)
 
     monkeypatch.setattr(os, "listdir", mock_listdir)
 
@@ -396,7 +390,7 @@ async def test_gen_extract_fn_list_helper_none_returns(
 
     # And a log_dir returned
 
-    def mock_helper_get_log_dir(*args, **kwargs) -> str:
+    def mock_helper_get_log_dir(*args, **kwargs) -> Path:
         return get_log_dir
 
     monkeypatch.setattr(helper, "get_log_dir", mock_helper_get_log_dir)
@@ -405,8 +399,8 @@ async def test_gen_extract_fn_list_helper_none_returns(
     # Then it raises a TypeError
     with pytest.raises(TypeError):
         coro_list: list[
-            Coroutine[Any, Any, list[str]]
-        ] | None = extract.gen_zip_extract_fn_list(str(tmpdir), None)
+            Coroutine[Any, Any, list[Path]]
+        ] | None = extract.gen_zip_extract_fn_list(tmp_path, None)
         assert coro_list is not None
         for coro in coro_list:
             await coro
@@ -423,12 +417,12 @@ async def test_gen_extract_fn_list_helper_none_returns(
 @pytest.mark.unit
 async def test_gen_extract_fn_list_None_list(
     logger: pytest.LogCaptureFixture,
-    tmpdir: pytest.TempdirFactory,
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # Given a source directory
-    def mock_listdir(*args, **kwargs) -> list[str]:
-        return MockDir.listdir(str(tmpdir))
+    def mock_listdir(*args, **kwargs) -> list[Path]:
+        return MockDir.listdir(tmp_path)
 
     monkeypatch.setattr(os, "listdir", mock_listdir)
 
@@ -447,7 +441,7 @@ async def test_gen_extract_fn_list_None_list(
     # When it tries to extract the zip function list
     # Then it raises a TypeError
     with pytest.raises(AttributeError):
-        extract.gen_zip_extract_fn_list(str(tmpdir), None)
+        extract.gen_zip_extract_fn_list(tmp_path, None)
 
     # And the logger logs it
     assert logger.record_tuples[-1] == (
@@ -462,35 +456,40 @@ async def test_gen_extract_fn_list_None_list(
 @pytest.mark.integration
 async def test_extract_log_returns_log_files(
     logger: pytest.LogCaptureFixture,
-    tmpdir: pytest.TempdirFactory,
+    tmp_path: Path,
     settings_override: config.Settings,
 ) -> None:
-    # Given  a target directory
-    src_dir: str = settings_override.get_sourcedir()
+    # Given a source directory
+    src_dir: Path = settings_override.get_sourcedir()
+    # And a target directory
+    target: Path = Path(os.path.join(tmp_path, "target"))
+    os.mkdir(target)
     # And a zip file
-    file_full_path: str = os.path.join(str(tmpdir), filename_example)
-    # And a log to be extracted (filename_example)
-    src_file: str = os.path.join(src_dir, filename_example)
-    shutil.copy(src_file, str(tmpdir))
+    file_full_path: Path = Path(os.path.join(tmp_path, filename_example))
+    # And a zip to be extracted (filename_example)
+    src_file: Path = Path(os.path.join(src_dir, filename_example))
+    shutil.copy(src_file, tmp_path)
+    # And a log filename inside the zip
+    log_file: Path = Path(os.path.join(target, "fanapiservice.log"))
 
     # And a list of coroutines
     coroutine_list: list = []
-    coroutine_list.append(extract._extract(file_full_path, str(tmpdir)))
+    coroutine_list.append(extract._extract(file_full_path, target))
 
     # When it tries to extract the log list
-    log_files: list[str] = []
-    log_file_list: list[str] = await extract.extract_log(coroutine_list)
+    log_files: list[Path] = []
+    log_file_list: list[Path] = await extract.extract_log(coroutine_list)
     for file in log_file_list:
         log_files.append(file)
 
     # The extracted file is in the log_files output
-    assert file_full_path in log_files[0]
+    assert [log_file] == log_files[0]
 
     # And the logger logs the extraction
     assert logger.record_tuples[1] == (
         module_name,
         logging.INFO,
-        f"Extracted *service.log generating System/fanapiservice.log at {tmpdir}",
+        f"Extracted *service.log generating System/fanapiservice.log at {target}",
     )
 
 
@@ -508,7 +507,7 @@ async def test_extract_log_asyncio_returns_empty(
     monkeypatch.setattr(asyncio, "gather", mock_asyncio_gather_get_empty)
 
     # And a mock list
-    lst: list[Coroutine[Any, Any, list[str]]] = []
+    lst: list[Coroutine[Any, Any, list[Path]]] = []
 
     # When it tries to extract the log
     # Then it raises an error
@@ -528,13 +527,13 @@ async def test_extract_log_asyncio_returns_empty(
 @pytest.mark.mutmut
 @pytest.mark.unit
 async def test_extract_log_asyncio_returns_FnF(
-    logger: pytest.LogCaptureFixture, tmpdir: pytest.TempdirFactory
+    logger: pytest.LogCaptureFixture, tmp_path: Path
 ) -> None:
     # Given a non file
-    file: str = os.path.join(str(tmpdir), non_file)
+    file: Path = Path(os.path.join(tmp_path, non_file))
     # And a mock zip_file_extract_fn_list
-    extract_fn_list: list[Coroutine[Any, Any, list[str]]] = []
-    extract_fn_list.append(extract._extract(file, str(tmpdir)))
+    extract_fn_list: list[Coroutine[Any, Any, list[Path]]] = []
+    extract_fn_list.append(extract._extract(file, tmp_path))
 
     # When it tries to extract the log
     # Then it raises an error
@@ -554,13 +553,13 @@ async def test_extract_log_asyncio_returns_FnF(
 @pytest.mark.mutmut
 @pytest.mark.unit
 async def test_extract_log_asyncio_gather_type(
-    logger: pytest.LogCaptureFixture, tmpdir: pytest.TempdirFactory
+    logger: pytest.LogCaptureFixture, tmp_path: Path
 ) -> None:
     # Given a non file
-    file: str = os.path.join(str(tmpdir), non_file)
+    file: Path = Path(os.path.join(tmp_path, non_file))
     # And a mock zip_file_extract_fn_list
-    extract_fn_list: list[Coroutine[Any, Any, list[str]]] = []
-    extract_fn_list.append(extract._extract(file, str(tmpdir)))
+    extract_fn_list: list[Coroutine[Any, Any, list[Path]]] = []
+    extract_fn_list.append(extract._extract(file, tmp_path))
 
     # When it tries to extract the log
     # it raises a FileNotFound Error

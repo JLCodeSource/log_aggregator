@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 
 import pytest
 
@@ -40,14 +41,14 @@ def test_settings_get_testing_from_test_conf(settings_override: Settings) -> Non
             settings.get_connection_log(),
             "mongodb://username:password@localhost:27017/?authMechanism=DEFAULT",
         ),
-        (settings.get_sourcedir(), "./testsource/zips"),
-        (settings.get_outdir(), "./out"),
-        (settings.get_testdatadir(), "./testsource"),
+        (settings.get_sourcedir(), Path("./testsource/zips")),
+        (settings.get_outdir(), Path("./out")),
+        (settings.get_testdatadir(), Path("./testsource")),
         (settings.get_database(), "logs"),
         (settings.get_log_level(), logging.INFO),
     ],
 )
-def test_settings_funcs(func: object, value: str | bool | int) -> None:
+def test_settings_funcs(func: object, value: str | bool | int | Path) -> None:
     assert func == value
 
 

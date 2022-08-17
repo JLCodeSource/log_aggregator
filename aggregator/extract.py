@@ -29,6 +29,7 @@ from typing import Any, Coroutine, Literal
 
 from aggregator import helper
 from aggregator.config import Settings, get_settings
+from aggregator.helper import LOG_LOGTYPE_PATTERN, ZIP_NODE_PATTERN
 
 READ: Literal["r"] = "r"
 TYPEERROR: str = "Value should not be None"
@@ -38,7 +39,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 settings: Settings = get_settings()
 
 
-def _create_log_dir(target: str) -> None:
+def _create_log_dir(target: Path) -> None:
     # Create logs output directory
     try:
         Path(target).mkdir(parents=True, exist_ok=True)
@@ -48,15 +49,15 @@ def _create_log_dir(target: str) -> None:
     logger.debug(f"Created {target}")
 
 
-def _move_files_to_target(target: str, source: str) -> None:
+def _move_files_to_target(target: Path, source: Path) -> None:
     # Move log files out of System folder where they are by default
-    tmp_logs_out: str = os.path.join(target, source)
+    tmp_logs_out: Path = Path(os.path.join(target, source))
     for filename in os.listdir(tmp_logs_out):
         move(os.path.join(tmp_logs_out, filename), os.path.join(target, filename))
         logger.debug(f"Moved {filename} from {tmp_logs_out} to {target}")
 
 
-def _remove_folder(target: str) -> None:
+def _remove_folder(target: Path) -> None:
     # Remove System folder
     try:
         os.rmdir(target)
@@ -67,11 +68,11 @@ def _remove_folder(target: str) -> None:
 
 
 async def _extract(
-    zip_file: str, target_dir: str, extension: str = DEFAULT_LOG_EXTENSION
-) -> list[str]:
+    zip_file: Path, target_dir: Path, extension: str = DEFAULT_LOG_EXTENSION
+) -> list[Path]:
 
     logger.info(f"Starting extraction coroutine for {zip_file}")
-    log_files: list[str] = []
+    log_files: list[Path] = []
 
     if not os.path.exists(zip_file):
         logger.error(f"FileNotFoundError: {zip_file} is not a file")
@@ -85,7 +86,7 @@ async def _extract(
 
         filesInZip: list[str] = zf.namelist()
         for filename in filesInZip:
-            if filename.endswith(extension):
+            if os.path.basename(filename).endswith(extension):
                 await asyncio.sleep(0)
                 zf.extract(filename, target_dir)
                 logger.info(
@@ -93,31 +94,31 @@ async def _extract(
                 )
 
         # TODO: Extract move_files_to_target & remove_folder
-        _move_files_to_target(target_dir, "System")
+        _move_files_to_target(target_dir, Path("System"))
 
-        _remove_folder(os.path.join(target_dir, "System"))
+        _remove_folder(Path(os.path.join(target_dir, "System")))
 
         for filename in os.listdir(target_dir):
             filename = os.path.join(target_dir, filename)
-            log_files.append(filename)
+            log_files.append(Path(filename))
 
     logger.info(f"Ending extraction coroutine for {zip_file}")
     return log_files
 
 
 def gen_zip_extract_fn_list(
-    src_dir: str,
-    zip_files_extract_fn_list: list[Coroutine[Any, Any, list[str]]] | None = [],
-) -> list[Coroutine[Any, Any, list[str]]] | None:
+    src_dir: Path,
+    zip_files_extract_fn_list: list[Coroutine[Any, Any, list[Path]]] | None = [],
+) -> list[Coroutine[Any, Any, list[Path]]] | None:
     # Manages the process of extracting the logs
     # Kicks off the conversion process for each in an await
     # Added options to pass in list values for testing purposes
 
     for zip_file in os.listdir(src_dir):
         try:
-            node: str = helper.get_node(zip_file)
-            log_type: str = helper.get_log_type(zip_file)
-            logs_dir: str = helper.get_log_dir(node, log_type)
+            node: str = helper.get_node(Path(zip_file), ZIP_NODE_PATTERN)
+            log_type: str = helper.get_log_type(Path(zip_file), LOG_LOGTYPE_PATTERN)
+            logs_dir: Path = helper.get_log_dir(node, log_type)
             if node is None or log_type is None or logs_dir is None:
                 raise TypeError(TYPEERROR)
         except TypeError as err:
@@ -129,7 +130,7 @@ def gen_zip_extract_fn_list(
 
         try:
             zip_files_extract_fn_list.append(  # type: ignore
-                _extract(zip_file, logs_dir)
+                _extract(Path(zip_file), logs_dir)
             )
         except AttributeError as err:
             logger.error(f"Attribute Error: {err}")
@@ -139,9 +140,9 @@ def gen_zip_extract_fn_list(
 
 
 async def extract_log(
-    extract_fn_list: list[Coroutine[Any, Any, list[str]]],
-    log_files: list[str] = [],
-) -> list[str]:
+    extract_fn_list: list[Coroutine[Any, Any, list[Path]]],
+    log_files: list[Path] = [],
+) -> list[Path]:
 
     try:
         new_log_files: list = await asyncio.gather(*extract_fn_list)

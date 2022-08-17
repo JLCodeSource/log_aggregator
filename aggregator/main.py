@@ -11,6 +11,7 @@ Variables: sourcedir
 
 import asyncio
 import logging
+from pathlib import Path
 from typing import Any, Coroutine, cast
 
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -59,14 +60,14 @@ async def init_app() -> tuple[AsyncIOMotorClient, Settings]:
 
 def _get_zip_extract_coro_list(
     settings: Settings,
-) -> list[Coroutine[Any, Any, list[str]]]:
-    zip_coro_list: list[Coroutine[Any, Any, list[str]]] = []
+) -> list[Coroutine[Any, Any, list[Path]]]:
+    zip_coro_list: list[Coroutine[Any, Any, list[Path]]] = []
     gen_zip_extract_fn_list(settings.sourcedir, zip_coro_list)
     if zip_coro_list is None:
         raise ValueError
     else:
-        coro_list: list[Coroutine[Any, Any, list[str]]] = cast(
-            list[Coroutine[Any, Any, list[str]]], zip_coro_list
+        coro_list: list[Coroutine[Any, Any, list[Path]]] = cast(
+            list[Coroutine[Any, Any, list[Path]]], zip_coro_list
         )
     return coro_list
 
@@ -77,7 +78,7 @@ def _get_convert_coro_list(
 ) -> list[Coroutine[Any, Any, list[JavaLog]]]:
     for log_list in log_file_list:  # type: ignore
         for file in log_list:
-            convert_coro_list.append(convert(file))
+            convert_coro_list.append(convert(Path(file)))
     return convert_coro_list
 
 
@@ -91,13 +92,13 @@ async def main() -> None:
         exit()
 
     # Create list of configured extraction functions for zip extraction
-    zip_coro_list: list[Coroutine[Any, Any, list[str]]] = _get_zip_extract_coro_list(
+    zip_coro_list: list[Coroutine[Any, Any, list[Path]]] = _get_zip_extract_coro_list(
         settings
     )
 
     # Extact logs from source directory
     try:
-        log_file_list: list[str] = await extract_log(zip_coro_list)
+        log_file_list: list[Path] = await extract_log(zip_coro_list)
         if log_file_list is None or log_file_list is empty:
             raise Exception(f"Failed to get log_files from {settings.sourcedir}")
     except Exception as err:

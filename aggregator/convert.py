@@ -11,16 +11,16 @@ convertLogtoCSV, convert
 import asyncio
 import csv
 import logging
-import os
 import re
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Generator
 
 from beanie.exceptions import CollectionWasNotInitialized
 from pydantic import ValidationError
 from pymongo.errors import ServerSelectionTimeoutError
 
-from aggregator.helper import get_node
+from aggregator.helper import LOG_NODE_PATTERN, get_node
 from aggregator.model import JavaLog
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -59,13 +59,13 @@ def _yield_matches(full_log: str) -> Generator:
     yield log
 
 
-def _multi_to_single_line(logfile: str) -> None:
+def _multi_to_single_line(logfile: Path) -> None:
     # multiToSingleLine converts multiline to single line logs
     data: str = open(logfile).read()
     logger.info(f"Opened {logfile} for reading")
     logs: list[str] = list(_yield_matches(data))
 
-    with open(os.path.join(logfile), "w") as file:
+    with open(logfile, "w") as file:
         for line in logs:
             file.write(f"{line}\n")
             logger.debug(f"Wrote: {line} to {file}")
@@ -81,10 +81,10 @@ def _strip_whitespace(d: dict) -> dict:
     return d
 
 
-def _convert_log_to_csv(logfile: str) -> list[dict[str | Any, str | Any]]:
+def _convert_log_to_csv(logfile: Path) -> list[dict[str | Any, str | Any]]:
     # Converts the CSV log file to a dict
     header: list[str] = ["severity", "jvm", "datetime", "source", "type", "message"]
-    with open(os.path.join(logfile), "r") as file:
+    with open(logfile, "r") as file:
         reader: csv.DictReader = csv.DictReader(file, delimiter="|", fieldnames=header)
         logger.info(f"Opened {logfile} as csv.dictReader")
         return list(reader)
@@ -99,11 +99,11 @@ def _convert_to_datetime(timestamp: str) -> datetime:
     return dt
 
 
-async def convert(log_file: str) -> list[JavaLog]:
+async def convert(log_file: Path) -> list[JavaLog]:
     logger.info(f"Starting new convert coroutine for {log_file}")
     # Work on log files in logsout
     log_list: list[JavaLog] = []
-    node: str = get_node(log_file)
+    node: str = get_node(log_file, LOG_NODE_PATTERN)
 
     _multi_to_single_line(log_file)
     reader: list[dict[str | Any, str | Any]] = _convert_log_to_csv(log_file)

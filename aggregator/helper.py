@@ -23,41 +23,60 @@ Functions: getNode, getLogType, getLogOutputDir,
 
 import logging
 import os
+import re
+from pathlib import Path
+from typing import Pattern
 
 from aggregator.config import Settings, get_settings
+
+ZIP_NODE_PATTERN: Pattern = re.compile(
+    r"^.+\/.+[L][o][g][s]_(.+?)([.].+|)_.+_\d{13}[.][z][i][p]$"
+)
+LOG_NODE_PATTERN: Pattern = re.compile(
+    r"^.+[o][u][t]\/([^\/].+?)([.].+|)\/.+\/.+[.][l][o][g](\d|)$"
+)
+ZIP_LOGTYPE_PATTERN: Pattern = re.compile(
+    r"^.+\/.+[L][o][g][s]_.+_(.+?)_\d{13}[.][z][i][p]$"
+)
+LOG_LOGTYPE_PATTERN: Pattern = re.compile(
+    r"^.+[o][u][t]\/.+\/([^\/].+)\/.+[.][l][o][g](\d|)$"
+)
+
 
 logger: logging.Logger = logging.getLogger(__name__)
 settings: Settings = get_settings()
 
 
-def get_node(file: str) -> str:
+def get_node(file: Path, pattern: Pattern) -> str:
     # Extract node name from filename
-    if os.path.basename(file).endswith(".zip"):
-        node: str = os.path.basename(file).split("_")[1].split(".")[0]
+    match: re.Match[str] | None = re.match(pattern, str(file))
+    if match is None:
+        logger.warning(
+            f"Wrong filename structure when getting node from {file} with {pattern}"
+        )
+        return ""
     else:
-        # Split by directory
-        node_split: list[str] = file.split(os.path.sep)
-        # node is first directory
-        node = node_split[-3]
-    logger.debug(f"node: {node} from {file}")
+        node: str = match[1]
+        logger.debug(f"node: {node} from {file}")
     return node
 
 
-def get_log_type(file: str) -> str:
+def get_log_type(file: Path, pattern: Pattern) -> str:
     # Extract logtype from filename
-    if os.path.basename(file).endswith(".zip"):
-        log_type: str = os.path.basename(file).split("_")[2]
+    match: re.Match[str] | None = re.match(pattern, str(file))
+    if match is None:
+        logger.warning(
+            f"Wrong filename structure when getting logtype from {file} with {pattern}"
+        )
+        return ""
     else:
-        # Split by directory
-        log_type_split: list[str] = file.split(os.path.sep)
-        # log_type is second directory
-        log_type = log_type_split[-2]
+        log_type: str = match[1]
     logger.debug(f"log_type: {log_type} from {file}")
     return log_type
 
 
-def get_log_dir(node: str, log_type: str) -> str:
+def get_log_dir(node: str, log_type: str) -> Path:
     # Return the output dir as a path
-    out: str = os.path.join(settings.outdir, node, log_type)
+    out: Path = Path(os.path.join(settings.outdir, node, log_type))
     logger.debug(f"outdir: {out} from {settings.outdir}, {node}, {log_type}")
     return out

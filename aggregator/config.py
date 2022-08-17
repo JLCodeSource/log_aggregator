@@ -10,6 +10,7 @@ Variables: sourcedir, outdir, connection, database
 import logging
 import os
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import BaseSettings  # AnyUrl
 
@@ -22,9 +23,9 @@ class Settings(BaseSettings):
     connection: str = os.getenv(
         "DATABASE_URL", "mongodb://root:example@localhost:27017/?authMechanism=DEFAULT"
     )
-    sourcedir: str = os.getenv("SOURCE", "./testsource/zips")
-    outdir: str = os.getenv("OUT", "./out")
-    testdatadir: str = os.getenv("TESTDATA", "./testsource")
+    sourcedir: Path = Path(os.getenv("SOURCE", "./testsource/zips"))
+    outdir: Path = Path(os.getenv("OUT", "./out"))
+    testdatadir: Path = Path(os.getenv("TESTDATA", "./testsource"))
     database: str = os.getenv("DATABASE", "logs")
     log_level: int = int(os.getenv("LOG_LEVEL", logging.INFO))
 
@@ -46,13 +47,13 @@ class Settings(BaseSettings):
             conn_log = f"{url_scheme}//username:password@" f"{url_address}"
         return conn_log
 
-    def get_sourcedir(self) -> str:
+    def get_sourcedir(self) -> Path:
         return self.sourcedir
 
-    def get_outdir(self) -> str:
+    def get_outdir(self) -> Path:
         return self.outdir
 
-    def get_testdatadir(self) -> str:
+    def get_testdatadir(self) -> Path:
         return self.testdatadir
 
     def get_database(self) -> str:

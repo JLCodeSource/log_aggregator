@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  aggregator:
+    build: ./aggregator
+    command: python -m main.py
+    volumes:
+    - .:/usr/src/app
+    environment:
+    - TESTING=0

@@ -145,7 +145,7 @@ def settings_override(tmp_database) -> config.Settings:
     settings.database = tmp_database
     settings.log_level = logging.DEBUG
     settings.testing = True
-    settings.sourcedir = "./testsource/zips"
+    settings.sourcedir = Path("./testsource/zips")
     return settings
 
 
@@ -222,46 +222,53 @@ def multi_line_log() -> str:
 
 
 @pytest.fixture()
-def make_filename(settings_override: config.Settings) -> object:
+def make_filename(settings_override: config.Settings, tmp_path: Path) -> object:
 
     settings: config.Settings = settings_override
 
-    def _make_filename(node: str, service: str, ext: str, tld: bool) -> str | None:
-        ts: int = 1658844081 + randrange(-100000, 100000)
-
+    def _make_filename(node: str, service: str, ext: str, tld: bool) -> Path | None:
+        ts: int = 1660736299000 + randrange(-100000000, 100000000)
+        outdir: str = os.path.join(tmp_path, os.path.relpath(settings.outdir))
         if ext == ".zip" and tld is True:
-            filename: str = f"GBLogs_{node}.domain.tld_" f"{service}_{ts}.zip"
+            filename: str = os.path.join(
+                outdir, f"GBLogs_{node}.domain.tld_{service}_{ts}.zip"
+            )
         elif ext == ".zip" and tld is False:
-            filename = f"GBLogs_{node}_" f"{service}_{ts}.zip"
+            filename = os.path.join(outdir, f"GBLogs_{node}_{service}_{ts}.zip")
         elif ext == ".log":
             file: str = f"{service}{ext}"
-            filename = os.path.join(settings.outdir, node, service, file)
+
+            filename = os.path.join(outdir, node, service, file)
         else:
             return None
-        return str(filename)
+        return Path(filename)
 
     return _make_filename
 
 
 @pytest.fixture
-def make_logs(request, tmpdir, make_filename, testdata_log_dir) -> str | list[str]:
+def make_logs(
+    request, tmp_path: Path, make_filename, testdata_log_dir: Path
+) -> Path | list[Path]:
     # Given a directory (tmpdir) & a log_file
-    log_files: list[str] = []
+    log_files: list[Path] = []
     params: list[str] = []
     if isinstance(request.param, str):
         params.append(request.param)
     else:
         params = request.param
     for param in params:
-        file: tuple[str, str] = os.path.splitext(param)
+        file: tuple[str, str] = os.path.splitext(str(param))
         filename: str = file[0]
         ext: str = file[1]
-        log_file_name: str | None = make_filename("node", filename, ext, False)[2:]
+        log_file_name: str | None = make_filename("node", filename, ext, False)
         if log_file_name is None:
             continue
         src_log_file: str = os.path.join(testdata_log_dir, param)
-        tgt_folder: str = os.path.join(tmpdir, os.path.dirname(log_file_name))
-        tgt_log_file: str = os.path.join(tgt_folder, os.path.basename(log_file_name))
+        tgt_folder: Path = Path(os.path.join(tmp_path, os.path.dirname(log_file_name)))
+        tgt_log_file: Path = Path(
+            os.path.join(tgt_folder, os.path.basename(log_file_name))
+        )
 
         # And a multi-line-log has been copied to the log_file
         os.makedirs(tgt_folder, exist_ok=True)
