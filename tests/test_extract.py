@@ -63,7 +63,7 @@ def test_create_log_dir_parents_false(
 ) -> None:
     # Given a log dir as a subdirectory without a parent
     def mock_mkdir_fnf(*args, **kwargs) -> NoReturn:
-        raise MockPath.mkdir_fnf()
+        return MockPath.mkdir_fnf()
 
     monkeypatch.setattr(Path, "mkdir", mock_mkdir_fnf)
 
@@ -90,7 +90,7 @@ def test_create_log_dir_exist_ok_false(
 ) -> None:
     # Given a log_directory file that already exists
     def mock_mkdir_fee(*args, **kwargs) -> NoReturn:
-        raise MockPath.mkdir_fee()
+        return MockPath.mkdir_fee()
 
     monkeypatch.setattr(Path, "mkdir", mock_mkdir_fee)
 
