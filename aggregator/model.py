@@ -1,7 +1,8 @@
+import uuid
 from datetime import datetime
 from pathlib import Path
+
 from pydantic import BaseModel
-import uuid
 
 
 class File(BaseModel):
@@ -13,15 +14,15 @@ class File(BaseModel):
 
 
 class ZipFile(File):
-    filetype: str = "zip"
+    filetype: Path = Path("zip")
 
-    
+
 class LogFile(File):
     source_zip: ZipFile
-    filetype: str = "log"
+    filetype: Path = Path("log")
     logtype: str | None = None
 
-    
+
 class LogEntry(BaseModel):
     id: uuid.UUID | None = uuid.uuid4()
     source_file: LogFile

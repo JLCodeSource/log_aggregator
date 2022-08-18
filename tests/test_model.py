@@ -1,14 +1,15 @@
+import uuid
 from datetime import datetime
 from pathlib import Path
-import uuid
-import pytest
-from aggregator.model import File, LogEntry, JavaLogEntry, LogFile, ZipFile
 
-test_uuid: uuid.UUID = uuid.UUID('d525b033-e4ac-4acf-b3ba-219ab974f0c5')
+import pytest
+
+from aggregator.model import File, JavaLogEntry, LogEntry, LogFile, ZipFile
+
+test_uuid: uuid.UUID = uuid.UUID("d525b033-e4ac-4acf-b3ba-219ab974f0c5")
 
 
 class TestFileModel:
-
     @pytest.mark.unit
     def test_file_model(self) -> None:
         # Given a class (File)
@@ -40,7 +41,7 @@ class TestFileModel:
         name: Path = Path("file.txt")
         filetype: Path = Path(".txt")
         node: str = "node001"
-        
+
         # When the File is instantiated
         file: File = File(id=id, path=path, name=name, filetype=filetype, node=node)
 
@@ -53,7 +54,6 @@ class TestFileModel:
 
 
 class TestZipFileModel(TestFileModel):
-
     @pytest.mark.unit
     def test_zipfile_model(self) -> None:
         # Given a class (ZipFile)
@@ -65,7 +65,6 @@ class TestZipFileModel(TestFileModel):
 
 
 class TestLogFileModel(TestFileModel):
-
     @pytest.mark.unit
     def test_logfile_model(self) -> None:
         # Given a class (LogFile)
@@ -81,8 +80,7 @@ class TestLogFileModel(TestFileModel):
         assert log_file.source_zip.id == zip_file.id
 
 
-class TestLogEntryModel():
-
+class TestLogEntryModel:
     @pytest.mark.unit
     def test_log_entry_model(self) -> None:
         # Given a class (LogEntry)
@@ -92,20 +90,17 @@ class TestLogEntryModel():
         log_file: LogFile = LogFile(id=id, source_zip=zip_file)
         # When it is instantiated
         log_entry: LogEntry = LogEntry(
-            source_file=log_file,
-            timestamp=datetime.now(),
-            message="Message"
-            )
+            source_file=log_file, timestamp=datetime.now(), message="Message"
+        )
 
         # Then the object exists & is a log
         assert type(log_entry.id) == uuid.UUID
         assert log_entry.source_file.id == id
         assert type(log_entry.source_file.source_zip.id) == uuid.UUID
-        assert log_entry.message == "Message" 
+        assert log_entry.message == "Message"
 
 
 class TestJavaLogEntry(TestLogEntryModel):
-
     @pytest.mark.unit
     def test_javalog_entry(self) -> None:
         # Given a class(JavaLog)
@@ -129,4 +124,4 @@ class TestJavaLogEntry(TestLogEntryModel):
         assert javalog_entry.source_file.id == id
         assert javalog_entry.severity == "INFO"
         assert javalog_entry.module == "AsyncFileSystem"
-        assert javalog_entry.type == "Async" 
+        assert javalog_entry.type == "Async"

@@ -12,7 +12,7 @@ Variables: sourcedir
 import asyncio
 import logging
 from pathlib import Path
-from typing import Any, Coroutine, Type, cast
+from typing import Any, Coroutine, cast
 
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.results import InsertManyResult
@@ -21,9 +21,9 @@ from pyparsing import empty
 from aggregator.config import Settings, get_settings
 from aggregator.convert import convert
 from aggregator.db import find_logs, init, insert_logs
+from aggregator.document import JavaLog
 from aggregator.extract import extract_log, gen_zip_extract_fn_list
 from aggregator.logs import configure_logging
-from aggregator.document import JavaLog
 from aggregator.view import display_result
 
 logger: logging.Logger = logging.getLogger(__name__)

@@ -1,7 +1,9 @@
-from aggregator.main import consume, publish
-import pytest
-import logging
 import asyncio
+import logging
+
+import pytest
+
+from aggregator.main import consume, publish
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -38,7 +40,7 @@ class TestQueues:
     @pytest.mark.asyncio
     def test_create_queue_consume_structure(self) -> None:
         # Given a queue
-        queue = asyncio.Queue()
+        queue: asyncio.Queue = asyncio.Queue()
         # When a value is added to the queue
         value: int = 1
         asyncio.run(publish(queue, value))
@@ -50,9 +52,9 @@ class TestQueues:
     @pytest.mark.asyncio
     def test_multiple_queues(self) -> None:
         # Given a queue
-        zip_file_queue = asyncio.Queue()
+        zip_file_queue: asyncio.Queue = asyncio.Queue()
         # And another queue
-        log_file_queue = asyncio.Queue()
+        log_file_queue: asyncio.Queue = asyncio.Queue()
 
         # When a value is added to one queue
         asyncio.run(publish(zip_file_queue, 1))
@@ -63,7 +65,6 @@ class TestQueues:
         assert asyncio.run(consume(log_file_queue)) == 2
         # And the value added to the first queue is in the first queue
         assert asyncio.run(consume(zip_file_queue)) == 1
-
 
     @pytest.mark.unit
     @pytest.mark.asyncio
@@ -83,7 +84,7 @@ class TestQueues:
         # Then the consumer can read them
         new_list: list[str] = []
         while True:
-            file: str = asyncio.run(consume(zip_file_queue))
+            file = asyncio.run(consume(zip_file_queue))
             if file is None:
                 break
             else:
