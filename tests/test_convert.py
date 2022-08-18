@@ -8,7 +8,7 @@ from beanie.exceptions import CollectionWasNotInitialized
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from aggregator import convert, db
-from aggregator.model import JavaLog
+from aggregator.document import JavaLog
 
 module_name: Literal["aggregator.convert"] = "aggregator.convert"
 

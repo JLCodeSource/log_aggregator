@@ -23,7 +23,7 @@ from aggregator.convert import convert
 from aggregator.db import find_logs, init, insert_logs
 from aggregator.extract import extract_log, gen_zip_extract_fn_list
 from aggregator.logs import configure_logging
-from aggregator.model import JavaLog
+from aggregator.document import JavaLog
 from aggregator.view import display_result
 
 logger: logging.Logger = logging.getLogger(__name__)

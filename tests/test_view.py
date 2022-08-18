@@ -9,7 +9,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.results import InsertManyResult
 
 from aggregator import config, convert, db, view
-from aggregator.model import JavaLog
+from aggregator.document import JavaLog
 
 module_name: str = "view"
 

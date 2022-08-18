@@ -21,7 +21,7 @@ from pydantic import ValidationError
 from pymongo.errors import ServerSelectionTimeoutError
 
 from aggregator.helper import LOG_NODE_PATTERN, get_node
-from aggregator.model import JavaLog
+from aggregator.document import JavaLog
 
 logger: logging.Logger = logging.getLogger(__name__)
 

@@ -15,7 +15,7 @@ from pymongo.results import InsertManyResult
 from pytest_mock_resources.fixture.database.mongo import create_mongo_fixture
 
 from aggregator import convert, db
-from aggregator.model import JavaLog
+from aggregator.document import JavaLog
 
 module_name: Literal["aggregator.db"] = "aggregator.db"
 wrong_id: PydanticObjectId = PydanticObjectId("608da169eb9e17281f0ab2ff")
@@ -97,7 +97,7 @@ async def test_init_server_timeout(
 ) -> None:
     # Given a mock init_beanie_server_timeout to target the test database
     def mock_beanie_server_timeout(*args, **kwargs) -> NoReturn:
-        raise MockBeanie.beanie_server_timeout()
+        return MockBeanie.beanie_server_timeout()
 
     monkeypatch.setattr(beanie, "init_beanie", mock_beanie_server_timeout)
 
@@ -230,7 +230,7 @@ async def test_insert_logs_servertimeout(
 ) -> None:
     # Given a mock javalog_server_timeout to target the test database
     def mock_insert_logs_server_timeout(*args, **kwargs) -> NoReturn:
-        raise MockJavaLog.insert_many_server_timeout()
+        return MockJavaLog.insert_many_server_timeout()
 
     monkeypatch.setattr(JavaLog, "insert_many", mock_insert_logs_server_timeout)
 
@@ -272,7 +272,7 @@ async def test_insert_logs_invalid_operation_error(
 ) -> None:
     # Given a MockJavaLog
     def mock_javalog_raises_invalid_operation(*args, **kwargs) -> NoReturn:
-        raise MockJavaLog.insert_many_invalid(*args, **kwargs)
+        return MockJavaLog.insert_many_invalid(*args, **kwargs)
 
     monkeypatch.setattr(JavaLog, "insert_many", mock_javalog_raises_invalid_operation)
 

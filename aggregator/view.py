@@ -12,7 +12,7 @@ from datetime import datetime
 from beanie import PydanticObjectId
 
 from aggregator.config import Settings, get_settings
-from aggregator.model import JavaLog
+from aggregator.document import JavaLog
 
 settings: Settings = get_settings()
 logger: logging.Logger = logging.getLogger(__name__)

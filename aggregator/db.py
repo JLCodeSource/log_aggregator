@@ -19,7 +19,7 @@ from pymongo.errors import InvalidOperation, ServerSelectionTimeoutError
 from pymongo.results import InsertManyResult
 
 from aggregator.config import Settings, get_settings
-from aggregator.model import JavaLog
+from aggregator.document import JavaLog
 
 logger: logging.Logger = logging.getLogger(__name__)
 

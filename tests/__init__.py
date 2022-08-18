@@ -5,5 +5,5 @@ from aggregator import extract  # noqa
 from aggregator import helper  # noqa
 from aggregator import logs  # noqa
 from aggregator import main  # noqa
-from aggregator import model  # noqa
+from aggregator import document  # noqa
 from aggregator import view  # noqa
