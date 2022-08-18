@@ -12,7 +12,7 @@ Variables: sourcedir
 import asyncio
 import logging
 from pathlib import Path
-from typing import Any, Coroutine, cast
+from typing import Any, Coroutine, Type, cast
 
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.results import InsertManyResult
@@ -80,6 +80,14 @@ def _get_convert_coro_list(
         for file in log_list:
             convert_coro_list.append(convert(Path(file)))
     return convert_coro_list
+
+
+async def publish(queue: asyncio.Queue, value: int) -> None:
+    await queue.put(value)
+
+
+async def consume(queue: asyncio.Queue) -> Any:
+    return await queue.get()
 
 
 @Aggregator
