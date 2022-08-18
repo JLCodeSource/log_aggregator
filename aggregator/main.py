@@ -82,7 +82,7 @@ def _get_convert_coro_list(
     return convert_coro_list
 
 
-async def publish(queue: asyncio.Queue, value: int) -> None:
+async def publish(queue: asyncio.Queue, value: Any) -> None:
     await queue.put(value)
 
 
