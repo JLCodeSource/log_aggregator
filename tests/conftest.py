@@ -4,19 +4,15 @@ This module contains shared fixtures, steps and hooks.
 import asyncio
 import logging
 import os
-import random
 import shutil
-import string
 from datetime import datetime
-from ipaddress import IPv4Address
 from pathlib import Path
 from random import randrange
-from typing import Any, Generator, Union  # Literal
+from typing import Generator, Union  # Literal
 
 import pytest
-from pytest_mock_resources.container.mongo import MongoConfig
 from pytest_mock_resources.fixture.database.generic import Credentials
-from typing_extensions import LiteralString
+from pytest_mock_resources.fixture.database.mongo import create_mongo_fixture
 
 from aggregator import config, convert
 from aggregator.model import JavaLog
@@ -111,38 +107,26 @@ def mock_get_node(monkeypatch) -> None:
     monkeypatch.setattr(convert, "get_node", mock_get_node)
 
 
+"""
 @pytest.fixture(scope="session")
-def pmr_mongo_config() -> MongoConfig:
-    return MongoConfig(image="mongo:latest", host="127.0.0.1")
-
-
-@pytest.fixture(scope="session")
-def pmr_creds() -> dict[str, Any]:
-    creds: dict[str, Any] = Credentials(
+def mongo():  # type: ignore
+    config: MongoConfig = MongoConfig(
+        image="mongo:latest",
+        port=27017,
         host="127.0.0.1",
-        port=28017,
-        drivername="mongodb",
-        database="mongo-dev",
-        username="",
-        password="",
-    ).as_mongo_kwargs()
-    return dict(creds)
+    )
+    mongo = create_mongo_fixture(pmr_mongo_config=config)  # type: ignore
+    return mongo
+"""
+
+mongo = create_mongo_fixture()
 
 
 @pytest.fixture()
-def tmp_database() -> str:
-    choices: LiteralString = string.ascii_lowercase + string.digits
-    postfix: str = "".join(random.choices(choices, k=4))
-    database: str = TEST_DATABASE
-    database = f"{database}-{postfix}"
-    return database
-
-
-@pytest.fixture()
-def settings_override(tmp_database) -> config.Settings:
+def settings_override() -> config.Settings:
 
     settings: config.Settings = config.get_settings()
-    settings.database = tmp_database
+    settings.database = "test-logs"
     settings.log_level = logging.DEBUG
     settings.testing = True
     settings.sourcedir = Path("./testsource/zips")
@@ -150,38 +134,16 @@ def settings_override(tmp_database) -> config.Settings:
 
 
 @pytest.fixture()
-def settings_override_pmr(
-    settings_override: config.Settings, pmr_creds: dict[str, Any]
-) -> tuple[config.Settings, dict[str, Any]]:
-    # username = pmr_mongo_credentials.username
-    # password = pmr_mongo_credentials.password
-    host: IPv4Address = IPv4Address("127.0.0.1")
-    port: int = 28017
-    database: str = pmr_creds["database"]
-    authsource: str = pmr_creds["database"]
-    settings: config.Settings = settings_override
-    settings.connection = (
-        f"mongodb://"
-        f"{host}:{port}/?authMechanism=DEFAULT&"
-        f"authSource={authsource}"
-    )
-    settings.database = database
-    return settings, pmr_creds
+def motor_conn(mongo) -> tuple[str, str]:
+    creds: Credentials = mongo.pmr_credentials
+    database: str = creds.database
+    conn: str = creds.as_url()
+    return database, conn
 
 
 @pytest.fixture()
 def get_datetime() -> datetime:
     return datetime(2022, 8, 6, 12, 1, 1)
-
-
-@pytest.fixture()
-def motor_conn(settings_override: config.Settings) -> tuple[str, str]:
-    # Given a motor_client generator
-    # database = tmp_database()
-    database: str = settings_override.database
-    connection: str = settings_override.connection
-    # It returns client, database & db_logname
-    return database, connection
 
 
 @pytest.fixture()

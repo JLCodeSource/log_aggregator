@@ -38,9 +38,7 @@ LOG_NODE_PATTERN: Pattern = re.compile(
 ZIP_LOGTYPE_PATTERN: Pattern = re.compile(
     r"^.+\/.+[L][o][g][s]_.+_(.+?)_\d{13}[.][z][i][p]$"
 )
-LOG_LOGTYPE_PATTERN: Pattern = re.compile(
-    r"^.+\/.+\/([^\/].+)\/.+[.][l][o][g](\d|)$"
-)
+LOG_LOGTYPE_PATTERN: Pattern = re.compile(r"^.+\/.+\/([^\/].+)\/.+[.][l][o][g](\d|)$")
 
 
 logger: logging.Logger = logging.getLogger(__name__)

@@ -705,25 +705,20 @@ async def test_find_logs_with_sort(
 
     finally:
         # Set manual teardown
-        client = motor.motor_asyncio.AsyncIOMotorClient(conn)
+        client: AsyncIOMotorClient = motor.motor_asyncio.AsyncIOMotorClient(conn)
         await client.drop_database(database)
 
 
-"""
 @pytest.mark.asyncio
 @pytest.mark.unit
 @pytest.mark.mock
 async def test_db_pmr(
-        settings_override_pmr: tuple[Settings, dict[str, Any]],
-        add_one: Coroutine[Any, Any, JavaLog | None]) -> None:
+    motor_conn: tuple[str, str], add_one: Coroutine[Any, Any, JavaLog | None]
+) -> None:
     # Given a pmr_database & connection
-    settings: Settings
-    pmr_creds: dict[str, Any]
-    settings, pmr_creds = settings_override_pmr
-    check: dict[str, Any] = pmr_creds
-
-    database: str = settings.database
-    conn: str = settings.connection
+    database: str
+    conn: str
+    database, conn = motor_conn
 
     try:
         # When it tries to init the database
@@ -737,6 +732,5 @@ async def test_db_pmr(
 
     finally:
         # Set Manual Teardown
-        client: AsyncIOMotorClient = await db.init(database, conn)
+        client = await db.init(database, conn)
         await client.drop_database(database)
-"""
