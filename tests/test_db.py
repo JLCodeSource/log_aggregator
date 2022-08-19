@@ -96,7 +96,7 @@ async def test_init_server_timeout(
     logger: pytest.LogCaptureFixture,
 ) -> None:
     # Given a mock init_beanie_server_timeout to target the test database
-    def mock_beanie_server_timeout(*args, **kwargs) -> NoReturn:
+    def mock_beanie_server_timeout(*args, **kwargs):
         raise MockBeanie.beanie_server_timeout()
 
     monkeypatch.setattr(beanie, "init_beanie", mock_beanie_server_timeout)
@@ -229,7 +229,7 @@ async def test_insert_logs_servertimeout(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # Given a mock javalog_server_timeout to target the test database
-    def mock_insert_logs_server_timeout(*args, **kwargs) -> NoReturn:
+    def mock_insert_logs_server_timeout(*args, **kwargs):
         raise MockJavaLog.insert_many_server_timeout()
 
     monkeypatch.setattr(JavaLog, "insert_many", mock_insert_logs_server_timeout)
@@ -271,7 +271,7 @@ async def test_insert_logs_invalid_operation_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # Given a MockJavaLog
-    def mock_javalog_raises_invalid_operation(*args, **kwargs) -> NoReturn:
+    def mock_javalog_raises_invalid_operation(*args, **kwargs):
         raise MockJavaLog.insert_many_invalid(*args, **kwargs)
 
     monkeypatch.setattr(JavaLog, "insert_many", mock_javalog_raises_invalid_operation)
