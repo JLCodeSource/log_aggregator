@@ -1,21 +1,37 @@
+import logging
+import os
 import uuid
 from datetime import datetime
 from pathlib import Path
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
+
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class File(BaseModel):
     id: uuid.UUID | None = uuid.uuid4()
     fullpath: Path
+    filename: Path | None = None
+    extension: Path | None = None
     node: str | None = None
+    log_type: str | None = None
+
+    def __init__(self, **data) -> None:
+        data["extension"] = Path(os.path.splitext(data["fullpath"])[1])
+        data["filename"] = Path(os.path.basename(data["fullpath"]))
+        super().__init__(**data)
 
 
 class ZipFile(File):
-    file_type: str = "zip"
-
-
-# TODO: enforce paths for ZipFiles as .zip
+    @validator("extension")
+    def extension_must_be_zip(cls, v, values) -> Path:
+        if v != Path(".zip"):
+            fullpath: Path = values["fullpath"]
+            err: str = f"ValueError: ZipFile {fullpath} must have .zip extension"
+            logging.error(f"{err}")
+            raise ValueError(f"{err}")
+        return v
 
 
 class LogFile(File):
@@ -23,8 +39,14 @@ class LogFile(File):
     file_type: str = "log"
     logtype: str | None = None
 
-
-# TODO: enforce paths for ZipFiles as .log_like
+    @validator("extension")
+    def extension_must_be_log(cls, v, values) -> Path:
+        if not str(v).startswith(".log"):
+            fullpath: Path = values["fullpath"]
+            err: str = f"ValueError: LogFile {fullpath} must have .log* extension"
+            logging.error(f"{err}")
+            raise ValueError(f"{err}")
+        return v
 
 
 class LogEntry(BaseModel):

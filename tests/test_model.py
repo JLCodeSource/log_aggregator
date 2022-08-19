@@ -1,3 +1,4 @@
+import logging
 import os
 import uuid
 from datetime import datetime
@@ -8,6 +9,7 @@ import pytest
 from aggregator.model import File, JavaLogEntry, LogEntry, LogFile, ZipFile
 
 test_uuid: uuid.UUID = uuid.UUID("d525b033-e4ac-4acf-b3ba-219ab974f0c5")
+module_name: str = "aggregator.model"
 
 
 class TestFileModel:
@@ -76,7 +78,25 @@ class TestZipFileModel(TestFileModel):
         zip_file: ZipFile = ZipFile(fullpath=fullpath)
 
         # Then the object exists & is a zip
-        assert zip_file.file_type == "zip"
+        assert zip_file.extension == Path(".zip")
+
+    @pytest.mark.unit
+    def test_zipfile_validator(self, tmp_path, logger) -> None:
+        # Given a class (ZipFile)
+        # And a non_zip
+        fullpath: Path = Path(os.path.join(tmp_path, "not_a_zip.txt"))
+
+        # When it is instantiated with the non-zip
+        # Then it raises a Value error
+        with pytest.raises(ValueError):
+            ZipFile(fullpath=fullpath)
+
+        # And it logs it
+        assert logger.record_tuples[0][1] == logging.ERROR
+        assert (
+            logger.record_tuples[0][2]
+            == f"ValueError: ZipFile {fullpath} must have .zip extension"
+        )
 
 
 class TestLogFileModel(TestFileModel):
@@ -95,6 +115,46 @@ class TestLogFileModel(TestFileModel):
         assert log_file.file_type == "log"
         # And the source is the ZipFile
         assert log_file.source_zip.id == zip_file.id
+
+    @pytest.mark.unit
+    def test_logfile_validator(self, tmp_path, logger) -> None:
+        # Given a class (LogFile)
+        # And a source zip
+        id: uuid.UUID = test_uuid
+        fullpath: Path = Path(os.path.join(tmp_path, "zipfile.zip"))
+        zip_file: ZipFile = ZipFile(id=id, fullpath=fullpath)
+
+        # And a non_log
+        fullpath = Path(os.path.join(tmp_path, "not_a_log.txt"))
+
+        # When it is instantiated with the non-zip
+        # Then it raises a Value error
+        with pytest.raises(ValueError):
+            LogFile(source_zip=zip_file, fullpath=fullpath)
+
+        # And it logs it
+        assert logger.record_tuples[0][1] == logging.ERROR
+        assert (
+            logger.record_tuples[0][2]
+            == f"ValueError: LogFile {fullpath} must have .log* extension"
+        )
+
+    @pytest.mark.unit
+    def test_logfile_validator_logN(self, tmp_path) -> None:
+        # Given a class (LogFile)
+        # And a source zip
+        id: uuid.UUID = test_uuid
+        fullpath: Path = Path(os.path.join(tmp_path, "zipfile.zip"))
+        zip_file: ZipFile = ZipFile(id=id, fullpath=fullpath)
+
+        # And a .log5
+        fullpath = Path(os.path.join(tmp_path, "logfile.log5"))
+
+        # When it creates the LogFile
+        log_file: LogFile = LogFile(source_zip=zip_file, fullpath=fullpath)
+
+        # Then it creates the log
+        assert log_file.extension == Path(".log5")
 
 
 class TestLogEntryModel:
