@@ -1,3 +1,4 @@
+import os
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -15,79 +16,97 @@ class TestFileModel:
         # Given a class (File)
         # When it is instantiated
         id = uuid.uuid4()
-        file: File = File(id=id)
+        fullpath: Path = Path("filename.txt")
+        file: File = File(id=id, fullpath=fullpath)
 
         # Then the object exists
         assert type(file.id) == uuid.UUID
-        assert file.path is None
-        assert file.name is None
-        assert file.filetype is None
+        assert file.fullpath == Path("filename.txt")
         assert file.node is None
 
     def test_file_model_uuid(self) -> None:
         # Given a class (File)
         # And an id
         id: uuid.UUID = test_uuid
+        fullpath: Path = Path("filename.txt")
         # When it is instantiated with an id
-        file: File = File(id=id)
+        file: File = File(id=id, fullpath=fullpath)
         # Then the id remains
         assert file.id == id
 
-    def test_file_model_vars(self, tmp_path) -> None:
+    def test_file_model_node(self, tmp_path) -> None:
         # Given a class (File)
         # And some vars
         id: uuid.UUID = test_uuid
-        path: Path = tmp_path
-        name: Path = Path("file.txt")
-        filetype: Path = Path(".txt")
+        fullpath: Path = Path(os.path.join(tmp_path, "filename.txt"))
         node: str = "node001"
 
         # When the File is instantiated
-        file: File = File(id=id, path=path, name=name, filetype=filetype, node=node)
+        file: File = File(id=id, fullpath=fullpath, node=node)
 
         # Then the object exists
         assert file.id == id
-        assert file.path == path
-        assert file.name == name
-        assert file.filetype == filetype
+        assert file.fullpath == fullpath
         assert file.node == node
+
+    def test_file_model_path_variants(self, tmp_path) -> None:
+        # Given a class (File)
+        # And some vars
+        id: uuid.UUID = test_uuid
+        fullpath: Path = Path(os.path.join(tmp_path, "filename.txt"))
+        node: str = "node001"
+
+        # When the File is instantiated
+        file: File = File(id=id, fullpath=fullpath, node=node)
+
+        # Then the object exists
+        assert file.id == id
+        assert file.fullpath == fullpath
+        assert Path(os.path.dirname(file.fullpath)) == tmp_path
+        assert Path(os.path.basename(file.fullpath)) == Path("filename.txt")
+        assert Path(os.path.splitext(file.fullpath)[1]) == Path(".txt")
 
 
 class TestZipFileModel(TestFileModel):
     @pytest.mark.unit
-    def test_zipfile_model(self) -> None:
+    def test_zipfile_model(self, tmp_path) -> None:
         # Given a class (ZipFile)
         # When it is instantiated
-        zip_file: ZipFile = ZipFile()
+        fullpath: Path = Path(os.path.join(tmp_path, "zipfile.zip"))
+        zip_file: ZipFile = ZipFile(fullpath=fullpath)
 
         # Then the object exists & is a zip
-        assert zip_file.filetype == "zip"
+        assert zip_file.file_type == "zip"
 
 
 class TestLogFileModel(TestFileModel):
     @pytest.mark.unit
-    def test_logfile_model(self) -> None:
+    def test_logfile_model(self, tmp_path) -> None:
         # Given a class (LogFile)
         # And a source zip
         id: uuid.UUID = test_uuid
-        zip_file: ZipFile = ZipFile(id=id)
+        fullpath: Path = Path(os.path.join(tmp_path, "zipfile.zip"))
+        zip_file: ZipFile = ZipFile(id=id, fullpath=fullpath)
         # When it is instantiated
-        log_file: LogFile = LogFile(source_zip=zip_file)
+        fullpath = Path(os.path.join(tmp_path, "logfile.log"))
+        log_file: LogFile = LogFile(source_zip=zip_file, fullpath=fullpath)
 
         # Then the object exists & is a log
-        assert log_file.filetype == "log"
+        assert log_file.file_type == "log"
         # And the source is the ZipFile
         assert log_file.source_zip.id == zip_file.id
 
 
 class TestLogEntryModel:
     @pytest.mark.unit
-    def test_log_entry_model(self) -> None:
+    def test_log_entry_model(self, tmp_path) -> None:
         # Given a class (LogEntry)
-        # And a source log_file
+        # And source log and zip_files
         id: uuid.UUID = test_uuid
-        zip_file: ZipFile = ZipFile()
-        log_file: LogFile = LogFile(id=id, source_zip=zip_file)
+        fullpath: Path = Path(os.path.join(tmp_path, "zipfile.zip"))
+        zip_file: ZipFile = ZipFile(fullpath=fullpath)
+        fullpath: Path = Path(os.path.join(tmp_path, "logfile.log"))
+        log_file: LogFile = LogFile(id=id, fullpath=fullpath, source_zip=zip_file)
         # When it is instantiated
         log_entry: LogEntry = LogEntry(
             source_file=log_file, timestamp=datetime.now(), message="Message"
@@ -102,12 +121,14 @@ class TestLogEntryModel:
 
 class TestJavaLogEntry(TestLogEntryModel):
     @pytest.mark.unit
-    def test_javalog_entry(self) -> None:
+    def test_javalog_entry(self, tmp_path) -> None:
         # Given a class(JavaLog)
         # And sources
         id: uuid.UUID = test_uuid
-        zip_file: ZipFile = ZipFile()
-        log_file: LogFile = LogFile(id=id, source_zip=zip_file)
+        fullpath: Path = Path(os.path.join(tmp_path, "zipfile.zip"))
+        zip_file: ZipFile = ZipFile(fullpath=fullpath)
+        fullpath: Path = Path(os.path.join(tmp_path, "logfile.log"))
+        log_file: LogFile = LogFile(id=id, fullpath=fullpath, source_zip=zip_file)
         # When it is instantiated with additional vars
         javalog_entry: JavaLogEntry = JavaLogEntry(
             source_file=log_file,

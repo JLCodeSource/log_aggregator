@@ -7,19 +7,17 @@ from pydantic import BaseModel
 
 class File(BaseModel):
     id: uuid.UUID | None = uuid.uuid4()
-    path: Path | None = None
-    name: Path | None = None
-    filetype: Path | None = None
+    fullpath: Path
     node: str | None = None
 
 
 class ZipFile(File):
-    filetype: Path = Path("zip")
+    file_type: str = "zip"
 
 
 class LogFile(File):
     source_zip: ZipFile
-    filetype: Path = Path("log")
+    file_type: str = "log"
     logtype: str | None = None
 
 
