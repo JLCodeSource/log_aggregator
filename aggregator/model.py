@@ -6,6 +6,8 @@ from pathlib import Path
 
 from pydantic import BaseModel, validator
 
+from aggregator import helper
+
 logger: logging.Logger = logging.getLogger(__name__)
 
 
@@ -24,6 +26,12 @@ class File(BaseModel):
 
 
 class ZipFile(File):
+    def __init__(self, **data) -> None:
+        fullpath: Path = data["fullpath"]
+        data["node"] = helper.get_node(fullpath, helper.ZIP_NODE_PATTERN)
+        data["log_type"] = helper.get_log_type(fullpath, helper.ZIP_LOGTYPE_PATTERN)
+        super().__init__(**data)
+
     @validator("extension")
     def extension_must_be_zip(cls, v, values) -> Path:
         if v != Path(".zip"):

@@ -93,17 +93,19 @@ class TestFileModel:
 
 class TestZipFileModel(TestFileModel):
     @pytest.mark.unit
-    def test_zipfile_model(self, tmp_path) -> None:
+    def test_zipfile_model(self, tmp_path: Path) -> None:
         # Given a class (ZipFile)
         # When it is instantiated
         fullpath: Path = Path(os.path.join(tmp_path, "zipfile.zip"))
-        zip_file: ZipFile = pytest.helpers.get_file(ZipFile, fullpath)  # type: ignore
+        zip_file: ZipFile = ZipFile(fullpath=fullpath)
 
         # Then the object exists & is a zip
         assert zip_file.extension == Path(".zip")
 
     @pytest.mark.unit
-    def test_zipfile_validator(self, tmp_path, logger) -> None:
+    def test_zipfile_validator(
+        self, tmp_path: Path, logger: pytest.LogCaptureFixture
+    ) -> None:
         # Given a class (ZipFile)
         # And a non_zip
         fullpath: Path = Path(os.path.join(tmp_path, "not_a_zip.txt"))
@@ -114,11 +116,37 @@ class TestZipFileModel(TestFileModel):
             ZipFile(fullpath=fullpath)
 
         # And it logs it
-        assert logger.record_tuples[0][1] == logging.ERROR
+        assert logger.record_tuples[-1][1] == logging.ERROR
         assert (
-            logger.record_tuples[0][2]
+            logger.record_tuples[-1][2]
             == f"ValueError: ZipFile {fullpath} must have .zip extension"
         )
+
+    @pytest.mark.parametrize(
+        "filename, node, log_type",
+        [
+            ("GBLogs_node001_apiservice_1234567890123.zip", "node001", "apiservice"),
+            (
+                "GBLogs_node001.domain.tld_apiservice_1234567890123.zip",
+                "node001",
+                "apiservice",
+            ),
+        ],
+    )
+    @pytest.mark.unit
+    def test_zipfile_node(
+        self, tmp_path: Path, filename: str, node: str, log_type: str
+    ) -> None:
+        # Given a class (ZipFile)
+        # And an example zip_file name
+        fullpath: Path = Path(os.path.join(tmp_path, filename))
+
+        # When it is instantiated
+        zip_file: ZipFile = ZipFile(fullpath=fullpath)
+
+        # Then the node & log_type are generated
+        assert zip_file.node == node
+        assert zip_file.log_type == log_type
 
 
 class TestLogFileModel(TestFileModel):
@@ -155,9 +183,11 @@ class TestLogFileModel(TestFileModel):
             LogFile(source_zip=zip_file, fullpath=fullpath)
 
         # And it logs it
-        assert logger.record_tuples[0][1] == logging.ERROR
+        assert logger.record_tuples[0][1] == logging.WARNING
+        assert logger.record_tuples[0][2].startswith("Wrong filename structure")
+        assert logger.record_tuples[-1][1] == logging.ERROR
         assert (
-            logger.record_tuples[0][2]
+            logger.record_tuples[-1][2]
             == f"ValueError: LogFile {fullpath} must have .log* extension"
         )
 
