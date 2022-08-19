@@ -519,8 +519,8 @@ async def test_get_log_server_timeout(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # Given a mock javalog_server_timeout to target the test database
-    def mock_javalog_server_timeout(*args, **kwargs) -> NoReturn:
-        raise MockJavaLog.insert_many_server_timeout()
+    def mock_javalog_server_timeout(*args, **kwargs):
+        return MockJavaLog.insert_many_server_timeout()
 
     monkeypatch.setattr(JavaLog, "get", mock_javalog_server_timeout)
     # And a motor_conn & database
