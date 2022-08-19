@@ -51,7 +51,7 @@ class LogFile(File):
 
 class LogEntry(BaseModel):
     id: uuid.UUID | None = uuid.uuid4()
-    source_file: LogFile
+    source_log: LogFile
     node: str | None = None
     timestamp: datetime
     message: str

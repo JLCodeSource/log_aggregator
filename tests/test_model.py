@@ -12,6 +12,24 @@ test_uuid: uuid.UUID = uuid.UUID("d525b033-e4ac-4acf-b3ba-219ab974f0c5")
 module_name: str = "aggregator.model"
 
 
+@pytest.helpers.register  # type: ignore
+def get_file(
+    T: type,
+    fullpath: Path,
+    id: uuid.UUID | None = None,
+    source_zip: ZipFile | None = None,
+) -> File:
+
+    if T == ZipFile:
+        file: File = ZipFile(id=id, fullpath=fullpath)
+    elif T == LogFile:
+        assert source_zip is not None
+        file = LogFile(id=id, fullpath=fullpath, source_zip=source_zip)
+    else:
+        raise ValueError("Wrong file type")
+    return file
+
+
 class TestFileModel:
     @pytest.mark.unit
     def test_file_model(self) -> None:
@@ -79,7 +97,7 @@ class TestZipFileModel(TestFileModel):
         # Given a class (ZipFile)
         # When it is instantiated
         fullpath: Path = Path(os.path.join(tmp_path, "zipfile.zip"))
-        zip_file: ZipFile = ZipFile(fullpath=fullpath)
+        zip_file: ZipFile = pytest.helpers.get_file(ZipFile, fullpath)  # type: ignore
 
         # Then the object exists & is a zip
         assert zip_file.extension == Path(".zip")
@@ -173,13 +191,13 @@ class TestLogEntryModel:
         log_file: LogFile = LogFile(id=id, fullpath=fullpath, source_zip=zip_file)
         # When it is instantiated
         log_entry: LogEntry = LogEntry(
-            source_file=log_file, timestamp=datetime.now(), message="Message"
+            source_log=log_file, timestamp=datetime.now(), message="Message"
         )
 
         # Then the object exists & is a log
         assert type(log_entry.id) == uuid.UUID
-        assert log_entry.source_file.id == id
-        assert type(log_entry.source_file.source_zip.id) == uuid.UUID
+        assert log_entry.source_log.id == id
+        assert type(log_entry.source_log.source_zip.id) == uuid.UUID
         assert log_entry.message == "Message"
 
 
@@ -195,7 +213,7 @@ class TestJavaLogEntry(TestLogEntryModel):
         log_file: LogFile = LogFile(id=id, fullpath=fullpath, source_zip=zip_file)
         # When it is instantiated with additional vars
         javalog_entry: JavaLogEntry = JavaLogEntry(
-            source_file=log_file,
+            source_log=log_file,
             timestamp=datetime.now(),
             severity="INFO",
             jvm="jvm 1",
@@ -206,7 +224,7 @@ class TestJavaLogEntry(TestLogEntryModel):
 
         # Then the javalogentry exists & is a javalog
         assert type(javalog_entry.id) == uuid.UUID
-        assert javalog_entry.source_file.id == id
+        assert javalog_entry.source_log.id == id
         assert javalog_entry.severity == "INFO"
         assert javalog_entry.module == "AsyncFileSystem"
         assert javalog_entry.type == "Async"
