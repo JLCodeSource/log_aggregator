@@ -1,9 +1,11 @@
 import asyncio
 import logging
+from pathlib import Path
 
 import pytest
 
 from aggregator.main import consume, publish
+from aggregator.model import LogFile, ZipFile
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -66,28 +68,65 @@ class TestQueues:
         # And the value added to the first queue is in the first queue
         assert asyncio.run(consume(zip_file_queue)) == 1
 
+
+class TestQueuesZip(TestQueues):
     @pytest.mark.unit
     @pytest.mark.asyncio
-    def test_adding_files_to_queue(self) -> None:
+    def test_adding_zip_files_to_zipfile_queue(self) -> None:
         # Given a queue
-        zip_file_queue: asyncio.Queue[str] = asyncio.Queue()
+        zip_file_queue: asyncio.Queue[ZipFile] = asyncio.Queue()
 
         # And a mock dirlist of files
-        dirlist: list[str] = []
+        dirlist: list[ZipFile] = []
         for i in range(10):
-            dirlist.append(f"file{i}.zip")
+            dirlist.append(ZipFile(fullpath=Path(f"file{i}.zip")))
 
         # When a list of zip files is added to it
-        for file in dirlist:
-            asyncio.run(publish(zip_file_queue, file))
+        for zip in dirlist:
+            asyncio.run(publish(zip_file_queue, zip))
 
         # Then the consumer can read them
-        new_list: list[str] = []
-        while True:
-            file = asyncio.run(consume(zip_file_queue))
-            if file is None:
-                break
-            else:
-                new_list.append(file)
+        new_list: list[ZipFile] = []
+        while not zip_file_queue.empty():
+            zip: ZipFile = asyncio.run(consume(zip_file_queue))
+            new_list.append(zip)
+            zip_file_queue.task_done()
 
         assert new_list == dirlist
+
+        # TODO: Add testing actual asyncio accessing queues!
+
+
+class TestQueuesLogFile(TestQueues):
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    def test_adding_log_files_to_logfile_queue(self) -> None:
+        # Given a queue
+        log_file_queue: asyncio.Queue[LogFile] = asyncio.Queue()
+
+        # And a mock zip file
+        zip_file: ZipFile = ZipFile(fullpath=Path("file.zip"))
+
+        # And a mock dirlist of log files
+        dirlist: list[LogFile] = []
+        for i in range(5):
+            if i == 0:
+                dirlist.append(LogFile(source_zip=zip_file, fullpath=Path(f"file.log")))
+            else:
+                dirlist.append(LogFile(source_zip=zip_file,
+                               fullpath=Path(f"file.log{i}")))
+
+        # When a list of log files is added to it
+        for log_file in dirlist:
+            asyncio.run(publish(log_file_queue, log_file))
+
+        # Then the consumer can read them
+        new_list: list[LogFile] = []
+        while not log_file_queue.empty():
+            log: LogFile = asyncio.run(consume(log_file_queue))
+            new_list.append(log)
+            log_file_queue.task_done()
+
+        assert new_list == dirlist
+
+        # TODO: Add testing actual asyncio accessing queues!
