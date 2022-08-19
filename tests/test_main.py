@@ -88,7 +88,7 @@ class TestQueuesZip(TestQueues):
         # Then the consumer can read them
         new_list: list[ZipFile] = []
         while not zip_file_queue.empty():
-            zip: ZipFile = asyncio.run(consume(zip_file_queue))
+            zip = asyncio.run(consume(zip_file_queue))
             new_list.append(zip)
             zip_file_queue.task_done()
 
@@ -111,10 +111,11 @@ class TestQueuesLogFile(TestQueues):
         dirlist: list[LogFile] = []
         for i in range(5):
             if i == 0:
-                dirlist.append(LogFile(source_zip=zip_file, fullpath=Path(f"file.log")))
+                dirlist.append(LogFile(source_zip=zip_file, fullpath=Path("file.log")))
             else:
-                dirlist.append(LogFile(source_zip=zip_file,
-                               fullpath=Path(f"file.log{i}")))
+                dirlist.append(
+                    LogFile(source_zip=zip_file, fullpath=Path(f"file.log{i}"))
+                )
 
         # When a list of log files is added to it
         for log_file in dirlist:

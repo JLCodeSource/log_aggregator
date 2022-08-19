@@ -105,7 +105,7 @@ class TestLogEntryModel:
         id: uuid.UUID = test_uuid
         fullpath: Path = Path(os.path.join(tmp_path, "zipfile.zip"))
         zip_file: ZipFile = ZipFile(fullpath=fullpath)
-        fullpath: Path = Path(os.path.join(tmp_path, "logfile.log"))
+        fullpath = Path(os.path.join(tmp_path, "logfile.log"))
         log_file: LogFile = LogFile(id=id, fullpath=fullpath, source_zip=zip_file)
         # When it is instantiated
         log_entry: LogEntry = LogEntry(
@@ -127,7 +127,7 @@ class TestJavaLogEntry(TestLogEntryModel):
         id: uuid.UUID = test_uuid
         fullpath: Path = Path(os.path.join(tmp_path, "zipfile.zip"))
         zip_file: ZipFile = ZipFile(fullpath=fullpath)
-        fullpath: Path = Path(os.path.join(tmp_path, "logfile.log"))
+        fullpath = Path(os.path.join(tmp_path, "logfile.log"))
         log_file: LogFile = LogFile(id=id, fullpath=fullpath, source_zip=zip_file)
         # When it is instantiated with additional vars
         javalog_entry: JavaLogEntry = JavaLogEntry(

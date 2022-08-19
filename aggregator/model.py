@@ -13,6 +13,8 @@ class File(BaseModel):
 
 class ZipFile(File):
     file_type: str = "zip"
+
+
 # TODO: enforce paths for ZipFiles as .zip
 
 
@@ -20,6 +22,8 @@ class LogFile(File):
     source_zip: ZipFile
     file_type: str = "log"
     logtype: str | None = None
+
+
 # TODO: enforce paths for ZipFiles as .log_like
 
 
