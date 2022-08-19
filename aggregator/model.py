@@ -44,8 +44,12 @@ class ZipFile(File):
 
 class LogFile(File):
     source_zip: ZipFile
-    file_type: str = "log"
-    logtype: str | None = None
+
+    def __init__(self, **data) -> None:
+        fullpath: Path = data["fullpath"]
+        data["node"] = helper.get_node(fullpath, helper.LOG_NODE_PATTERN)
+        data["log_type"] = helper.get_log_type(fullpath, helper.LOG_LOGTYPE_PATTERN)
+        super().__init__(**data)
 
     @validator("extension")
     def extension_must_be_log(cls, v, values) -> Path:

@@ -134,7 +134,7 @@ class TestZipFileModel(TestFileModel):
         ],
     )
     @pytest.mark.unit
-    def test_zipfile_node(
+    def test_zipfile_node_and_log_type(
         self, tmp_path: Path, filename: str, node: str, log_type: str
     ) -> None:
         # Given a class (ZipFile)
@@ -162,7 +162,7 @@ class TestLogFileModel(TestFileModel):
         log_file: LogFile = LogFile(source_zip=zip_file, fullpath=fullpath)
 
         # Then the object exists & is a log
-        assert log_file.file_type == "log"
+        assert log_file.extension == Path(".log")
         # And the source is the ZipFile
         assert log_file.source_zip.id == zip_file.id
 
@@ -207,6 +207,30 @@ class TestLogFileModel(TestFileModel):
 
         # Then it creates the log
         assert log_file.extension == Path(".log5")
+
+    @pytest.mark.parametrize(
+        "fullpath, node, log_type",
+        [
+            ("out/node001/apiservice/apiservice.log", "node001", "apiservice"),
+        ],
+    )
+    @pytest.mark.unit
+    def test_logfile_node_and_log_type(
+        self, tmp_path: Path, fullpath: Path, node: str, log_type: str
+    ) -> None:
+        # Given a class (ZipFile)
+        # And a source zip_file name
+        zip_path: Path = Path(os.path.join(tmp_path, "zip.zip"))
+        zip_file: ZipFile = ZipFile(fullpath=zip_path)
+        # And a log file path
+        path: Path = Path(os.path.join(tmp_path, fullpath))
+
+        # When it is instantiated
+        log_file: LogFile = LogFile(fullpath=path, source_zip=zip_file)
+
+        # Then the node & log_type are generated
+        assert log_file.node == node
+        assert log_file.log_type == log_type
 
 
 class TestLogEntryModel:
