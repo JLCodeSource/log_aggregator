@@ -25,6 +25,7 @@ class TestFileModel:
         assert type(file.id) == uuid.UUID
         assert file.fullpath == Path("filename.txt")
         assert file.node is None
+        assert file.log_type is None
 
     def test_file_model_uuid(self) -> None:
         # Given a class (File)
@@ -40,7 +41,8 @@ class TestFileModel:
         # Given a class (File)
         # And some vars
         id: uuid.UUID = test_uuid
-        fullpath: Path = Path(os.path.join(tmp_path, "filename.txt"))
+        filename: Path = Path("filename.txt")
+        fullpath: Path = Path(os.path.join(tmp_path, filename))
         node: str = "node001"
 
         # When the File is instantiated
@@ -49,6 +51,8 @@ class TestFileModel:
         # Then the object exists
         assert file.id == id
         assert file.fullpath == fullpath
+        assert file.filename == filename
+        assert file.extension == Path(os.path.splitext(filename)[1])
         assert file.node == node
 
     def test_file_model_path_variants(self, tmp_path) -> None:
