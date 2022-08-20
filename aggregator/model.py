@@ -24,6 +24,9 @@ class File(BaseModel):
         data["filename"] = Path(os.path.basename(data["full_path"]))
         super().__init__(**data)
 
+    class Config:
+        extra: str = "forbid"
+
 
 class ZipFile(File):
     def __init__(self, **data) -> None:

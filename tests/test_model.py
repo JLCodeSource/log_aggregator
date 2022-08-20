@@ -3,7 +3,7 @@ import os
 import uuid
 from datetime import datetime
 from pathlib import Path
-
+from pydantic import ValidationError
 import pytest
 
 from aggregator.model import File, JavaLogEntry, LogEntry, LogFile, ZipFile
@@ -92,6 +92,13 @@ class TestFileModel:
         assert Path(os.path.dirname(file.full_path)) == tmp_path
         assert Path(os.path.basename(file.full_path)) == Path("filename.txt")
         assert Path(os.path.splitext(file.full_path)[1]) == Path(".txt")
+
+    def test_file_model_no_extras(self) -> None:
+        # Given a File
+        # When it tries to add unexpected attributes
+        # Then it raises an error
+        with pytest.raises(ValidationError):
+            File(full_path=Path("file"), not_an_attribute="fails")
 
 
 class TestZipFileModel(TestFileModel):
