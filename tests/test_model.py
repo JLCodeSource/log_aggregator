@@ -333,8 +333,8 @@ class TestLogEntryModel:
         # Then it raises a ValidationError
         with pytest.raises(ValidationError):
             LogEntry(
-                source_log=log_file, timestamp=datetime.now(), message="M", test="test"
-            )  # type: ignore
+                source_log=log_file, timestamp=datetime.now(), message="M", test="test"  # type: ignore
+            )
 
 
 class TestJavaLogEntry(TestLogEntryModel):
