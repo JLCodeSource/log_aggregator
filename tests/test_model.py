@@ -18,16 +18,16 @@ log_filename: str = "/out/node001/apiservice/apiservice.log"
 @pytest.helpers.register  # type: ignore
 def get_file(
     T: type,
-    fullpath: Path,
+    full_path: Path,
     id: uuid.UUID | None = None,
     source_zip: ZipFile | None = None,
 ) -> File:
 
     if T == ZipFile:
-        file: File = ZipFile(id=id, fullpath=fullpath)
+        file: File = ZipFile(id=id, full_path=full_path)
     elif T == LogFile:
         assert source_zip is not None
-        file = LogFile(id=id, fullpath=fullpath, source_zip=source_zip)
+        file = LogFile(id=id, full_path=full_path, source_zip=source_zip)
     else:
         raise ValueError("Wrong file type")
     return file
@@ -39,12 +39,12 @@ class TestFileModel:
         # Given a class (File)
         # When it is instantiated
         id = uuid.uuid4()
-        fullpath: Path = Path("filename.txt")
-        file: File = File(id=id, fullpath=fullpath)
+        full_path: Path = Path("filename.txt")
+        file: File = File(id=id, full_path=full_path)
 
         # Then the object exists
         assert type(file.id) == uuid.UUID
-        assert file.fullpath == Path("filename.txt")
+        assert file.full_path == Path("filename.txt")
         assert file.node is None
         assert file.log_type is None
 
@@ -52,9 +52,9 @@ class TestFileModel:
         # Given a class (File)
         # And an id
         id: uuid.UUID = test_uuid
-        fullpath: Path = Path("filename.txt")
+        full_path: Path = Path("filename.txt")
         # When it is instantiated with an id
-        file: File = File(id=id, fullpath=fullpath)
+        file: File = File(id=id, full_path=full_path)
         # Then the id remains
         assert file.id == id
 
@@ -63,15 +63,15 @@ class TestFileModel:
         # And some vars
         id: uuid.UUID = test_uuid
         filename: Path = Path("filename.txt")
-        fullpath: Path = Path(os.path.join(tmp_path, filename))
+        full_path: Path = Path(os.path.join(tmp_path, filename))
         node: str = "node001"
 
         # When the File is instantiated
-        file: File = File(id=id, fullpath=fullpath, node=node)
+        file: File = File(id=id, full_path=full_path, node=node)
 
         # Then the object exists
         assert file.id == id
-        assert file.fullpath == fullpath
+        assert file.full_path == full_path
         assert file.filename == filename
         assert file.extension == Path(os.path.splitext(filename)[1])
         assert file.node == node
@@ -80,18 +80,18 @@ class TestFileModel:
         # Given a class (File)
         # And some vars
         id: uuid.UUID = test_uuid
-        fullpath: Path = Path(os.path.join(tmp_path, "filename.txt"))
+        full_path: Path = Path(os.path.join(tmp_path, "filename.txt"))
         node: str = "node001"
 
         # When the File is instantiated
-        file: File = File(id=id, fullpath=fullpath, node=node)
+        file: File = File(id=id, full_path=full_path, node=node)
 
         # Then the object exists
         assert file.id == id
-        assert file.fullpath == fullpath
-        assert Path(os.path.dirname(file.fullpath)) == tmp_path
-        assert Path(os.path.basename(file.fullpath)) == Path("filename.txt")
-        assert Path(os.path.splitext(file.fullpath)[1]) == Path(".txt")
+        assert file.full_path == full_path
+        assert Path(os.path.dirname(file.full_path)) == tmp_path
+        assert Path(os.path.basename(file.full_path)) == Path("filename.txt")
+        assert Path(os.path.splitext(file.full_path)[1]) == Path(".txt")
 
 
 class TestZipFileModel(TestFileModel):
@@ -112,20 +112,20 @@ class TestZipFileModel(TestFileModel):
     ) -> None:
         # Given a class (ZipFile)
         # And an example zip_file name
-        fullpath: Path = Path(os.path.join(tmp_path, filename))
+        full_path: Path = Path(os.path.join(tmp_path, filename))
 
         # When it is instantiated
-        zip_file: ZipFile = ZipFile(fullpath=fullpath, id=test_zip_uuid)
+        zip_file: ZipFile = ZipFile(full_path=full_path, id=test_zip_uuid)
 
         # Then the extension, node & log_type are generated
         assert zip_file.extension == Path(".zip")
         assert zip_file.node == node
         assert zip_file.log_type == log_type
-        assert zip_file.fullpath == fullpath
+        assert zip_file.full_path == full_path
         assert zip_file.id == test_zip_uuid
 
     @pytest.mark.parametrize(
-        "fullpath, errs",
+        "full_path, errs",
         [
             (
                 Path("/tmp/path/out/not_a_zip.txt"),
@@ -146,16 +146,16 @@ class TestZipFileModel(TestFileModel):
     )
     @pytest.mark.unit
     def test_zipfile_validators(
-        self, fullpath: Path, errs: tuple[str], logger: pytest.LogCaptureFixture
+        self, full_path: Path, errs: tuple[str], logger: pytest.LogCaptureFixture
     ) -> None:
         # Given a class (ZipFile)
-        # And a fullpath
+        # And a full_path
         # And a tuple of errs
 
         # When the file is instantiated
         # Then it raises a Value error
         with pytest.raises(ValueError):
-            ZipFile(fullpath=fullpath)
+            ZipFile(full_path=full_path)
 
         # And it logs it
         msgs: list[str] = []
@@ -166,7 +166,7 @@ class TestZipFileModel(TestFileModel):
 
 class TestLogFileModel(TestFileModel):
     @pytest.mark.parametrize(
-        "fullpath, log_id, node, log_type, zip_id",
+        "full_path, log_id, node, log_type, zip_id",
         [
             (
                 "out/node001/apiservice/apiservice.log",
@@ -195,7 +195,7 @@ class TestLogFileModel(TestFileModel):
     def test_logfile_log_node_and_log_type(
         self,
         tmp_path: Path,
-        fullpath: Path,
+        full_path: Path,
         log_id: uuid.UUID,
         node: str,
         log_type: str,
@@ -204,9 +204,9 @@ class TestLogFileModel(TestFileModel):
         # Given a class (ZipFile)
         # And a source zip_file name
         zip_path: Path = Path(os.path.join(tmp_path, zip_filename))
-        zip_file: ZipFile = ZipFile(fullpath=zip_path, id=zip_id)
+        zip_file: ZipFile = ZipFile(full_path=zip_path, id=zip_id)
         # And a log file path
-        path: Path = Path(os.path.join(tmp_path, fullpath))
+        path: Path = Path(os.path.join(tmp_path, full_path))
         # And (depending on params) an id
         check_id: bool
         if log_id is not None:
@@ -215,7 +215,7 @@ class TestLogFileModel(TestFileModel):
             check_id = False
 
         # When it is instantiated
-        log_file: LogFile = LogFile(fullpath=path, id=log_id, source_zip=zip_file)
+        log_file: LogFile = LogFile(full_path=path, id=log_id, source_zip=zip_file)
 
         # Then the object exists & is a log
         assert str(log_file.extension).startswith(".log")
@@ -229,7 +229,7 @@ class TestLogFileModel(TestFileModel):
             assert zip_file.id == zip_id
 
     @pytest.mark.parametrize(
-        "fullpath_log, fullpath_zip, errs",
+        "full_path_log, full_path_zip, errs",
         [
             (
                 Path("/tmp/path/out/not_a_log.txt"),
@@ -265,21 +265,21 @@ class TestLogFileModel(TestFileModel):
     @pytest.mark.unit
     def test_logfile_validators(
         self,
-        fullpath_log: Path,
-        fullpath_zip: Path,
+        full_path_log: Path,
+        full_path_zip: Path,
         errs: str,
         logger: pytest.LogCaptureFixture,
     ) -> None:
         # Given a class (LogFile)
         # And a source zip
-        zip_file: ZipFile = ZipFile(id=test_zip_uuid, fullpath=fullpath_zip)
+        zip_file: ZipFile = ZipFile(id=test_zip_uuid, full_path=full_path_zip)
 
-        # And a logfile (fullpath_log)
+        # And a logfile (full_path_log)
 
         # When it is instantiated with the non-zip
         # Then it raises a Value error
         with pytest.raises(ValueError):
-            LogFile(source_zip=zip_file, fullpath=fullpath_log)
+            LogFile(source_zip=zip_file, full_path=full_path_log)
 
         # And it logs it
         lvls: list[int]
@@ -298,10 +298,10 @@ class TestLogEntryModel:
         # Given a class (LogEntry)
         # And source log and zip_files
         id: uuid.UUID = test_uuid
-        fullpath: Path = Path(os.path.join(tmp_path, zip_filename))
-        zip_file: ZipFile = ZipFile(fullpath=fullpath)
-        fullpath = Path(os.path.join(tmp_path, log_filename))
-        log_file: LogFile = LogFile(id=id, fullpath=fullpath, source_zip=zip_file)
+        full_path: Path = Path(os.path.join(tmp_path, zip_filename))
+        zip_file: ZipFile = ZipFile(full_path=full_path)
+        full_path = Path(os.path.join(tmp_path, log_filename))
+        log_file: LogFile = LogFile(id=id, full_path=full_path, source_zip=zip_file)
         # When it is instantiated
         log_entry: LogEntry = LogEntry(
             source_log=log_file, timestamp=datetime.now(), message="Message"
@@ -320,10 +320,10 @@ class TestJavaLogEntry(TestLogEntryModel):
         # Given a class(JavaLog)
         # And sources
         id: uuid.UUID = test_uuid
-        fullpath: Path = Path(os.path.join(tmp_path, zip_filename))
-        zip_file: ZipFile = ZipFile(fullpath=fullpath)
-        fullpath = Path(os.path.join(tmp_path, log_filename))
-        log_file: LogFile = LogFile(id=id, fullpath=fullpath, source_zip=zip_file)
+        full_path: Path = Path(os.path.join(tmp_path, zip_filename))
+        zip_file: ZipFile = ZipFile(full_path=full_path)
+        full_path = Path(os.path.join(tmp_path, log_filename))
+        log_file: LogFile = LogFile(id=id, full_path=full_path, source_zip=zip_file)
         # When it is instantiated with additional vars
         javalog_entry: JavaLogEntry = JavaLogEntry(
             source_log=log_file,
