@@ -9,8 +9,10 @@ import pytest
 from aggregator.model import File, JavaLogEntry, LogEntry, LogFile, ZipFile
 
 test_uuid: uuid.UUID = uuid.UUID("d525b033-e4ac-4acf-b3ba-219ab974f0c5")
+test_zip_uuid: uuid.UUID = uuid.UUID("d525b033-e4ac-4acf-b3ba-219ab974f0c6")
 module_name: str = "aggregator.model"
 zip_filename: str = "GBLogs_node001_apiservice_1234567890123.zip"
+log_filename: str = "/out/node001/apiservice/apiservice.log"
 
 
 @pytest.helpers.register  # type: ignore
@@ -113,12 +115,14 @@ class TestZipFileModel(TestFileModel):
         fullpath: Path = Path(os.path.join(tmp_path, filename))
 
         # When it is instantiated
-        zip_file: ZipFile = ZipFile(fullpath=fullpath)
+        zip_file: ZipFile = ZipFile(fullpath=fullpath, id=test_zip_uuid)
 
         # Then the extension, node & log_type are generated
         assert zip_file.extension == Path(".zip")
         assert zip_file.node == node
         assert zip_file.log_type == log_type
+        assert zip_file.fullpath == fullpath
+        assert zip_file.id == test_zip_uuid
 
     @pytest.mark.parametrize(
         "fullpath, errs",
@@ -162,30 +166,56 @@ class TestZipFileModel(TestFileModel):
 
 class TestLogFileModel(TestFileModel):
     @pytest.mark.parametrize(
-        "fullpath, node, log_type",
+        "fullpath, log_id, node, log_type, zip_id",
         [
-            ("out/node001/apiservice/apiservice.log", "node001", "apiservice"),
             (
-                "out/node001.domain.tld/apiservice/apiservice.log",
+                "out/node001/apiservice/apiservice.log",
+                None,
                 "node001",
                 "apiservice",
+                None,
             ),
-            ("out/node001/apiservice/apiservice.log4", "node001", "apiservice"),
+            (
+                "out/node001.domain.tld/apiservice/apiservice.log",
+                None,
+                "node001",
+                "apiservice",
+                None,
+            ),
+            (
+                "out/node001/apiservice/apiservice.log4",
+                test_uuid,
+                "node001",
+                "apiservice",
+                test_zip_uuid,
+            ),
         ],
     )
     @pytest.mark.unit
     def test_logfile_log_node_and_log_type(
-        self, tmp_path: Path, fullpath: Path, node: str, log_type: str
+        self,
+        tmp_path: Path,
+        fullpath: Path,
+        log_id: uuid.UUID,
+        node: str,
+        log_type: str,
+        zip_id: uuid.UUID,
     ) -> None:
         # Given a class (ZipFile)
         # And a source zip_file name
         zip_path: Path = Path(os.path.join(tmp_path, zip_filename))
-        zip_file: ZipFile = ZipFile(fullpath=zip_path)
+        zip_file: ZipFile = ZipFile(fullpath=zip_path, id=zip_id)
         # And a log file path
         path: Path = Path(os.path.join(tmp_path, fullpath))
+        # And (depending on params) an id
+        check_id: bool
+        if log_id is not None:
+            check_id = True
+        else:
+            check_id = False
 
         # When it is instantiated
-        log_file: LogFile = LogFile(fullpath=path, source_zip=zip_file)
+        log_file: LogFile = LogFile(fullpath=path, id=log_id, source_zip=zip_file)
 
         # Then the object exists & is a log
         assert str(log_file.extension).startswith(".log")
@@ -194,22 +224,62 @@ class TestLogFileModel(TestFileModel):
         # And the node & log_type are generated
         assert log_file.node == node
         assert log_file.log_type == log_type
+        if check_id is True:
+            assert log_file.id == log_id
+            assert zip_file.id == zip_id
 
+    @pytest.mark.parametrize(
+        "fullpath_log, fullpath_zip, errs",
+        [
+            (
+                Path("/tmp/path/out/not_a_log.txt"),
+                Path("/tmp/path/out/GBLogs_node001_apiservice_0123456789123.zip"),
+                (
+                    "ValueError: LogFile /tmp/path/out/not_a_log.txt must have .log* extension",
+                    "ValueError: LogFile /tmp/path/out/not_a_log.txt must have node value",
+                    "ValueError: LogFile /tmp/path/out/not_a_log.txt must have log_type value",
+                ),
+            ),
+            (
+                Path("/apiservice.log"),
+                Path("/tmp/path/out/GBLogs_node001_apiservice_0123456789123.zip"),
+                (
+                    "ValueError: LogFile /apiservice.log must have node value",
+                    "ValueError: LogFile /apiservice.log must have log_type value",
+                ),
+            ),
+            (
+                Path("/tmp/path/out/notnode/notapi/apiservice.log"),
+                Path("/tmp/path/out/GBLogs_node001_apiservice_0123456789123.zip"),
+                (
+                    (
+                        f"ValueError: LogFile /tmp/path/out/notnode/notapi/apiservice.log node value must match ZipFile {test_zip_uuid} node value"
+                    ),
+                    (
+                        f"ValueError: LogFile /tmp/path/out/notnode/notapi/apiservice.log log_type value must match ZipFile {test_zip_uuid} log_type value"
+                    ),
+                ),
+            ),
+        ],
+    )
     @pytest.mark.unit
-    def test_logfile_validator(self, tmp_path, logger) -> None:
+    def test_logfile_validators(
+        self,
+        fullpath_log: Path,
+        fullpath_zip: Path,
+        errs: str,
+        logger: pytest.LogCaptureFixture,
+    ) -> None:
         # Given a class (LogFile)
         # And a source zip
-        id: uuid.UUID = test_uuid
-        fullpath: Path = Path(os.path.join(tmp_path, zip_filename))
-        zip_file: ZipFile = ZipFile(id=id, fullpath=fullpath)
+        zip_file: ZipFile = ZipFile(id=test_zip_uuid, fullpath=fullpath_zip)
 
-        # And a non_log
-        fullpath = Path(os.path.join(tmp_path, "not_a_log.txt"))
+        # And a logfile (fullpath_log)
 
         # When it is instantiated with the non-zip
         # Then it raises a Value error
         with pytest.raises(ValueError):
-            LogFile(source_zip=zip_file, fullpath=fullpath)
+            LogFile(source_zip=zip_file, fullpath=fullpath_log)
 
         # And it logs it
         lvls: list[int]
@@ -217,30 +287,9 @@ class TestLogFileModel(TestFileModel):
         _, lvls, msgs = pytest.helpers.log_recorder(  # type: ignore
             logger.record_tuples
         )
-        assert any(lvl == logging.WARNING for lvl in lvls)
         assert any(lvl == logging.ERROR for lvl in lvls)
-        assert any(msg.startswith("Wrong filename structure") for msg in msgs)
-        assert any(
-            msg == f"ValueError: LogFile {fullpath} must have .log* extension"
-            for msg in msgs
-        )
-
-    @pytest.mark.unit
-    def test_logfile_validator_logN(self, tmp_path) -> None:
-        # Given a class (LogFile)
-        # And a source zip
-        id: uuid.UUID = test_uuid
-        fullpath: Path = Path(os.path.join(tmp_path, zip_filename))
-        zip_file: ZipFile = ZipFile(id=id, fullpath=fullpath)
-
-        # And a .log5
-        fullpath = Path(os.path.join(tmp_path, "logfile.log5"))
-
-        # When it creates the LogFile
-        log_file: LogFile = LogFile(source_zip=zip_file, fullpath=fullpath)
-
-        # Then it creates the log
-        assert log_file.extension == Path(".log5")
+        for i in range(len(errs)):
+            assert any(errs[i] == msg for msg in msgs)
 
 
 class TestLogEntryModel:
@@ -251,7 +300,7 @@ class TestLogEntryModel:
         id: uuid.UUID = test_uuid
         fullpath: Path = Path(os.path.join(tmp_path, zip_filename))
         zip_file: ZipFile = ZipFile(fullpath=fullpath)
-        fullpath = Path(os.path.join(tmp_path, "logfile.log"))
+        fullpath = Path(os.path.join(tmp_path, log_filename))
         log_file: LogFile = LogFile(id=id, fullpath=fullpath, source_zip=zip_file)
         # When it is instantiated
         log_entry: LogEntry = LogEntry(
@@ -273,7 +322,7 @@ class TestJavaLogEntry(TestLogEntryModel):
         id: uuid.UUID = test_uuid
         fullpath: Path = Path(os.path.join(tmp_path, zip_filename))
         zip_file: ZipFile = ZipFile(fullpath=fullpath)
-        fullpath = Path(os.path.join(tmp_path, "logfile.log"))
+        fullpath = Path(os.path.join(tmp_path, log_filename))
         log_file: LogFile = LogFile(id=id, fullpath=fullpath, source_zip=zip_file)
         # When it is instantiated with additional vars
         javalog_entry: JavaLogEntry = JavaLogEntry(

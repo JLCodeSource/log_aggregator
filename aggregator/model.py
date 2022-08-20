@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, root_validator, validator
 
 from aggregator import helper
 
@@ -69,6 +69,17 @@ class LogFile(File):
         data["log_type"] = helper.get_log_type(fullpath, helper.LOG_LOGTYPE_PATTERN)
         super().__init__(**data)
 
+    @validator("source_zip")
+    def source_zip_must_exist(cls, v, values) -> Path:
+        fullpath: Path = values["fullpath"]
+        if v is None:
+            err: str = f"ValueError: LogFile {fullpath} must have ZipFile"
+            logging.error(f"{err}")
+            raise ValueError(f"{err}")
+        return v
+
+    # TODO: Add functionality to work with raw log files
+
     @validator("extension")
     def extension_must_be_log(cls, v, values) -> Path:
         if not str(v).startswith(".log"):
@@ -77,6 +88,51 @@ class LogFile(File):
             logging.error(f"{err}")
             raise ValueError(f"{err}")
         return v
+
+    @validator("node")
+    def node_must_not_be_none_empty_or_not_match_zip(cls, v, values) -> str:
+        fullpath: Path = values["fullpath"]
+        if v is None or v == "":
+            err: str = f"ValueError: LogFile {fullpath} must have node value"
+            logging.error(f"{err}")
+            raise ValueError(f"{err}")
+        return v
+
+    @validator("log_type")
+    def log_type_must_not_be_none_or_empty(cls, v, values) -> str:
+        if v is None or v == "":
+            fullpath: Path = values["fullpath"]
+            err: str = f"ValueError: LogFile {fullpath} must have log_type value"
+            logging.error(f"{err}")
+            raise ValueError(f"{err}")
+        return v
+
+    @root_validator
+    def check_node_and_log_type_value_matches_zip_file(cls, values):
+        fullpath: Path = values["fullpath"]
+        keys: tuple[str, str, str] = ("node", "log_type", "source_zip")
+        if not all(key in values for key in keys):
+            raise ValueError()
+        else:
+            node: str = values["node"]
+            log_type: str = values["log_type"]
+            zip_node: str = getattr(values["source_zip"], "node")
+            zip_log_type: str = getattr(values["source_zip"], "log_type")
+            zip_id: uuid.UUID = getattr(values["source_zip"], "id")
+
+        has_value_erred: bool = False
+        if node != zip_node:
+            err: str = f"ValueError: LogFile {fullpath} node value must match ZipFile {zip_id} node value"
+            logging.error(f"{err}")
+            has_value_erred = True
+        if log_type != zip_log_type:
+            err: str = f"ValueError: LogFile {fullpath} log_type value must match ZipFile {zip_id} log_type value"
+            logging.error(f"{err}")
+            has_value_erred = True
+        if has_value_erred:
+            raise ValueError("ValueError: See prior logs")
+            # TODO: Make this mechanism cleaner
+        return values
 
 
 class LogEntry(BaseModel):
