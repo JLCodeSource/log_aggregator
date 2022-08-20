@@ -41,6 +41,24 @@ class ZipFile(File):
             raise ValueError(f"{err}")
         return v
 
+    @validator("node")
+    def node_must_not_be_none_or_empty(cls, v, values) -> str:
+        if v is None or v == "":
+            fullpath: Path = values["fullpath"]
+            err: str = f"ValueError: ZipFile {fullpath} must have node value"
+            logging.error(f"{err}")
+            raise ValueError(f"{err}")
+        return v
+
+    @validator("log_type")
+    def log_type_must_not_be_none_or_empty(cls, v, values) -> str:
+        if v is None or v == "":
+            fullpath: Path = values["fullpath"]
+            err: str = f"ValueError: ZipFile {fullpath} must have log_type value"
+            logging.error(f"{err}")
+            raise ValueError(f"{err}")
+        return v
+
 
 class LogFile(File):
     source_zip: ZipFile
