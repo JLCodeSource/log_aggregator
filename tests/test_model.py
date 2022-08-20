@@ -3,8 +3,9 @@ import os
 import uuid
 from datetime import datetime
 from pathlib import Path
-from pydantic import ValidationError
+
 import pytest
+from pydantic import ValidationError
 
 from aggregator.model import File, JavaLogEntry, LogEntry, LogFile, ZipFile
 
@@ -319,6 +320,21 @@ class TestLogEntryModel:
         assert log_entry.source_log.id == id
         assert type(log_entry.source_log.source_zip.id) == uuid.UUID
         assert log_entry.message == "Message"
+
+    @pytest.mark.unit
+    def test_log_entry_no_extras(self, tmp_path) -> None:
+        # Given log entry sources
+        full_path: Path = Path(os.path.join(tmp_path, zip_filename))
+        zip_file: ZipFile = ZipFile(full_path=full_path)
+        full_path = Path(os.path.join(tmp_path, log_filename))
+        log_file: LogFile = LogFile(full_path=full_path, source_zip=zip_file)
+        # And a log entry
+        # When it adds an unexpected attribute
+        # Then it raises a ValidationError
+        with pytest.raises(ValidationError):
+            LogEntry(
+                source_log=log_file, timestamp=datetime.now(), message="M", test="test"
+            )  # type: ignore
 
 
 class TestJavaLogEntry(TestLogEntryModel):

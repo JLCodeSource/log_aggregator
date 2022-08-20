@@ -145,6 +145,9 @@ class LogEntry(BaseModel):
     timestamp: datetime
     message: str
 
+    class Config:
+        extra: str = "forbid"
+
 
 class JavaLogEntry(LogEntry):
     severity: str
