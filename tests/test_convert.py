@@ -232,9 +232,9 @@ async def test_convert_collection_not_initialized(
         await convert.convert(tgt_log_file)
 
     # Then it logs an AttributeError:
-    assert logger.record_tuples[7][0] == module_name
-    assert logger.record_tuples[7][1] == logging.CRITICAL
-    assert logger.record_tuples[7][2] == (
+    assert logger.record_tuples[8][0] == module_name
+    assert logger.record_tuples[8][1] == logging.CRITICAL
+    assert logger.record_tuples[8][2] == (
         "Error: err=CollectionWasNotInitialized(), type(err)=<class "
         "'beanie.exceptions.CollectionWasNotInitialized'>"
     )
