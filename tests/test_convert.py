@@ -340,7 +340,7 @@ async def test_convert_to_datetime_bad_timestamp(
         await convert.convert(tgt_log_file)
 
         # Then it logs an exception
-        assert logger.record_tuples[10] == (
+        assert logger.record_tuples[-3] == (
             module_name,
             logging.ERROR,
             "ValueError: time data '2022/07/1x 09:12:02' "
@@ -394,9 +394,9 @@ async def test_convert_bad_timestamp(
         await convert.convert(tgt_log_file)
 
         # Then it logs an AttributeError:
-        assert logger.record_tuples[10][0] == module_name
-        assert logger.record_tuples[10][1] == logging.ERROR
-        assert logger.record_tuples[10][2].startswith(
+        assert logger.record_tuples[-2][0] == module_name
+        assert logger.record_tuples[-2][1] == logging.ERROR
+        assert logger.record_tuples[-2][2].startswith(
             "Error <class 'pydantic.error_wrappers.ValidationError'> "
             "1 validation error for JavaLog"
         )
