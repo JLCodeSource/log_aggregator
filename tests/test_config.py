@@ -41,7 +41,7 @@ def test_settings_get_testing_from_test_conf(settings_override: Settings) -> Non
             settings.get_connection_log(),
             "mongodb://username:password@localhost:27017/?authMechanism=DEFAULT",
         ),
-        (settings.get_sourcedir(), Path("./testsource/zips")),
+        (settings.get_sourcedir(), Path("./testsource/prod_zips")),
         (settings.get_outdir(), Path("./out")),
         (settings.get_testdatadir(), Path("./testsource")),
         (settings.get_database(), "logs"),

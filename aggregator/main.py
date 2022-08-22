@@ -66,11 +66,11 @@ def _get_zip_extract_coro_list(
 
 def _get_convert_coro_list(
     convert_coro_list: list[Coroutine[Any, Any, list[JavaLog]]] = [],
-    log_file_list: list[Path] = [],
+    log_file_list: list[str] = [],
 ) -> list[Coroutine[Any, Any, list[JavaLog]]]:
     for log_list in log_file_list:
-        for file in str(log_list):
-            convert_coro_list.append(convert(Path(file)))
+        for file in log_list:
+            convert_coro_list.append(convert(file))
     return convert_coro_list
 
 
@@ -89,7 +89,7 @@ async def main() -> None:
 
     # Extact logs from source directory
     try:
-        log_file_list: list[Path] = asyncio.run(extract_log(zip_coro_list))
+        log_file_list: list[str] = await extract_log(zip_coro_list)
         if log_file_list is None or log_file_list is empty:
             raise Exception(f"Failed to get log_files from {settings.sourcedir}")
     except Exception as err:

@@ -678,7 +678,7 @@ async def test_find_logs_with_sort(
         await db.init(database, conn)
 
         # And some logs
-        logs: list[JavaLog] = await convert.convert(tgt_log_file)
+        logs: list[JavaLog] = await convert.convert(str(tgt_log_file))
 
         # And it has saved the logs
         await db.insert_logs(logs)

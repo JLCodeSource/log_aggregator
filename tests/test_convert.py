@@ -229,7 +229,7 @@ async def test_convert_collection_not_initialized(
     # When it tries to convert the logs
     # Then it raises a CollectionNotInitialized error
     with pytest.raises(CollectionWasNotInitialized):
-        await convert.convert(tgt_log_file)
+        await convert.convert(str(tgt_log_file))
 
     # Then it logs an AttributeError:
     assert logger.record_tuples[-1][0] == module_name
@@ -259,7 +259,7 @@ async def test_convert_success(
         await db.init(database, conn)
 
         # When it tries to convert the logs
-        log_list: list[JavaLog] = await convert.convert(tgt_log_file)
+        log_list: list[JavaLog] = await convert.convert(str(tgt_log_file))
 
         # Then it succeeds
         assert len(log_list) == 5
@@ -337,7 +337,7 @@ async def test_convert_to_datetime_bad_timestamp(
         await db.init(database, conn)
 
         # When it tries to convert the logs
-        await convert.convert(tgt_log_file)
+        await convert.convert(str(tgt_log_file))
 
         # Then it logs an exception
         assert logger.record_tuples[-3] == (
@@ -391,7 +391,7 @@ async def test_convert_bad_timestamp(
         await db.init(database, conn)
 
         # When it tries to convert the logs:
-        await convert.convert(tgt_log_file)
+        await convert.convert(str(tgt_log_file))
 
         # Then it logs an AttributeError:
         assert logger.record_tuples[-2][0] == module_name

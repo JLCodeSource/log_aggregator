@@ -99,7 +99,8 @@ def _convert_to_datetime(timestamp: str) -> datetime:
     return dt
 
 
-async def convert(log_file: Path) -> list[JavaLog]:
+async def convert(file: str) -> list[JavaLog]:
+    log_file: Path = Path(file)
     logger.info(f"Starting new convert coroutine for {log_file}")
     # Work on log files in logsout
     log_list: list[JavaLog] = []

@@ -40,7 +40,7 @@ async def test_view_display_result_one_line_success(
         client: AsyncIOMotorClient = await db.init(database, conn)
 
         # And a log
-        logs: list[JavaLog] = await convert.convert(tgt_log_file)
+        logs: list[JavaLog] = await convert.convert(str(tgt_log_file))
 
         # And it has saved the log
         ids: InsertManyResult | None = await db.insert_logs(logs, database)
@@ -102,7 +102,7 @@ async def test_view_display_result_multi_line_success(
         client: AsyncIOMotorClient = await db.init(database, conn)
 
         # And a log
-        converted_logs: list[JavaLog] = await convert.convert(log_in)
+        converted_logs: list[JavaLog] = await convert.convert(str(log_in))
 
         # And it has saved the log
         await db.insert_logs(converted_logs)

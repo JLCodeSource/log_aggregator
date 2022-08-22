@@ -477,8 +477,8 @@ async def test_extract_log_returns_log_files(
     coroutine_list.append(extract._extract(file_full_path, target))
 
     # When it tries to extract the log list
-    log_files: list[Path] = []
-    log_file_list: list[Path] = await extract.extract_log(coroutine_list)
+    log_files: list[str] = []
+    log_file_list: list[str] = await extract.extract_log(coroutine_list)
     for file in log_file_list:
         log_files.append(file)
 

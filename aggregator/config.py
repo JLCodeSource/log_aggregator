@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     connection: str = os.getenv(
         "DATABASE_URL", "mongodb://root:example@localhost:27017/?authMechanism=DEFAULT"
     )
-    sourcedir: Path = Path(os.getenv("SOURCE", "./testsource/zips"))
+    sourcedir: Path = Path(os.getenv("SOURCE", "./testsource/prod_zips"))
     outdir: Path = Path(os.getenv("OUT", "./out"))
     testdatadir: Path = Path(os.getenv("TESTDATA", "./testsource"))
     database: str = os.getenv("DATABASE", "logs")
