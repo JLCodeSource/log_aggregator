@@ -396,8 +396,8 @@ async def test_gen_extract_fn_list_helper_none_returns(
     monkeypatch.setattr(helper, "get_log_dir", mock_helper_get_log_dir)
 
     # When it tries to extract the zip function list
-    # Then it raises a TypeError
-    with pytest.raises(TypeError):
+    # Then it raises an AttributeError
+    with pytest.raises(AttributeError):
         coro_list: list[
             Coroutine[Any, Any, list[Path]]
         ] | None = extract.gen_zip_extract_fn_list(tmp_path, None)
@@ -408,7 +408,7 @@ async def test_gen_extract_fn_list_helper_none_returns(
     # And the logger logs it
     assert logger.record_tuples[-1][0] == module_name
     assert logger.record_tuples[-1][1] == logging.ERROR
-    assert logger.record_tuples[-1][2] == "TypeError: Value should not be None"
+    assert logger.record_tuples[-1][2] == "Attribute Error: 'NoneType' object has no attribute 'append'"
 
 
 @pytest.mark.asyncio
