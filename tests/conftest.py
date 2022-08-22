@@ -14,9 +14,8 @@ import pytest
 from pytest_mock_resources.fixture.database.generic import Credentials
 from pytest_mock_resources.fixture.database.mongo import create_mongo_fixture
 
-import config
-import convert
-from model import JavaLog
+from aggregator import config, convert
+from aggregator.model import JavaLog
 
 TEST_DATABASE: str = "test-logs"
 
@@ -48,7 +47,8 @@ def gen_tmp_log_dir(
 @pytest.helpers.register  # type: ignore
 def gen_log_file(
     faker,
-    logs: tuple[tuple[str]], log_file: Path
+    log_file: Path,
+    # logs: tuple[tuple[str]],
 ) -> None:
     # Given a set of log data and
     levels: list[str] = ["INFO", "WARN", "ERROR"]
@@ -56,7 +56,7 @@ def gen_log_file(
     timestamp: Iterator[tuple[datetime, Any]] = faker.time_series(
         start_date=datetime(2022, 8, 6, 12, 1, 1, 0),
         precision=1.0,
-        end_date=datetime(2022, 8, 6, 12, 1, 1, 5)
+        end_date=datetime(2022, 8, 6, 12, 1, 1, 5),
     )
     source: list[str] = [
         "tld.main.java.cmp.api.impl.Network",
@@ -73,7 +73,7 @@ def gen_log_file(
         "tld.main.java.cmp.cache.FolderUpdateCache",
         "tld.main.java.cmp.database.proxy.ProxyConfigHandler"
         "tld.main.java.cmp.api.impl.Manager",
-        "tld.main.java.cmp.cache.CacheManagementTask"
+        "tld.main.java.cmp.cache.CacheManagementTask",
     ]
     category: list[str] = [f"pool-9-thread{x}" for x in range(15)]
     category2: list[str] = [
@@ -83,15 +83,22 @@ def gen_log_file(
         "FileConfigUpdater",
         "FileLiveCheckTask",
         "ProxyManager",
-        "CacheManagementTask"
+        "CacheManagementTask",
     ]
     category.extend(category2)
     message: list[str] = []
     for _ in range(50):
         message.append(faker.sentence(nb_words=50))
-    logs = faker.psv(data_columns=(
-        {{levels}}, {{jvm}}, {{timestamp}}, {{source}}, {{category}}, {{message}}),
-        num_rows=1000
+    logs = faker.psv(
+        data_columns=(
+            {{levels}},
+            {{jvm}},
+            {{timestamp}},
+            {{source}},
+            {{category}},
+            {{message}},
+        ),
+        num_rows=1000,
     )
     print(logs)
     # log: str = ""

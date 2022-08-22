@@ -27,7 +27,7 @@ import re
 from pathlib import Path
 from typing import Pattern
 
-from config import Settings, get_settings
+from aggregator.config import Settings, get_settings
 
 ZIP_NODE_PATTERN: Pattern = re.compile(
     r"^.+[L][o][g][s]_(.+?)([.].+|)_.+_\d{13}[.][z][i][p]$"

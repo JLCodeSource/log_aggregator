@@ -20,9 +20,8 @@ from beanie.exceptions import CollectionWasNotInitialized
 from pydantic import ValidationError
 from pymongo.errors import ServerSelectionTimeoutError
 
-
-from helper import LOG_NODE_PATTERN, get_node
-from model import JavaLog
+from aggregator.helper import LOG_NODE_PATTERN, get_node
+from aggregator.model import JavaLog
 
 logger: logging.Logger = logging.getLogger(__name__)
 

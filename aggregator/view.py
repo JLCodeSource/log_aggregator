@@ -11,8 +11,8 @@ from datetime import datetime
 
 from beanie import PydanticObjectId
 
-from config import Settings, get_settings
-from model import JavaLog
+from aggregator.config import Settings, get_settings
+from aggregator.model import JavaLog
 
 settings: Settings = get_settings()
 logger: logging.Logger = logging.getLogger(__name__)

@@ -1,3 +1,4 @@
+"""
 from main import main
 import asyncio
 import pytest
@@ -20,3 +21,4 @@ async def test_main(logger, settings_override, monkeypatch) -> None:
     asyncio.run(main())
     logs = logger.record_tuples
     assert logs[0][0] == "fail"
+"""

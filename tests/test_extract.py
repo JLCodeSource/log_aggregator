@@ -4,12 +4,12 @@ import logging
 import os
 import shutil
 from pathlib import Path
-from typing import Any, Coroutine, NoReturn
+from typing import Any, Coroutine, Literal, NoReturn
 from zipfile import BadZipFile, ZipFile
 
 import pytest
 
-from aggregator import config, extract, helper  # noqa
+from aggregator import config, extract, helper
 from aggregator.helper import LOG_LOGTYPE_PATTERN, ZIP_NODE_PATTERN
 
 filename_example: Path = Path("GBLogs_-n11_fanapiservice_1657563227839.zip")
@@ -22,7 +22,7 @@ sourcedir_example: list[Path] = [
 ]
 
 
-module_name: str = "aggregator.extract"
+module_name: Literal["aggregator.extract"] = "aggregator.extract"
 
 
 @pytest.mark.mock
@@ -396,8 +396,8 @@ async def test_gen_extract_fn_list_helper_none_returns(
     monkeypatch.setattr(helper, "get_log_dir", mock_helper_get_log_dir)
 
     # When it tries to extract the zip function list
-    # Then it raises an AttributeError
-    with pytest.raises(AttributeError):
+    # Then it raises an TypeError
+    with pytest.raises(TypeError):
         coro_list: list[
             Coroutine[Any, Any, list[Path]]
         ] | None = extract.gen_zip_extract_fn_list(tmp_path, None)
@@ -408,7 +408,7 @@ async def test_gen_extract_fn_list_helper_none_returns(
     # And the logger logs it
     assert logger.record_tuples[-1][0] == module_name
     assert logger.record_tuples[-1][1] == logging.ERROR
-    assert logger.record_tuples[-1][2] == "Attribute Error: 'NoneType' object has no attribute 'append'"
+    assert logger.record_tuples[-1][2] == "TypeError: Value should not be None"
 
 
 @pytest.mark.asyncio

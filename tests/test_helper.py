@@ -2,7 +2,7 @@ import logging
 import os
 from pathlib import Path
 from re import Pattern
-from typing import Callable
+from typing import Callable, Literal
 
 import pytest
 from hypothesis import given
@@ -12,7 +12,7 @@ from aggregator import config, helper
 from aggregator.helper import LOG_LOGTYPE_PATTERN  # noqa
 from aggregator.helper import LOG_NODE_PATTERN  # noqa
 from aggregator.helper import ZIP_LOGTYPE_PATTERN  # noqa
-from aggregator.helper import ZIP_NODE_PATTERN  # noqa; noqa
+from aggregator.helper import ZIP_NODE_PATTERN  # noqa
 
 PATTERNS: list[Pattern[str]] = [
     ZIP_LOGTYPE_PATTERN,
@@ -23,7 +23,7 @@ PATTERNS: list[Pattern[str]] = [
 
 settings: config.Settings = config.get_settings()
 
-module_name: str = "aggregator.helper"
+module_name: Literal["aggregator.helper"] = "aggregator.helper"
 
 
 filename_node_data: list[tuple[str, str, str, bool, Pattern]] = [

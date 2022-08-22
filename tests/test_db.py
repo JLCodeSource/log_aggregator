@@ -15,12 +15,10 @@ from pymongo.errors import InvalidOperation, ServerSelectionTimeoutError
 from pymongo.results import InsertManyResult
 from pytest_mock_resources.fixture.database.mongo import create_mongo_fixture
 
-import convert
-import db
-import model
-from model import JavaLog
+from aggregator import convert, db
+from aggregator.model import JavaLog
 
-module_name: Literal["db"] = "db"
+module_name: Literal["aggregator.db"] = "aggregator.db"
 wrong_id: PydanticObjectId = PydanticObjectId("608da169eb9e17281f0ab2ff")
 mongo = create_mongo_fixture()
 
@@ -99,7 +97,7 @@ async def test_init_server_timeout(
     logger: pytest.LogCaptureFixture,
 ) -> None:
     # Given a mock init_beanie_server_timeout to target the test database
-    def mock_beanie_server_timeout(*args, **kwargs) -> NoReturn:
+    def mock_beanie_server_timeout(*args, **kwargs):
         return MockBeanie.beanie_server_timeout()
 
     monkeypatch.setattr(beanie, "init_beanie", mock_beanie_server_timeout)
@@ -232,7 +230,7 @@ async def test_insert_logs_servertimeout(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # Given a mock javalog_server_timeout to target the test database
-    def mock_insert_logs_server_timeout(*args, **kwargs) -> NoReturn:
+    def mock_insert_logs_server_timeout(*args, **kwargs):
         return MockJavaLog.server_timeout()
 
     monkeypatch.setattr(JavaLog, "insert_many", mock_insert_logs_server_timeout)
@@ -274,7 +272,7 @@ async def test_insert_logs_invalid_operation_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # Given a MockJavaLog
-    def mock_javalog_raises_invalid_operation(*args, **kwargs) -> NoReturn:
+    def mock_javalog_raises_invalid_operation(*args, **kwargs):
         return MockJavaLog.invalid_operation(*args, **kwargs)
 
     monkeypatch.setattr(JavaLog, "insert_many", mock_javalog_raises_invalid_operation)
@@ -522,10 +520,10 @@ async def test_get_log_server_timeout(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # Given a mock javalog_server_timeout to target the test database
-    def mock_javalog_server_timeout(*args, **kwargs) -> NoReturn:
+    def mock_javalog_server_timeout(*args, **kwargs):
         return MockJavaLog.server_timeout()
 
-    monkeypatch.setattr(model.JavaLog, "get", mock_javalog_server_timeout)
+    monkeypatch.setattr(JavaLog, "get", mock_javalog_server_timeout)
 
     # And a motor_conn & database
     database: str
@@ -591,7 +589,7 @@ async def test_find_logs_successfully(
         await db.insert_logs(logs, database)
 
         # And it has a query
-        query: BaseFindOperator = (JavaLog.node == "testnode")
+        query: BaseFindOperator = JavaLog.node == "testnode"
 
         # When it tries to find the logs
         result: list[JavaLog] = await db.find_logs(query, sort=None, database=database)
@@ -686,7 +684,7 @@ async def test_find_logs_with_sort(
         await db.insert_logs(logs)
 
         # And it has a query
-        query: str = (JavaLog.node == "node")
+        query: str = JavaLog.node == "node"
 
         # And it has a sort
         sort: str = "-datetime"

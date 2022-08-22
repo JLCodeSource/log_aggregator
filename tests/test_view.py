@@ -2,6 +2,7 @@
 import io
 import sys
 from pathlib import Path
+from typing import Literal
 
 import pytest
 from beanie import PydanticObjectId
@@ -11,7 +12,7 @@ from pymongo.results import InsertManyResult
 from aggregator import config, convert, db, view
 from aggregator.model import JavaLog
 
-module_name: str = "view"
+module_name: Literal["aggregator.view"] = "aggregator.view"
 
 
 @pytest.mark.asyncio
