@@ -18,7 +18,7 @@ lint:
 	flake8 aggregator tests || exit 1
 	isort --check-only --diff aggregator tests || exit 1
 	black --check aggregator tests || exit 1
-	dmypy run -- aggregator tests || exit 1
+	dmypy run -- aggregator tests -vv || exit 1
 
 # pydocstyle src tests || exit 1	
 
