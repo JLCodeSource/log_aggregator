@@ -8,14 +8,15 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 from random import randrange
-from typing import Generator, Union  # Literal
+from typing import Any, Generator, Iterator, Union  # Literal
 
 import pytest
 from pytest_mock_resources.fixture.database.generic import Credentials
 from pytest_mock_resources.fixture.database.mongo import create_mongo_fixture
 
-from aggregator import config, convert
-from aggregator.model import JavaLog
+import config
+import convert
+from model import JavaLog
 
 TEST_DATABASE: str = "test-logs"
 
@@ -31,26 +32,75 @@ EXAMPLE_GEN = (  # Row 1
 )
 
 
+@pytest.fixture(scope="session", autouse=True)
+def faker_seed() -> int:
+    return 101
+
+
 @pytest.helpers.register  # type: ignore
 def gen_tmp_log_dir(
-    tmpdir: Union[str, bytes, os.PathLike],
-    target: Union[str, bytes, os.PathLike] = "System",
+    tmp_path: Path,
+    target: Path = Path("System"),
 ) -> None:
-    Path(os.path.join(str(tmpdir), str(target))).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(str(tmp_path), str(target))).mkdir(parents=True, exist_ok=True)
 
 
 @pytest.helpers.register  # type: ignore
 def gen_log_file(
-    logs: tuple[tuple[str]], log_file: Union[str, bytes, os.PathLike]
+    faker,
+    logs: tuple[tuple[str]], log_file: Path
 ) -> None:
     # Given a set of log data and
-    log: str = ""
-    for row in logs:
-        for field in row:
-            log = f"{log} {field}\t|"
-        log = f"{log}\n"
+    levels: list[str] = ["INFO", "WARN", "ERROR"]
+    jvm: list[str] = ["jvm 1"]
+    timestamp: Iterator[tuple[datetime, Any]] = faker.time_series(
+        start_date=datetime(2022, 8, 6, 12, 1, 1, 0),
+        precision=1.0,
+        end_date=datetime(2022, 8, 6, 12, 1, 1, 5)
+    )
+    source: list[str] = [
+        "tld.main.java.cmp.api.impl.Network",
+        "tld.main.java.cmp.file.server.ServiceImpl",
+        "tld.main.java.cmp.file.server.LiveCheckTask",
+        "tld.main.java.cmp.api.async.AsyncCacheCleaner",
+        "tld.main.java.cmp.file.server.FileConfigUpdater",
+        "tld.main.java.common.block.BlockingCommandExecutor",
+        "tld.main.java.cmp.database.proxy.ProxyManager",
+        "tld.main.java.cmp.api.cache.UserTreeCache",
+        "tld.main.java.cmp.api.async.AsyncFilesHolder",
+        "tld.main.dist.file.dedupe.INodeFactory",
+        "tld.main.java.archivemgmt.managers.DeletionManager"
+        "tld.main.java.cmp.cache.FolderUpdateCache",
+        "tld.main.java.cmp.database.proxy.ProxyConfigHandler"
+        "tld.main.java.cmp.api.impl.Manager",
+        "tld.main.java.cmp.cache.CacheManagementTask"
+    ]
+    category: list[str] = [f"pool-9-thread{x}" for x in range(15)]
+    category2: list[str] = [
+        "AsyncCacheCleaner",
+        "AsyncNetFilesHolder",
+        "FolderCacheUpdateTask",
+        "FileConfigUpdater",
+        "FileLiveCheckTask",
+        "ProxyManager",
+        "CacheManagementTask"
+    ]
+    category.extend(category2)
+    message: list[str] = []
+    for _ in range(50):
+        message.append(faker.sentence(nb_words=50))
+    logs = faker.psv(data_columns=(
+        {{levels}}, {{jvm}}, {{timestamp}}, {{source}}, {{category}}, {{message}}),
+        num_rows=1000
+    )
+    print(logs)
+    # log: str = ""
+    # for row in logs:
+    #    for field in row:
+    #        log = f"{log} {field}\t|"
+    #    log = f"{log}\n"
     with open(log_file, "w") as f:
-        f.write(log)
+        f.write(logs)
 
 
 @pytest.helpers.register  # type: ignore

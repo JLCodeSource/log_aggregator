@@ -27,16 +27,16 @@ import re
 from pathlib import Path
 from typing import Pattern
 
-from aggregator.config import Settings, get_settings
+from config import Settings, get_settings
 
 ZIP_NODE_PATTERN: Pattern = re.compile(
-    r"^.+\/.+[L][o][g][s]_(.+?)([.].+|)_.+_\d{13}[.][z][i][p]$"
+    r"^.+[L][o][g][s]_(.+?)([.].+|)_.+_\d{13}[.][z][i][p]$"
 )
 LOG_NODE_PATTERN: Pattern = re.compile(
     r"^.+\/([^\/].+?)([.].+|)\/.+\/.+[.][l][o][g](\d|)$"
 )
 ZIP_LOGTYPE_PATTERN: Pattern = re.compile(
-    r"^.+\/.+[L][o][g][s]_.+_(.+?)_\d{13}[.][z][i][p]$"
+    r"^.+[L][o][g][s]_.+_(.+?)_\d{13}[.][z][i][p]$"
 )
 LOG_LOGTYPE_PATTERN: Pattern = re.compile(r"^.+\/.+\/([^\/].+)\/.+[.][l][o][g](\d|)$")
 

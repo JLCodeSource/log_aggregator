@@ -27,9 +27,9 @@ from pathlib import Path
 from shutil import move
 from typing import Any, Coroutine, Literal
 
-from aggregator import helper
-from aggregator.config import Settings, get_settings
-from aggregator.helper import LOG_LOGTYPE_PATTERN, ZIP_NODE_PATTERN
+import helper
+from config import Settings, get_settings
+from helper import LOG_LOGTYPE_PATTERN, ZIP_NODE_PATTERN
 
 READ: Literal["r"] = "r"
 TYPEERROR: str = "Value should not be None"

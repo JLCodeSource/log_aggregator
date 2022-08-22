@@ -10,7 +10,7 @@ Classes: OneLineExceptionFormatter
 import logging
 from typing import TextIO
 
-from aggregator.config import Settings, get_settings
+from config import Settings, get_settings
 
 
 class OneLineExceptionFormatter(logging.Formatter):

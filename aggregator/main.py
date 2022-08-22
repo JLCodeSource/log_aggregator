@@ -11,6 +11,7 @@ Variables: sourcedir
 
 import asyncio
 import logging
+import nest_asyncio
 from pathlib import Path
 from typing import Any, Coroutine, cast
 
@@ -18,23 +19,15 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.results import InsertManyResult
 from pyparsing import empty
 
-from aggregator.config import Settings, get_settings
-from aggregator.convert import convert
-from aggregator.db import find_logs, init, insert_logs
-from aggregator.extract import extract_log, gen_zip_extract_fn_list
-from aggregator.logs import configure_logging
-from aggregator.model import JavaLog
-from aggregator.view import display_result
+from config import Settings, get_settings
+from convert import convert
+from db import find_logs, init, insert_logs
+from extract import extract_log, gen_zip_extract_fn_list
+from logs import configure_logging
+from model import JavaLog
+from view import display_result
 
 logger: logging.Logger = logging.getLogger(__name__)
-
-
-class Aggregator:
-    def __init__(self, func) -> None:
-        self._func = func
-
-    def __call__(self) -> object:
-        return self._func()
 
 
 async def init_app() -> tuple[AsyncIOMotorClient, Settings]:
@@ -82,7 +75,6 @@ def _get_convert_coro_list(
     return convert_coro_list
 
 
-@Aggregator
 async def main() -> None:
 
     client: AsyncIOMotorClient
@@ -98,15 +90,16 @@ async def main() -> None:
 
     # Extact logs from source directory
     try:
-        log_file_list: list[Path] = await extract_log(zip_coro_list)
+        log_file_list: list[Path] = asyncio.run(extract_log(zip_coro_list))
         if log_file_list is None or log_file_list is empty:
             raise Exception(f"Failed to get log_files from {settings.sourcedir}")
     except Exception as err:
         logger.error(f"{err}")
+        raise Exception(f"Failed to get log_files from {settings.sourcedir}")
 
     convert_coro_list: list[Coroutine[Any, Any, list[JavaLog]]] = []
     convert_coro_list = _get_convert_coro_list(
-        convert_coro_list, log_file_list  # type: ignore
+        convert_coro_list, log_file_list
     )
 
     converted_log_lists: list[list[JavaLog]] = await asyncio.gather(*convert_coro_list)
@@ -125,5 +118,5 @@ async def main() -> None:
 if __name__ == "__main__":
 
     configure_logging()
-
+    nest_asyncio.apply()
     asyncio.run(main())  # type: ignore #TODO: Update main startup

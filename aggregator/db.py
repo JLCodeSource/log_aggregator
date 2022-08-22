@@ -18,8 +18,8 @@ from pydantic import ValidationError  # AnyUrl
 from pymongo.errors import InvalidOperation, ServerSelectionTimeoutError
 from pymongo.results import InsertManyResult
 
-from aggregator.config import Settings, get_settings
-from aggregator.model import JavaLog
+from config import Settings, get_settings
+from model import JavaLog
 
 logger: logging.Logger = logging.getLogger(__name__)
 
