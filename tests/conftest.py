@@ -105,9 +105,9 @@ def gen_log_file(
 
 @pytest.helpers.register  # type: ignore
 def gen_zip_file(
-    log_dir: Union[str, bytes, os.PathLike],
-    zip_file: Union[str, bytes, os.PathLike],
-    target: Union[str, bytes, os.PathLike] = "System",
+    log_dir: Path,
+    zip_file: Path,
+    target: Path = Path("System"),
 ) -> None:
 
     if target not in os.listdir(log_dir):
