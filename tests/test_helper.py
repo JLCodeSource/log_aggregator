@@ -168,8 +168,9 @@ def test_get_node_with_no_match(logger) -> None:
     assert node == ""
     # And the logger logs it
     assert logger.record_tuples[0] == (
-        module_name, logging.WARNING,
-        f"Wrong filename structure when getting node from {filename} with {pattern}"
+        module_name,
+        logging.WARNING,
+        f"Wrong filename structure when getting node from {filename} with {pattern}",
     )
 
 
@@ -185,8 +186,9 @@ def test_get_log_type_with_no_match(logger) -> None:
     assert node == ""
     # And the logger logs it
     assert logger.record_tuples[0] == (
-        module_name, logging.WARNING,
-        f"Wrong filename structure when getting log_type from {filename} with {pattern}"
+        module_name,
+        logging.WARNING,
+        f"Wrong filename structure when getting log_type from {filename} with {pattern}",
     )
 
 
