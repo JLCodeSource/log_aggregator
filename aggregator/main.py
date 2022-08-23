@@ -18,7 +18,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.results import InsertManyResult
 from pyparsing import empty
 
-from aggregator.config import Settings, get_settings
+from aggregator import config
+from aggregator.config import Settings
 from aggregator.convert import convert
 from aggregator.db import find_logs, init, insert_logs
 from aggregator.extract import extract_log, gen_zip_extract_fn_list
@@ -31,7 +32,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 def _get_settings() -> Settings:
     try:
-        settings: Settings | None = get_settings()
+        settings: Settings | None = config.get_settings()
         assert settings is not None, "Failed to get settings"
     except AssertionError as err:
         logger.fatal(f"AssertionError: {err}")

@@ -1,4 +1,6 @@
 import logging
+import os
+from pathlib import Path
 from typing import Literal
 
 import pytest
@@ -10,11 +12,10 @@ module_name: Literal["aggregator.main"] = "aggregator.main"
 
 
 class TestGetSettings:
-    @pytest.mark.mock
+    @pytest.mark.unit
     def test_get_settings_override(
         self,
         settings_override: Settings,
-        monkeypatch: pytest.MonkeyPatch,
         logger: pytest.LogCaptureFixture,
     ) -> None:
 
@@ -48,27 +49,52 @@ class TestGetSettings:
         assert msgs[6] == "Database: test-logs"
         assert msgs[7] == "Log Level: 10"
 
-    @pytest.mark.mock
-    def test_get_settings_empty(
-        self, monkeypatch: pytest.MonkeyPatch, logger: pytest.LogCaptureFixture
+    @pytest.mark.unit
+    def test_get_settings_from_env(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        # Given a list of env vars
+        environment: str = "test"
+        testing: str = "1"
+        testing_out: bool = True
+        connection: str = (
+            "mongodb://test:test@mongoserver.domain.tld:28017//?authMechanism=DEFAULT"
+        )
+        connection_log: str = "mongodb://username:password@mongoserver.domain.tld:28017//?authMechanism=DEFAULT"
+        sourcedir: str = "/tmp/testsource"
+        outdir: str = "/tmp/outdir"
+        testdatadir: str = "/tmp/testdata"
+        database: str = "testdb"
+        log_level: str = "50"
 
-        # Given a mock get_settings
-        def mock_get_settings(*args, **kwargs) -> None:
-            return None
+        # And a mock to override main._get_settings
+
+        def mock_get_settings(*args, **kwargs) -> Settings:
+            # Given a list of env values
+            os.environ["ENVIRONMENT"] = environment
+            os.environ["TESTING"] = testing
+            os.environ["CONNECTION"] = connection
+            os.environ["SOURCEDIR"] = sourcedir
+            os.environ["OUTDIR"] = outdir
+            os.environ["TESTDATADIR"] = testdatadir
+            os.environ["DATABASE"] = database
+            os.environ["LOG_LEVEL"] = log_level
+            new_settings: Settings = Settings()
+            return new_settings
 
         monkeypatch.setattr(config, "get_settings", mock_get_settings)
 
-        # When it tries to get the settings
-        with pytest.raises(AssertionError):
-            settings: Settings | None = main._get_settings()
+        # When it gets the Settings
+        new_settings: Settings = main._get_settings()
 
-            # And the settings are None
-            assert settings is None
-
-            # And it logs it
-            assert logger.record_tuples[0] == [
-                module_name,
-                logging.FATAL,
-                "AssertionError: Failed to get settings",
-            ]
+        # Then the settings reflect the values
+        assert new_settings.get_environment() == environment
+        assert new_settings.get_testing() == testing_out
+        assert new_settings.get_connection() == connection
+        assert new_settings.get_connection_log() == connection_log
+        assert new_settings.get_sourcedir() == Path(sourcedir)
+        assert new_settings.get_outdir() == Path(outdir)
+        assert new_settings.get_testdatadir() == Path(testdatadir)
+        assert new_settings.get_database() == database
+        assert new_settings.get_log_level() == int(log_level)
