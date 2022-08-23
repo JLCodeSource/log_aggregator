@@ -5,8 +5,9 @@ from typing import Any, Coroutine, Literal
 
 import pytest
 from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo.results import InsertManyResult
 
-from aggregator import config, main
+from aggregator import config, main, model
 from aggregator.config import Settings
 
 module_name: Literal["aggregator.main"] = "aggregator.main"
@@ -126,22 +127,49 @@ class TestGetSettings:
 class TestInit:
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_init_db_success(self) -> None:
-        # When main tries to init the db
-        # Then it returns the client
-        client: AsyncIOMotorClient = await main._init_db()
-        assert isinstance(client, AsyncIOMotorClient)
+    async def test_init_db_success(self, motor_conn, settings_override) -> None:
+        # Given a mongo_conn
+        # Given a pmr_database & connection
+        database: str
+        conn: str
+        database, conn = motor_conn
+        settings_override.database = database
+        settings_override.connection = conn
+
+        try:
+            # When main tries to init the db
+            client: AsyncIOMotorClient = await main._init_db(settings_override)
+
+            # Then it returns the client
+            assert isinstance(client, AsyncIOMotorClient)
+        finally:
+            # Set Manual Teardown
+            client = await main._init_db(settings_override)
+            await client.drop_database(database)
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_init_app_success(self, settings_override) -> None:
+    async def test_init_app_success(self, motor_conn, settings_override) -> None:
+        # Given a mongo_conn
+        # Given a pmr_database & connection
+        database: str
+        conn: str
+        database, conn = motor_conn
+        settings_override.database = database
+        settings_override.connection = conn
+
         # When main tries to init the app
         # Then it returns settings and client
         client: AsyncIOMotorClient
         settings: Settings
-        client, settings = await main.init_app()
-        assert isinstance(client, AsyncIOMotorClient)
-        assert settings == settings_override
+        try:
+            client, settings = await main.init_app(settings_override)
+            assert isinstance(client, AsyncIOMotorClient)
+            assert settings == settings_override
+        finally:
+            # Set Manual Teardown
+            client = await main._init_db(settings_override)
+            await client.drop_database(database)
 
     # TODO: Add failure tests (though bunnying off other tests)
 
@@ -198,7 +226,6 @@ class TestExtract:
         self,
         tmp_path: Path,
         logger: pytest.LogCaptureFixture,
-        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         # Given a mock zip_extract_coro_list & a tmp_path
 
@@ -213,3 +240,60 @@ class TestExtract:
             logging.ERROR,
             "ValueError: Zip extract coroutine list is empty",
         )
+
+
+class TestConvert:
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_get_convert_coro_list_success(settings_override) -> None:
+        # When it has inited the database
+        await main._init_db()
+        # And it has a log_file_list
+        sourcedir: Path = Path("./testsource/zips")
+        log_file_list: list[str] = await main._extract_logs(sourcedir)
+        # When it tries to get the get the convert coro list
+        log_lists: list[list[model.JavaLog]] = await main._convert_log_files(
+            log_file_list
+        )
+        # Then it should return a list of JavaLogs
+        assert len(log_lists) > 0
+
+    # TODO Add unhappy path
+
+
+class TestInsert:
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_insert_logs(self, motor_conn, settings_override) -> None:
+
+        # Given a mongo_conn
+        # Given a pmr_database & connection
+        database: str
+        conn: str
+        database, conn = motor_conn
+        settings_override.database = database
+        settings_override.connection = conn
+
+        # When main tries to init the app
+        # Then it returns settings and client
+        client: AsyncIOMotorClient
+
+        try:
+            client, _ = await main.init_app(settings_override)
+            # And it has a log_file_list
+            sourcedir: Path = Path("./testsource/zips")
+            log_file_list: list[str] = await main._extract_logs(sourcedir)
+            # And it has converted the lists to logs
+            log_lists: list[list[model.JavaLog]] = await main._convert_log_files(
+                log_file_list
+            )
+            # When it tries to insert the logs
+            result: list[InsertManyResult] | None = await main._insert_logs(log_lists)
+            assert result is not None
+            assert len(result) > 0
+        finally:
+            # Set Manual Teardown
+            client = await main._init_db(settings_override)
+            await client.drop_database(database)
+
+    # TODO Add unhappy path

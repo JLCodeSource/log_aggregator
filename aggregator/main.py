@@ -41,16 +41,16 @@ def _get_settings() -> config.Settings:
     return settings
 
 
-async def _init_db() -> AsyncIOMotorClient:
-    return await db.init()
+async def _init_db(settings: config.Settings = _get_settings()) -> AsyncIOMotorClient:
+    return await db.init(settings.database, settings.connection)
 
 
-async def init_app() -> tuple[AsyncIOMotorClient, config.Settings]:
-    # Init settings
-    settings: config.Settings = _get_settings()
+async def init_app(
+    settings: config.Settings = _get_settings(),
+) -> tuple[AsyncIOMotorClient, config.Settings]:
 
     # Init database
-    client: AsyncIOMotorClient = await _init_db()
+    client: AsyncIOMotorClient = await _init_db(settings)
 
     return client, settings
 
@@ -98,6 +98,28 @@ async def _extract_logs(sourcedir: Path) -> list[str]:
     return log_file_list
 
 
+async def _convert_log_files(log_file_list: list[str]) -> list[list[model.JavaLog]]:
+    convert_coro_list: list[Coroutine[Any, Any, list[model.JavaLog]]] = []
+
+    convert_coro_list = _get_convert_coro_list(convert_coro_list, log_file_list)
+
+    converted_log_lists: list[list[model.JavaLog]] = await asyncio.gather(
+        *convert_coro_list
+    )
+
+    return converted_log_lists
+
+
+async def _insert_logs(
+    converted_log_lists: list[list[model.JavaLog]],
+) -> list[InsertManyResult] | None:
+    insert_log_fn_list: list[Coroutine[Any, Any, InsertManyResult | None]] = []
+    for log_lists in converted_log_lists:
+        insert_log_fn_list.append(db.insert_logs(log_lists))
+
+    return await asyncio.gather(*insert_log_fn_list)
+
+
 async def main() -> None:
 
     client: AsyncIOMotorClient
@@ -108,19 +130,13 @@ async def main() -> None:
 
     log_file_list: list[str] = await _extract_logs(settings.sourcedir)
 
-    convert_coro_list: list[Coroutine[Any, Any, list[model.JavaLog]]] = []
-    convert_coro_list = _get_convert_coro_list(convert_coro_list, log_file_list)
-
-    converted_log_lists: list[list[model.JavaLog]] = await asyncio.gather(
-        *convert_coro_list
+    converted_log_lists: list[list[model.JavaLog]] = await _convert_log_files(
+        log_file_list
     )
 
-    insert_log_fn_list: list[Coroutine[Any, Any, InsertManyResult | None]] = []
-    for log_lists in converted_log_lists:
-        insert_log_fn_list.append(db.insert_logs(log_lists))
+    result: list[InsertManyResult] | None = await _insert_logs(converted_log_lists)
 
-    ok: list[InsertManyResult] | None = await asyncio.gather(*insert_log_fn_list)
-    logger.info(f"Output from db insert: {ok}")
+    logger.info(f"Output from db insert: {result}")
 
     out: list[model.JavaLog] = await db.find_logs(query={}, sort="-datetime")
     await view.display_result(out)
