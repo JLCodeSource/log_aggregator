@@ -1,9 +1,10 @@
 import logging
 import os
 from pathlib import Path
-from typing import Literal
+from typing import Any, Coroutine, Literal
 
 import pytest
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from aggregator import config, main
 from aggregator.config import Settings
@@ -41,8 +42,8 @@ class TestGetSettings:
         assert msgs[1] == "Environment: dev"
         assert msgs[2] == "Testing: True"
         assert (
-            msgs[3]
-            == "Connection: mongodb://username:password@localhost:27017/?authMechanism=DEFAULT"
+            msgs[3] ==
+            "Connection: mongodb://username:password@localhost:27017/?authMechanism=DEFAULT"
         )
         assert msgs[4] == "Sourcedir: testsource/zips"
         assert msgs[5] == "Outdir: out"
@@ -98,3 +99,83 @@ class TestGetSettings:
         assert new_settings.get_testdatadir() == Path(testdatadir)
         assert new_settings.get_database() == database
         assert new_settings.get_log_level() == int(log_level)
+
+    @pytest.mark.unit
+    def test_settings_failed(
+        self, monkeypatch: pytest.MonkeyPatch, logger: pytest.LogCaptureFixture
+    ) -> None:
+        # Given a mock get settings
+        def mock_get_settings(*args, **kwargs) -> None:
+            return None
+
+        monkeypatch.setattr(config, "get_settings", mock_get_settings)
+
+        # When it gets the settings
+        # Then it raises an assertion error
+        with pytest.raises(AssertionError):
+            main._get_settings()
+
+        # And the logger logs it
+        assert logger.record_tuples[0] == (
+            module_name,
+            logging.FATAL,
+            "AssertionError: Failed to get settings",
+        )
+
+
+class TestInit:
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_init_db_success(self) -> None:
+        # When main tries to init the db
+        # Then it returns the client
+        client: AsyncIOMotorClient = await main._init_db()
+        assert isinstance(client, AsyncIOMotorClient)
+
+    @pytest.mark.asyncio
+    @pytest.mark.unit
+    async def test_init_app_success(self, settings_override) -> None:
+        # When main tries to init the app
+        # Then it returns settings and client
+        client: AsyncIOMotorClient
+        settings: Settings
+        client, settings = await main.init_app()
+        assert isinstance(client, AsyncIOMotorClient)
+        assert settings == settings_override
+
+    # TODO: Add failure tests (though bunnying off other tests)
+
+
+class TestExtract:
+    @pytest.mark.unit
+    def test_get_zip_extract_coro_list(
+        self, settings_override: config.Settings
+    ) -> None:
+        # Given a set of settings (settings_override)
+        # When it tries to generate the list
+        zip_coro_list: list[
+            Coroutine[Any, Any, list[Path]]
+        ] = main._get_zip_extract_coro_list(settings_override)
+        # Then it returns a list of coros
+        assert len(zip_coro_list) > 0
+
+    @pytest.mark.unit
+    def test_get_zip_extract_coro_list_is_none_or_empty(
+        self,
+        settings_override: config.Settings,
+        tmp_path: Path,
+        logger: pytest.LogCaptureFixture,
+    ) -> None:
+        # Given a set of settings (settings_override)
+        # And a tmp_path
+        settings_override.sourcedir = tmp_path
+        # When it tries to generate the list
+        # Then it raises a ValueError
+        with pytest.raises(ValueError):
+            main._get_zip_extract_coro_list(settings_override)
+        # And the logger logs it
+        assert logger.record_tuples[0] == (
+            module_name,
+            logging.ERROR,
+            "ValueError: Zip extract coroutine list is empty",
+        )
