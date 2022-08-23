@@ -12,13 +12,13 @@ import pytest
 from aggregator import config, extract, helper  # noqa
 from aggregator.helper import LOG_LOGTYPE_PATTERN, ZIP_NODE_PATTERN
 
-filename_example: Path = Path("GBLogs_-n11_fanapiservice_1657563227839.zip")
+filename_example: Path = Path("GBLogs_n11_fanapiservice_1657563227839.zip")
 badzipfile_example: Path = Path("not_a_zip.zip")
 non_file: Path = Path("non_file.zip")
 
 sourcedir_example: list[Path] = [
-    Path("GBLogs_-n11_fanapiservice_1657563227839.zip"),
-    Path("GBLogs_-n16_fanapiservice_1657563218539.zip"),
+    Path("GBLogs_n11_fanapiservice_1657563227839.zip"),
+    Path("GBLogs_n16_fanapiservice_1657563218539.zip"),
 ]
 
 
@@ -302,9 +302,9 @@ async def test_gen_extract_fn_list(
     monkeypatch.setattr(os, "listdir", mock_listdir)
 
     # When it tries to generate the extract files list
-    zip_files_extract_fn_list: list[
-        Coroutine[Any, Any, list[Path]]
-    ] | None = extract.gen_zip_extract_fn_list(tmp_path)
+    zip_files_extract_fn_list: list[Coroutine[Any, Any, list[Path]]] | None = (
+        extract.gen_zip_extract_fn_list(tmp_path)
+    )
 
     # Then it returns a list of functions
     assert zip_files_extract_fn_list is not None
@@ -398,9 +398,9 @@ async def test_gen_extract_fn_list_helper_none_returns(
     # When it tries to extract the zip function list
     # Then it raises a TypeError
     with pytest.raises(TypeError):
-        coro_list: list[
-            Coroutine[Any, Any, list[Path]]
-        ] | None = extract.gen_zip_extract_fn_list(tmp_path, None)
+        coro_list: list[Coroutine[Any, Any, list[Path]]] | None = (
+            extract.gen_zip_extract_fn_list(tmp_path, None)
+        )
         assert coro_list is not None
         for coro in coro_list:
             await coro

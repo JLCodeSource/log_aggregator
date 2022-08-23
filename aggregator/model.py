@@ -39,7 +39,10 @@ class ZipFile(File):
     def extension_must_be_zip(cls, v, values) -> Path:
         if v != Path(".zip"):
             full_path: Path = values["full_path"]
-            err: str = f"ValueError: ZipFile {full_path} must have .zip extension"
+            id: uuid.UUID = values["id"]
+            err: str = (
+                f"ValueError: ZipFile:{id} at {full_path} must have .zip extension"
+            )
             logging.error(f"{err}")
             raise ValueError(f"{err}")
         return v
@@ -48,7 +51,8 @@ class ZipFile(File):
     def node_must_not_be_none_or_empty(cls, v, values) -> str:
         if v is None or v == "":
             full_path: Path = values["full_path"]
-            err: str = f"ValueError: ZipFile {full_path} must have node value"
+            id: uuid.UUID = values["id"]
+            err: str = f"ValueError: ZipFile:{id} at {full_path} must have node value"
             logging.error(f"{err}")
             raise ValueError(f"{err}")
         return v
@@ -57,7 +61,10 @@ class ZipFile(File):
     def log_type_must_not_be_none_or_empty(cls, v, values) -> str:
         if v is None or v == "":
             full_path: Path = values["full_path"]
-            err: str = f"ValueError: ZipFile {full_path} must have log_type value"
+            id: uuid.UUID = values["id"]
+            err: str = (
+                f"ValueError: ZipFile:{id} at {full_path} must have log_type value"
+            )
             logging.error(f"{err}")
             raise ValueError(f"{err}")
         return v
@@ -75,8 +82,9 @@ class LogFile(File):
     @validator("source_zip")
     def source_zip_must_exist(cls, v, values) -> Path:
         full_path: Path = values["full_path"]
+        id: uuid.UUID = values["id"]
         if v is None:
-            err: str = f"ValueError: LogFile {full_path} must have ZipFile"
+            err: str = f"ValueError: LogFile:{id} at {full_path} must have ZipFile"
             logging.error(f"{err}")
             raise ValueError(f"{err}")
         return v
@@ -87,7 +95,10 @@ class LogFile(File):
     def extension_must_be_log(cls, v, values) -> Path:
         if not str(v).startswith(".log"):
             full_path: Path = values["full_path"]
-            err: str = f"ValueError: LogFile {full_path} must have .log* extension"
+            id: uuid.UUID = values["id"]
+            err: str = (
+                f"ValueError: LogFile:{id} at {full_path} must have .log* extension"
+            )
             logging.error(f"{err}")
             raise ValueError(f"{err}")
         return v
@@ -95,8 +106,9 @@ class LogFile(File):
     @validator("node")
     def node_must_not_be_none_empty_or_not_match_zip(cls, v, values) -> str:
         full_path: Path = values["full_path"]
+        id: uuid.UUID = values["id"]
         if v is None or v == "":
-            err: str = f"ValueError: LogFile {full_path} must have node value"
+            err: str = f"ValueError: LogFile:{id} at {full_path} must have node value"
             logging.error(f"{err}")
             raise ValueError(f"{err}")
         return v
@@ -105,7 +117,10 @@ class LogFile(File):
     def log_type_must_not_be_none_or_empty(cls, v, values) -> str:
         if v is None or v == "":
             full_path: Path = values["full_path"]
-            err: str = f"ValueError: LogFile {full_path} must have log_type value"
+            id: uuid.UUID = values["id"]
+            err: str = (
+                f"ValueError: LogFile:{id} at {full_path} must have log_type value"
+            )
             logging.error(f"{err}")
             raise ValueError(f"{err}")
         return v
@@ -117,6 +132,7 @@ class LogFile(File):
         if not all(key in values for key in keys):
             raise ValueError()
         else:
+            log_id: uuid.UUID = values["id"]
             node: str = values["node"]
             log_type: str = values["log_type"]
             zip_node: str = getattr(values["source_zip"], "node")
@@ -125,11 +141,11 @@ class LogFile(File):
 
         has_value_erred: bool = False
         if node != zip_node:
-            err: str = f"ValueError: LogFile {full_path} node value must match ZipFile {zip_id} node value"
+            err: str = f"ValueError: LogFile:{log_id} at {full_path} node value must match ZipFile {zip_id} node value"
             logging.error(f"{err}")
             has_value_erred = True
         if log_type != zip_log_type:
-            err: str = f"ValueError: LogFile {full_path} log_type value must match ZipFile {zip_id} log_type value"
+            err: str = f"ValueError: LogFile:{log_id} at {full_path} log_type value must match ZipFile {zip_id} log_type value"
             logging.error(f"{err}")
             has_value_erred = True
         if has_value_erred:

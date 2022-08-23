@@ -9,8 +9,11 @@ from pydantic import ValidationError
 
 from aggregator.model import File, JavaLogEntry, LogEntry, LogFile, ZipFile
 
-test_uuid: uuid.UUID = uuid.UUID("d525b033-e4ac-4acf-b3ba-219ab974f0c5")
-test_zip_uuid: uuid.UUID = uuid.UUID("d525b033-e4ac-4acf-b3ba-219ab974f0c6")
+test_file_uuid: uuid.UUID = uuid.UUID("d525b033-e4ac-4acf-b3ba-219ab974f0c1")
+test_zip_uuid: uuid.UUID = uuid.UUID("d525b033-e4ac-4acf-b3ba-219ab974f0c2")
+test_log_uuid: uuid.UUID = uuid.UUID("d525b033-e4ac-4acf-b3ba-219ab974f0c3")
+test_log_entry_uuid: uuid.UUID = uuid.UUID("d525b033-e4ac-4acf-b3ba-219ab974f0c4")
+test_java_log_entry_uuid: uuid.UUID = uuid.UUID("d525b033-e4ac-4acf-b3ba-219ab974f0c5")
 module_name: str = "aggregator.model"
 zip_filename: str = "GBLogs_node001_apiservice_1234567890123.zip"
 log_filename: str = "/out/node001/apiservice/apiservice.log"
@@ -52,7 +55,7 @@ class TestFileModel:
     def test_file_model_uuid(self) -> None:
         # Given a class (File)
         # And an id
-        id: uuid.UUID = test_uuid
+        id: uuid.UUID = test_file_uuid
         full_path: Path = Path("filename.txt")
         # When it is instantiated with an id
         file: File = File(id=id, full_path=full_path)
@@ -62,7 +65,7 @@ class TestFileModel:
     def test_file_model_node(self, tmp_path) -> None:
         # Given a class (File)
         # And some vars
-        id: uuid.UUID = test_uuid
+        id: uuid.UUID = test_file_uuid
         filename: Path = Path("filename.txt")
         full_path: Path = Path(os.path.join(tmp_path, filename))
         node: str = "node001"
@@ -80,7 +83,7 @@ class TestFileModel:
     def test_file_model_path_variants(self, tmp_path) -> None:
         # Given a class (File)
         # And some vars
-        id: uuid.UUID = test_uuid
+        id: uuid.UUID = test_file_uuid
         full_path: Path = Path(os.path.join(tmp_path, "filename.txt"))
         node: str = "node001"
 
@@ -138,16 +141,16 @@ class TestZipFileModel(TestFileModel):
             (
                 Path("/tmp/path/out/not_a_zip.txt"),
                 (
-                    "ValueError: ZipFile /tmp/path/out/not_a_zip.txt must have .zip extension",
-                    "ValueError: ZipFile /tmp/path/out/not_a_zip.txt must have node value",
-                    "ValueError: ZipFile /tmp/path/out/not_a_zip.txt must have log_type value",
+                    f"ValueError: ZipFile:{test_zip_uuid} at /tmp/path/out/not_a_zip.txt must have .zip extension",
+                    f"ValueError: ZipFile:{test_zip_uuid} at /tmp/path/out/not_a_zip.txt must have node value",
+                    f"ValueError: ZipFile:{test_zip_uuid} at /tmp/path/out/not_a_zip.txt must have log_type value",
                 ),
             ),
             (
                 Path("/tmp/path/out/GBLogs1234567890123.zip"),
                 (
-                    "ValueError: ZipFile /tmp/path/out/GBLogs1234567890123.zip must have node value",
-                    "ValueError: ZipFile /tmp/path/out/GBLogs1234567890123.zip must have log_type value",
+                    f"ValueError: ZipFile:{test_zip_uuid} at /tmp/path/out/GBLogs1234567890123.zip must have node value",
+                    f"ValueError: ZipFile:{test_zip_uuid} at /tmp/path/out/GBLogs1234567890123.zip must have log_type value",
                 ),
             ),
         ],
@@ -163,7 +166,7 @@ class TestZipFileModel(TestFileModel):
         # When the file is instantiated
         # Then it raises a Value error
         with pytest.raises(ValueError):
-            ZipFile(full_path=full_path)
+            ZipFile(full_path=full_path, id=test_zip_uuid)
 
         # And it logs it
         msgs: list[str] = []
@@ -192,7 +195,7 @@ class TestLogFileModel(TestFileModel):
             ),
             (
                 "out/node001/apiservice/apiservice.log4",
-                test_uuid,
+                test_log_uuid,
                 "node001",
                 "apiservice",
                 test_zip_uuid,
@@ -243,17 +246,17 @@ class TestLogFileModel(TestFileModel):
                 Path("/tmp/path/out/not_a_log.txt"),
                 Path("/tmp/path/out/GBLogs_node001_apiservice_0123456789123.zip"),
                 (
-                    "ValueError: LogFile /tmp/path/out/not_a_log.txt must have .log* extension",
-                    "ValueError: LogFile /tmp/path/out/not_a_log.txt must have node value",
-                    "ValueError: LogFile /tmp/path/out/not_a_log.txt must have log_type value",
+                    f"ValueError: LogFile:{test_log_uuid} at /tmp/path/out/not_a_log.txt must have .log* extension",
+                    f"ValueError: LogFile:{test_log_uuid} at /tmp/path/out/not_a_log.txt must have node value",
+                    f"ValueError: LogFile:{test_log_uuid} at /tmp/path/out/not_a_log.txt must have log_type value",
                 ),
             ),
             (
                 Path("/apiservice.log"),
                 Path("/tmp/path/out/GBLogs_node001_apiservice_0123456789123.zip"),
                 (
-                    "ValueError: LogFile /apiservice.log must have node value",
-                    "ValueError: LogFile /apiservice.log must have log_type value",
+                    f"ValueError: LogFile:{test_log_uuid} at /apiservice.log must have node value",
+                    f"ValueError: LogFile:{test_log_uuid} at /apiservice.log must have log_type value",
                 ),
             ),
             (
@@ -261,10 +264,10 @@ class TestLogFileModel(TestFileModel):
                 Path("/tmp/path/out/GBLogs_node001_apiservice_0123456789123.zip"),
                 (
                     (
-                        f"ValueError: LogFile /tmp/path/out/notnode/notapi/apiservice.log node value must match ZipFile {test_zip_uuid} node value"
+                        f"ValueError: LogFile:{test_log_uuid} at /tmp/path/out/notnode/notapi/apiservice.log node value must match ZipFile {test_zip_uuid} node value"
                     ),
                     (
-                        f"ValueError: LogFile /tmp/path/out/notnode/notapi/apiservice.log log_type value must match ZipFile {test_zip_uuid} log_type value"
+                        f"ValueError: LogFile:{test_log_uuid} at /tmp/path/out/notnode/notapi/apiservice.log log_type value must match ZipFile {test_zip_uuid} log_type value"
                     ),
                 ),
             ),
@@ -287,7 +290,7 @@ class TestLogFileModel(TestFileModel):
         # When it is instantiated with the non-zip
         # Then it raises a Value error
         with pytest.raises(ValueError):
-            LogFile(source_zip=zip_file, full_path=full_path_log)
+            LogFile(id=test_log_uuid, source_zip=zip_file, full_path=full_path_log)
 
         # And it logs it
         lvls: list[int]
@@ -305,7 +308,7 @@ class TestLogEntryModel:
     def test_log_entry_model(self, tmp_path) -> None:
         # Given a class (LogEntry)
         # And source log and zip_files
-        id: uuid.UUID = test_uuid
+        id: uuid.UUID = test_log_entry_uuid
         full_path: Path = Path(os.path.join(tmp_path, zip_filename))
         zip_file: ZipFile = ZipFile(full_path=full_path)
         full_path = Path(os.path.join(tmp_path, log_filename))
@@ -342,7 +345,7 @@ class TestJavaLogEntry(TestLogEntryModel):
     def test_javalog_entry(self, tmp_path) -> None:
         # Given a class(JavaLog)
         # And sources
-        id: uuid.UUID = test_uuid
+        id: uuid.UUID = test_java_log_entry_uuid
         full_path: Path = Path(os.path.join(tmp_path, zip_filename))
         zip_file: ZipFile = ZipFile(full_path=full_path)
         full_path = Path(os.path.join(tmp_path, log_filename))
