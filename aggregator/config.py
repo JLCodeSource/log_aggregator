@@ -8,7 +8,6 @@ Variables: sourcedir, outdir, connection, database
 """
 
 import logging
-import os
 from functools import lru_cache
 from pathlib import Path
 
@@ -18,16 +17,14 @@ logger: logging.Logger = logging.getLogger("__name__")
 
 
 class Settings(BaseSettings):
-    environment: str = os.getenv("ENVIRONMENT", "dev")
-    testing: bool = bool(os.getenv("TESTING", 0))
-    connection: str = os.getenv(
-        "DATABASE_URL", "mongodb://root:example@localhost:27017/?authMechanism=DEFAULT"
-    )
-    sourcedir: Path = Path(os.getenv("SOURCE", "./testsource/prod_zips"))
-    outdir: Path = Path(os.getenv("OUT", "./out"))
-    testdatadir: Path = Path(os.getenv("TESTDATA", "./testsource"))
-    database: str = os.getenv("DATABASE", "logs")
-    log_level: int = int(os.getenv("LOG_LEVEL", logging.INFO))
+    environment: str = "dev"
+    testing: bool = False
+    connection: str = "mongodb://root:example@localhost:27017/?authMechanism=DEFAULT"
+    sourcedir: Path = Path("./testsource/prod_zips")
+    outdir: Path = Path("./out")
+    testdatadir: Path = Path("./testsource")
+    database: str = "logs"
+    log_level: int = logging.INFO
 
     def get_environment(self) -> str:
         return self.environment
@@ -61,6 +58,10 @@ class Settings(BaseSettings):
 
     def get_log_level(self) -> int:
         return self.log_level
+
+    class Config:
+        env_file: str = ".env"
+        env_file_encoding = "utf-8"
 
 
 @lru_cache()

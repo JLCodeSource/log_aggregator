@@ -8,6 +8,20 @@ from aggregator.config import Settings
 
 settings: Settings = Settings()
 
+environment: str = "test"
+testing: str = "1"
+connection: str = (
+    "mongodb://test:test@mongoserver.domain.tld:28017/?authMechanism=DEFAULT"
+)
+connection_log: str = (
+    "mongodb://username:password@mongoserver.domain.tld:28017/?authMechanism=DEFAULT"
+)
+sourcedir: str = "/tmp/testsource"
+outdir: str = "/tmp/outdir"
+testdatadir: str = "/tmp/testdata"
+database: str = "testdb"
+log_level: str = "50"
+
 
 @pytest.mark.unit
 def test_settings_get_environment(settings_override: Settings) -> None:
@@ -52,25 +66,26 @@ def test_settings_funcs(func: object, value: str | bool | int | Path) -> None:
     assert func == value
 
 
-def test_settings_get_environment_getenv() -> None:
+def test_settings_get_environments() -> None:
     # Given that the environment var for environment has been set
-    os.environ["ENVIRONMENT"] = "prod"
-
-    # When the settings are queried
-    settings: Settings = Settings()
-    env: str = settings.get_environment()
-
-    # Then it returns the environment var
-    assert env == "prod"
-
-
-def test_settings_get_testing_getenv() -> None:
-    # Given that the environment var for testing has been set
-    os.environ["TESTING"] = "1"
-
-    # When the settings are queried
-    settings: Settings = Settings()
-    testing: bool = settings.get_testing()
+    os.environ["ENVIRONMENT"] = environment
+    os.environ["TESTING"] = testing
+    os.environ["CONNECTION"] = connection
+    os.environ["SOURCEDIR"] = sourcedir
+    os.environ["OUTDIR"] = outdir
+    os.environ["TESTDATADIR"] = testdatadir
+    os.environ["DATABASE"] = database
+    os.environ["LOG_LEVEL"] = log_level
+    # When the settings are set
+    env_settings: Settings = Settings()
 
     # Then it returns the environment var
-    assert testing is True
+    assert env_settings.get_environment() == environment
+    assert env_settings.get_testing() is True
+    assert env_settings.get_connection() == connection
+    assert env_settings.get_connection_log() == connection_log
+    assert env_settings.get_sourcedir() == Path(sourcedir)
+    assert env_settings.get_outdir() == Path(outdir)
+    assert env_settings.get_testdatadir() == Path(testdatadir)
+    assert env_settings.get_database() == database
+    assert env_settings.get_log_level() == int(log_level)
