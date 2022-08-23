@@ -29,7 +29,7 @@ from typing import Any, Coroutine, Literal
 
 from aggregator import helper
 from aggregator.config import Settings, get_settings
-from aggregator.helper import ZIP_LOGTYPE_PATTERN, ZIP_NODE_PATTERN
+from aggregator.helper import ZIP_LOG_TYPE_PATTERN, ZIP_NODE_PATTERN
 
 READ: Literal["r"] = "r"
 TYPEERROR: str = "Value should not be None"
@@ -117,7 +117,7 @@ def gen_zip_extract_fn_list(
     for zip_file in os.listdir(src_dir):
         try:
             node: str = helper.get_node(Path(zip_file), ZIP_NODE_PATTERN)
-            log_type: str = helper.get_log_type(Path(zip_file), ZIP_LOGTYPE_PATTERN)
+            log_type: str = helper.get_log_type(Path(zip_file), ZIP_LOG_TYPE_PATTERN)
             logs_dir: Path = helper.get_log_dir(node, log_type)
             if node is None or log_type is None or logs_dir is None:
                 raise TypeError(TYPEERROR)

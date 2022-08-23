@@ -35,10 +35,10 @@ ZIP_NODE_PATTERN: Pattern = re.compile(
 LOG_NODE_PATTERN: Pattern = re.compile(
     r"^.+\/([^\/].+?)([.].+|)\/.+\/.+[.][l][o][g](\d|)$"
 )
-ZIP_LOGTYPE_PATTERN: Pattern = re.compile(
+ZIP_LOG_TYPE_PATTERN: Pattern = re.compile(
     r"^.+[L][o][g][s]_.+_(.+?)_\d{13}[.][z][i][p]$"
 )
-LOG_LOGTYPE_PATTERN: Pattern = re.compile(r"^.+\/.+\/([^\/].+)\/.+[.][l][o][g](\d|)$")
+LOG_LOG_TYPE_PATTERN: Pattern = re.compile(r"^.+\/.+\/([^\/].+)\/.+[.][l][o][g](\d|)$")
 
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ def get_log_type(file: Path, pattern: Pattern) -> str:
     match: re.Match[str] | None = re.match(pattern, str(file))
     if match is None:
         logger.warning(
-            f"Wrong filename structure when getting logtype from {file} with {pattern}"
+            f"Wrong filename structure when getting log_type from {file} with {pattern}"
         )
         return ""
     else:

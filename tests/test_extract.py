@@ -10,7 +10,7 @@ from zipfile import BadZipFile, ZipFile
 import pytest
 
 from aggregator import config, extract, helper
-from aggregator.helper import LOG_LOGTYPE_PATTERN, ZIP_NODE_PATTERN
+from aggregator.helper import LOG_LOG_TYPE_PATTERN, ZIP_NODE_PATTERN
 
 filename_example: Path = Path("GBLogs_-n11_fanapiservice_1657563227839.zip")
 badzipfile_example: Path = Path("not_a_zip.zip")
@@ -343,7 +343,7 @@ async def test_gen_extract_fn_list_empty(
     [
         (
             MockNone.get_none(),
-            helper.get_log_type(filename_example, LOG_LOGTYPE_PATTERN),
+            helper.get_log_type(filename_example, LOG_LOG_TYPE_PATTERN),
             helper.get_log_dir("node", "fanapiservice"),
         ),
         (
@@ -353,7 +353,7 @@ async def test_gen_extract_fn_list_empty(
         ),
         (
             helper.get_node(filename_example, ZIP_NODE_PATTERN),
-            helper.get_log_type(filename_example, LOG_LOGTYPE_PATTERN),
+            helper.get_log_type(filename_example, LOG_LOG_TYPE_PATTERN),
             MockNone.get_none(),
         ),
     ],
