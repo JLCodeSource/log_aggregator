@@ -9,9 +9,15 @@ install:
 	poetry install
 
 ## Test
-test: 
-	pytest -vv
+test_all: 
 	pytest --mccabe --cov --cov-report html -vv
+
+test_unit:
+	pytest -vv -m "unit and not db"
+
+test_db:
+	pytest -vv -m "unit or mock"
+
 
 ## Lint
 lint:

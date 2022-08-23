@@ -33,6 +33,7 @@ def test_settings_get_environment(settings_override: Settings) -> None:
     assert env == "dev"
 
 
+@pytest.mark.unit
 def test_settings_get_testing_from_test_conf(settings_override: Settings) -> None:
     # Given a set of settings (settings_override)
     # When you check the environment value
@@ -62,10 +63,12 @@ def test_settings_get_testing_from_test_conf(settings_override: Settings) -> Non
         (settings.get_log_level(), logging.INFO),
     ],
 )
+@pytest.mark.unit
 def test_settings_funcs(func: object, value: str | bool | int | Path) -> None:
     assert func == value
 
 
+@pytest.mark.unit
 def test_settings_get_environments() -> None:
     # Given that the environment var for environment has been set
     os.environ["ENVIRONMENT"] = environment
@@ -91,6 +94,7 @@ def test_settings_get_environments() -> None:
     assert env_settings.get_log_level() == int(log_level)
 
 
+@pytest.mark.unit
 def test_connection_for_no_user_id() -> None:
     # Given a simple connectoin
     os.environ["CONNECTION"] = "mongodb://localhost:27017"

@@ -1,6 +1,7 @@
 """
 This module contains shared fixtures, steps and hooks.
 """
+
 import asyncio
 import logging
 import os
@@ -116,7 +117,6 @@ def gen_zip_file(
     zip_file: Path,
     target: Path = Path("System"),
 ) -> None:
-
     if target not in os.listdir(log_dir):
         gen_tmp_log_dir(log_dir, target)
 
@@ -181,7 +181,6 @@ mongo = create_mongo_fixture()
 
 @pytest.fixture()
 def settings_override() -> config.Settings:
-
     settings: config.Settings = config.get_settings()
     settings.database = "test-logs"
     settings.log_level = logging.DEBUG
@@ -205,7 +204,6 @@ def get_datetime() -> datetime:
 
 @pytest.fixture()
 async def add_one() -> JavaLog | None:
-
     # And adds a log
     log: JavaLog = JavaLog(
         node="testnode",
@@ -242,7 +240,6 @@ def multi_line_log() -> str:
 
 @pytest.fixture()
 def make_filename(settings_override: config.Settings, tmp_path: Path) -> object:
-
     settings: config.Settings = settings_override
 
     def _make_filename(node: str, service: str, ext: str, tld: bool) -> Path | None:

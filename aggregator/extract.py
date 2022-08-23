@@ -70,7 +70,6 @@ def _remove_folder(target: Path) -> None:
 async def _extract(
     zip_file: Path, target_dir: Path, extension: str = DEFAULT_LOG_EXTENSION
 ) -> list[Path]:
-
     logger.info(f"Starting extraction coroutine for {zip_file}")
     log_files: list[Path] = []
 
@@ -83,7 +82,6 @@ async def _extract(
 
     # Find zip files and extract (by default) just  files with .log extension
     with zipfile.ZipFile(zip_file, READ) as zf:
-
         filesInZip: list[str] = zf.namelist()
         for filename in filesInZip:
             if os.path.basename(filename).endswith(extension):
@@ -143,7 +141,6 @@ async def extract_log(
     extract_fn_list: list[Coroutine[Any, Any, list[Path]]],
     log_files: list[str] = [],
 ) -> list[str]:
-
     try:
         new_log_files: list = await asyncio.gather(*extract_fn_list)
         log_files.extend(list(new_log_files))
