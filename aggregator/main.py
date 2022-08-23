@@ -29,10 +29,10 @@ from aggregator.view import display_result
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-async def init_app() -> tuple[AsyncIOMotorClient, Settings]:
+def _get_settings() -> Settings:
     try:
-        settings: Settings = get_settings()
-        assert settings is not empty, "Failed to get settings"
+        settings: Settings | None = get_settings()
+        assert settings is not None, "Failed to get settings"
     except AssertionError as err:
         logger.fatal(f"AssertionError: {err}")
         exit()
@@ -44,6 +44,14 @@ async def init_app() -> tuple[AsyncIOMotorClient, Settings]:
     logger.debug(f"Outdir: {settings.outdir}")
     logger.debug(f"Database: {settings.database}")
     logger.info(f"Log Level: {settings.log_level}")
+
+    return settings
+
+
+async def init_app() -> tuple[AsyncIOMotorClient, Settings]:
+    # Init settings
+    settings: Settings = _get_settings()
+
     # Init database
     init_db: asyncio.Task[AsyncIOMotorClient] = asyncio.create_task(init())
     result: AsyncIOMotorClient = await init_db
