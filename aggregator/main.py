@@ -16,7 +16,6 @@ from typing import Any, Coroutine, cast
 
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.results import InsertManyResult
-from pyparsing import empty
 
 from aggregator import config, convert, db, extract, logs, model, view
 
@@ -57,10 +56,10 @@ async def init_app() -> tuple[AsyncIOMotorClient, config.Settings]:
 
 
 def _get_zip_extract_coro_list(
-    settings: config.Settings,
+    sourcedir: Path,
 ) -> list[Coroutine[Any, Any, list[Path]]]:
     zip_coro_list: list[Coroutine[Any, Any, list[Path]]] = []
-    extract.gen_zip_extract_fn_list(settings.sourcedir, zip_coro_list)
+    extract.gen_zip_extract_fn_list(sourcedir, zip_coro_list)
     if zip_coro_list is None or zip_coro_list == []:
         err: str = "Zip extract coroutine list is empty"
         logger.error(f"ValueError: {err}")
@@ -82,6 +81,23 @@ def _get_convert_coro_list(
     return convert_coro_list
 
 
+async def _extract_logs(sourcedir: Path) -> list[str]:
+
+    # Extact logs from source directory
+    try:
+        # Create list of configured extraction functions for zip extraction
+        zip_coro_list: list[
+            Coroutine[Any, Any, list[Path]]
+        ] = _get_zip_extract_coro_list(sourcedir)
+
+        log_file_list: list[str] = await extract.extract_log(zip_coro_list)
+    except ValueError as err:
+        logger.error(f"ValueError: {err}")
+        raise ValueError(f"ValueError: {err}")
+
+    return log_file_list
+
+
 async def main() -> None:
 
     client: AsyncIOMotorClient
@@ -90,19 +106,7 @@ async def main() -> None:
     if not isinstance(client, AsyncIOMotorClient):
         exit()
 
-    # Create list of configured extraction functions for zip extraction
-    zip_coro_list: list[Coroutine[Any, Any, list[Path]]] = _get_zip_extract_coro_list(
-        settings
-    )
-
-    # Extact logs from source directory
-    try:
-        log_file_list: list[str] = await extract.extract_log(zip_coro_list)
-        if log_file_list is None or log_file_list is empty:
-            raise Exception(f"Failed to get log_files from {settings.sourcedir}")
-    except Exception as err:
-        logger.error(f"{err}")
-        raise Exception(f"Failed to get log_files from {settings.sourcedir}")
+    log_file_list: list[str] = await _extract_logs(settings.sourcedir)
 
     convert_coro_list: list[Coroutine[Any, Any, list[model.JavaLog]]] = []
     convert_coro_list = _get_convert_coro_list(convert_coro_list, log_file_list)

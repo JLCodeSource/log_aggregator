@@ -42,8 +42,8 @@ class TestGetSettings:
         assert msgs[1] == "Environment: dev"
         assert msgs[2] == "Testing: True"
         assert (
-            msgs[3] ==
-            "Connection: mongodb://username:password@localhost:27017/?authMechanism=DEFAULT"
+            msgs[3]
+            == "Connection: mongodb://username:password@localhost:27017/?authMechanism=DEFAULT"
         )
         assert msgs[4] == "Sourcedir: testsource/zips"
         assert msgs[5] == "Outdir: out"
@@ -155,7 +155,7 @@ class TestExtract:
         # When it tries to generate the list
         zip_coro_list: list[
             Coroutine[Any, Any, list[Path]]
-        ] = main._get_zip_extract_coro_list(settings_override)
+        ] = main._get_zip_extract_coro_list(settings_override.sourcedir)
         # Then it returns a list of coros
         assert len(zip_coro_list) > 0
 
@@ -172,9 +172,43 @@ class TestExtract:
         # When it tries to generate the list
         # Then it raises a ValueError
         with pytest.raises(ValueError):
-            main._get_zip_extract_coro_list(settings_override)
+            main._get_zip_extract_coro_list(settings_override.sourcedir)
         # And the logger logs it
         assert logger.record_tuples[0] == (
+            module_name,
+            logging.ERROR,
+            "ValueError: Zip extract coroutine list is empty",
+        )
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_extract_logs_successful(
+        self, settings_override: config.Settings
+    ) -> None:
+        # Given a set of settings (settings_override)
+        settings_override.sourcedir = Path("./testsource/prod_zips")
+        # When it tries to extract the logs
+        log_file_list: list[str] = await main._extract_logs(settings_override.sourcedir)
+        # Then it returns a list of log files
+        assert len(log_file_list) > 0
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_extract_logs_FnF(
+        self,
+        tmp_path: Path,
+        logger: pytest.LogCaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        # Given a mock zip_extract_coro_list & a tmp_path
+
+        # When it tries to extract the logs
+        # Then it returns a FnFError
+        with pytest.raises(ValueError):
+            await main._extract_logs(tmp_path)
+
+        # And the logger logs it
+        assert logger.record_tuples[-1] == (
             module_name,
             logging.ERROR,
             "ValueError: Zip extract coroutine list is empty",
