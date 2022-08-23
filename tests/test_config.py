@@ -89,3 +89,14 @@ def test_settings_get_environments() -> None:
     assert env_settings.get_testdatadir() == Path(testdatadir)
     assert env_settings.get_database() == database
     assert env_settings.get_log_level() == int(log_level)
+
+
+def test_connection_for_no_user_id() -> None:
+    # Given a simple connectoin
+    os.environ["CONNECTION"] = "mongodb://localhost:27017"
+
+    # When the settings are set
+    env_settings: Settings = Settings()
+
+    # Then the connection log string is the same
+    assert env_settings.get_connection_log() == env_settings.get_connection()
