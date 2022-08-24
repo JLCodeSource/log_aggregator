@@ -16,6 +16,7 @@ name = "log-aggregator"
 version = "0.1.0"
 description = ""
 authors = ["JL"]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -28,7 +29,7 @@ bandit = "^1.7.4"
 beanie = "^1.11.6"
 black = "^22.6.0"
 flake8 = "^4.0.1"
-isort = "^5.10.1"
+isort = "^5.13.2"
 pip-chill = "^1.0.1"
 pytest-asyncio = "^0.19.0"
 pytest-bdd = "^6.0.1"
