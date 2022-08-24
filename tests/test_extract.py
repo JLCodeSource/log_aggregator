@@ -302,9 +302,9 @@ async def test_gen_extract_fn_list(
     monkeypatch.setattr(os, "listdir", mock_listdir)
 
     # When it tries to generate the extract files list
-    zip_files_extract_fn_list: list[Coroutine[Any, Any, list[Path]]] | None = (
-        extract.gen_zip_extract_fn_list(tmp_path)
-    )
+    zip_files_extract_fn_list: list[
+        Coroutine[Any, Any, list[Path]]
+    ] | None = extract.gen_zip_extract_fn_list(tmp_path)
 
     # Then it returns a list of functions
     assert zip_files_extract_fn_list is not None
@@ -398,9 +398,9 @@ async def test_gen_extract_fn_list_helper_none_returns(
     # When it tries to extract the zip function list
     # Then it raises an TypeError
     with pytest.raises(TypeError):
-        coro_list: list[Coroutine[Any, Any, list[Path]]] | None = (
-            extract.gen_zip_extract_fn_list(tmp_path, None)
-        )
+        coro_list: list[
+            Coroutine[Any, Any, list[Path]]
+        ] | None = extract.gen_zip_extract_fn_list(tmp_path, None)
         assert coro_list is not None
         for coro in coro_list:
             await coro
