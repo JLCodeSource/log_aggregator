@@ -240,6 +240,7 @@ async def test_convert_collection_not_initialized(
     )
 
 
+@pytest.mark.db
 @pytest.mark.unit
 @pytest.mark.asyncio
 @pytest.mark.parametrize("make_logs", ["simple_svc.log"], indirect=["make_logs"])
@@ -315,6 +316,7 @@ async def test_convert_success(
         await client.drop_database(database)
 
 
+@pytest.mark.db
 @pytest.mark.unit
 @pytest.mark.asyncio
 @pytest.mark.parametrize("make_logs", ["bad_timestamp.log"], indirect=["make_logs"])
@@ -362,6 +364,7 @@ class MockDatetime:
 # TODO: Test for file with trailing empty line
 
 
+@pytest.mark.db
 @pytest.mark.unit
 @pytest.mark.asyncio
 @pytest.mark.parametrize("make_logs", ["bad_timestamp.log"], indirect=["make_logs"])
