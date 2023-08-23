@@ -43,8 +43,8 @@ class TestGetSettings:
         assert msgs[1] == "Environment: dev"
         assert msgs[2] == "Testing: True"
         assert (
-            msgs[3]
-            == "Connection: mongodb://username:password@localhost:27017/?authMechanism=DEFAULT"
+            msgs[3] ==
+            "Connection: mongodb://username:password@localhost:27017/?authMechanism=DEFAULT"
         )
         assert msgs[4] == "Sourcedir: testsource/zips"
         assert msgs[5] == "Outdir: out"
@@ -127,6 +127,7 @@ class TestGetSettings:
 class TestInit:
     @pytest.mark.asyncio
     @pytest.mark.unit
+    @pytest.mark.db
     async def test_init_db_success(self, motor_conn, settings_override) -> None:
         # Given a mongo_conn
         # Given a pmr_database & connection
@@ -149,6 +150,7 @@ class TestInit:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
+    @pytest.mark.db
     async def test_init_app_success(self, motor_conn, settings_override) -> None:
         # Given a mongo_conn
         # Given a pmr_database & connection
@@ -244,7 +246,8 @@ class TestExtract:
 
 class TestConvert:
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
+    @pytest.mark.slow
     async def test_get_convert_coro_list_success(settings_override) -> None:
         # When it has inited the database
         await main._init_db()
@@ -263,7 +266,8 @@ class TestConvert:
 
 class TestInsert:
     @pytest.mark.asyncio
-    @pytest.mark.unit
+    @pytest.mark.integration
+    @pytest.mark.slow
     async def test_insert_logs(self, motor_conn, settings_override) -> None:
 
         # Given a mongo_conn

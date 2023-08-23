@@ -156,6 +156,7 @@ def test_get_log_dir(
     ]
 
 
+@pytest.mark.unit
 def test_get_node_with_no_match(logger) -> None:
     # Given a file and a pattern with no match
     filename: Path = Path("not_a_match.log")
@@ -174,6 +175,7 @@ def test_get_node_with_no_match(logger) -> None:
     )
 
 
+@pytest.mark.unit
 def test_get_log_type_with_no_match(logger) -> None:
     # Given a file and a pattern with no match
     filename: Path = Path("not_a_match.log")
@@ -194,7 +196,7 @@ def test_get_log_type_with_no_match(logger) -> None:
 
 class TestWithInferredStrategies:
     """Test all functions from helper with inferred Hypothesis strategies."""
-
+    @pytest.mark.unit
     def test_get_log_dir(self) -> None:
         @given(node=st.text(), log_type=st.text())
         def execute(**kwargs) -> None:

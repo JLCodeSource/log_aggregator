@@ -45,6 +45,7 @@ class MockJavaLog:
 
 @pytest.mark.asyncio
 @pytest.mark.unit
+@pytest.mark.db
 async def test_init(
     motor_conn: tuple[str, str],
     logger: pytest.LogCaptureFixture,
@@ -91,6 +92,7 @@ async def test_init(
 
 @pytest.mark.asyncio
 @pytest.mark.unit
+@pytest.mark.db
 async def test_init_server_timeout(
     motor_conn: tuple[str, str],
     monkeypatch: pytest.MonkeyPatch,
@@ -135,6 +137,7 @@ async def test_init_server_timeout(
 
 @pytest.mark.asyncio
 @pytest.mark.unit
+@pytest.mark.db
 async def test_insert_logs_success(
     motor_conn: tuple[str, str], logger: pytest.LogCaptureFixture
 ) -> None:
@@ -224,6 +227,7 @@ async def test_insert_logs_success(
 
 @pytest.mark.asyncio
 @pytest.mark.unit
+@pytest.mark.db
 async def test_insert_logs_servertimeout(
     motor_conn: tuple[str, str],
     logger: pytest.LogCaptureFixture,
@@ -266,6 +270,7 @@ async def test_insert_logs_servertimeout(
 
 @pytest.mark.asyncio
 @pytest.mark.unit
+@pytest.mark.db
 async def test_insert_logs_invalid_operation_error(
     motor_conn: tuple[str, str],
     logger: pytest.LogCaptureFixture,
@@ -329,6 +334,7 @@ async def test_insert_logs_invalid_operation_error(
 
 @pytest.mark.asyncio
 @pytest.mark.unit
+@pytest.mark.db
 async def test_insert_logs_none(
     motor_conn: tuple[str, str], logger: pytest.LogCaptureFixture
 ) -> None:
@@ -366,6 +372,7 @@ async def test_insert_logs_none(
 
 @pytest.mark.asyncio
 @pytest.mark.unit
+@pytest.mark.db
 async def test_get_log_successfully(
     motor_conn: tuple[str, str],
     get_datetime: datetime,
@@ -441,6 +448,7 @@ async def test_get_log_successfully(
 
 @pytest.mark.asyncio
 @pytest.mark.unit
+@pytest.mark.db
 async def test_get_log_none(
     motor_conn: tuple[str, str], logger: pytest.LogCaptureFixture
 ) -> None:
@@ -480,6 +488,7 @@ async def test_get_log_none(
 
 @pytest.mark.asyncio
 @pytest.mark.unit
+@pytest.mark.db
 async def test_get_log_wrong_id(
     motor_conn: tuple[str, str], logger: pytest.LogCaptureFixture
 ) -> None:
@@ -514,6 +523,7 @@ async def test_get_log_wrong_id(
 
 @pytest.mark.asyncio
 @pytest.mark.unit
+@pytest.mark.db
 async def test_get_log_server_timeout(
     motor_conn: tuple[str, str],
     logger: pytest.LogCaptureFixture,
@@ -558,6 +568,7 @@ async def test_get_log_server_timeout(
 
 @pytest.mark.asyncio
 @pytest.mark.unit
+@pytest.mark.db
 async def test_find_logs_successfully(
     motor_conn: tuple[str, str], get_datetime: datetime, logger: logging.Logger
 ) -> None:
@@ -661,6 +672,7 @@ async def test_find_logs_successfully(
 
 @pytest.mark.asyncio
 @pytest.mark.unit
+@pytest.mark.db
 @pytest.mark.parametrize("make_logs", ["simple_svc.log"], indirect=["make_logs"])
 async def test_find_logs_with_sort(
     motor_conn: tuple[str, str], make_logs: Path, mock_get_node: str
@@ -714,6 +726,7 @@ async def test_find_logs_with_sort(
 @pytest.mark.asyncio
 @pytest.mark.unit
 @pytest.mark.mock
+@pytest.mark.db
 async def test_db_pmr(
     motor_conn: tuple[str, str], add_one: Coroutine[Any, Any, JavaLog | None]
 ) -> None:
