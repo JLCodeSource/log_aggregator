@@ -16,6 +16,7 @@ module_name: Literal["aggregator.view"] = "aggregator.view"
 
 
 @pytest.mark.asyncio
+@pytest.mark.db
 @pytest.mark.unit
 @pytest.mark.parametrize("make_logs", ["one_line_log.log"], indirect=["make_logs"])
 async def test_view_display_result_one_line_success(
@@ -80,6 +81,7 @@ async def test_view_display_result_one_line_success(
 )
 @pytest.mark.asyncio
 @pytest.mark.unit
+@pytest.mark.db
 async def test_view_display_result_multi_line_success(
     motor_conn: tuple[str, str],
     make_logs: list[str],
