@@ -196,6 +196,7 @@ def test_get_log_type_with_no_match(logger) -> None:
 
 class TestWithInferredStrategies:
     """Test all functions from helper with inferred Hypothesis strategies."""
+
     @pytest.mark.unit
     def test_get_log_dir(self) -> None:
         @given(node=st.text(), log_type=st.text())

@@ -204,8 +204,8 @@ def test_convert_log_to_csv_success(make_logs: Path) -> None:
     result: list[dict[str | Any, str | Any]] = convert._convert_log_to_csv(log_file)
 
     # Then it succeeds
-    assert type(result) == list
-    assert type(result[0]) == dict
+    assert isinstance(result, list)
+    assert isinstance(result[0], dict)
 
     # TODO: Improve checks
     # And add logging

@@ -1,4 +1,5 @@
 import pytest
+
 from aggregator import __version__
 
 

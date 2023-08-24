@@ -43,8 +43,8 @@ class TestGetSettings:
         assert msgs[1] == "Environment: dev"
         assert msgs[2] == "Testing: True"
         assert (
-            msgs[3] ==
-            "Connection: mongodb://username:password@localhost:27017/?authMechanism=DEFAULT"
+            msgs[3]
+            == "Connection: mongodb://username:password@localhost:27017/?authMechanism=DEFAULT"
         )
         assert msgs[4] == "Sourcedir: testsource/zips"
         assert msgs[5] == "Outdir: out"
@@ -216,7 +216,7 @@ class TestExtract:
         self, settings_override: config.Settings
     ) -> None:
         # Given a set of settings (settings_override)
-        settings_override.sourcedir = Path("./testsource/prod_zips")
+        settings_override.sourcedir = Path("./testsource/zips")
         # When it tries to extract the logs
         log_file_list: list[str] = await main._extract_logs(settings_override.sourcedir)
         # Then it returns a list of log files
