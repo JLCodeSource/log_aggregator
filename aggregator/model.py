@@ -6,6 +6,7 @@ Change Log: Initial
 Summary: model manages the document (log) schema
 Classes: Log, JavaLog
 """
+
 from datetime import datetime
 from typing import Optional
 

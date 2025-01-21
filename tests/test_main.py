@@ -63,7 +63,9 @@ class TestGetSettings:
         connection: str = (
             "mongodb://test:test@mongoserver.domain.tld:28017//?authMechanism=DEFAULT"
         )
-        connection_log: str = "mongodb://username:password@mongoserver.domain.tld:28017//?authMechanism=DEFAULT"
+        connection_log: str = (
+            "mongodb://username:password@mongoserver.domain.tld:28017//?authMechanism=DEFAULT"
+        )
         sourcedir: str = "/tmp/testsource"
         outdir: str = "/tmp/outdir"
         testdatadir: str = "/tmp/testdata"
@@ -183,9 +185,9 @@ class TestExtract:
     ) -> None:
         # Given a set of settings (settings_override)
         # When it tries to generate the list
-        zip_coro_list: list[
-            Coroutine[Any, Any, list[Path]]
-        ] = main._get_zip_extract_coro_list(settings_override.sourcedir)
+        zip_coro_list: list[Coroutine[Any, Any, list[Path]]] = (
+            main._get_zip_extract_coro_list(settings_override.sourcedir)
+        )
         # Then it returns a list of coros
         assert len(zip_coro_list) > 0
 

@@ -6,6 +6,7 @@ Change Log: 2022-08-08 - initial commit
 Summary: view displays the output of any find requests
 Functions: display_results
 """
+
 import logging
 from datetime import datetime
 

@@ -7,6 +7,7 @@ Summary: logs configures logging & makes exceptions 1 line
 Functions: configureLogging
 Classes: OneLineExceptionFormatter
 """
+
 import logging
 from typing import TextIO
 

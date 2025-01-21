@@ -6,6 +6,7 @@ Change Log: 2022-07-26 - added environment settings
 Summary: db handles the initialization of the database and all db operations
 Functions: init, saveLogs
 """
+
 import asyncio
 import logging
 
@@ -35,7 +36,7 @@ async def init(
 
         await beanie.init_beanie(
             database=client[database],
-            document_models=[JavaLog]  # type: ignore
+            document_models=[JavaLog],  # type: ignore
             # TODO: Investigate mypy issue
         )
         logger.info(f"Initialized beanie with {database} using {connection}")

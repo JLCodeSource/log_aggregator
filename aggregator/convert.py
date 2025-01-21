@@ -8,6 +8,7 @@ for upload to the database.
 Functions: lineStartMatch, yield_matches, multiToSingleLine,
 convertLogtoCSV, convert
 """
+
 import asyncio
 import csv
 import logging

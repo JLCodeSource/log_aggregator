@@ -86,9 +86,9 @@ async def _extract_logs(sourcedir: Path) -> list[str]:
     # Extact logs from source directory
     try:
         # Create list of configured extraction functions for zip extraction
-        zip_coro_list: list[
-            Coroutine[Any, Any, list[Path]]
-        ] = _get_zip_extract_coro_list(sourcedir)
+        zip_coro_list: list[Coroutine[Any, Any, list[Path]]] = (
+            _get_zip_extract_coro_list(sourcedir)
+        )
 
         log_file_list: list[str] = await extract.extract_log(zip_coro_list)
     except ValueError as err:
