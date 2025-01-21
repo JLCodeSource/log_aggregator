@@ -12,11 +12,10 @@ exclude = [
     ".+site-packages/hypothesis/.+",
 ]
 [tool.poetry]
-name = "log-aggregator"
+name = "aggregator"
 version = "0.1.0"
 description = ""
 authors = ["JL"]
-package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"
