@@ -294,7 +294,9 @@ class TestInsert:
                 log_file_list
             )
             # When it tries to insert the logs
-            result: list[InsertManyResult] | None = await main._insert_logs(log_lists)
+            result: list[InsertManyResult | None] | None = await main._insert_logs(
+                log_lists
+            )
             assert result is not None
             assert len(result) > 0
         finally:

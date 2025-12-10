@@ -112,7 +112,7 @@ async def _convert_log_files(log_file_list: list[str]) -> list[list[model.JavaLo
 
 async def _insert_logs(
     converted_log_lists: list[list[model.JavaLog]],
-) -> list[InsertManyResult] | None:
+) -> list[InsertManyResult | None] | None:
     insert_log_fn_list: list[Coroutine[Any, Any, InsertManyResult | None]] = []
     for log_lists in converted_log_lists:
         insert_log_fn_list.append(db.insert_logs(log_lists))
@@ -134,7 +134,9 @@ async def main() -> None:
         log_file_list
     )
 
-    result: list[InsertManyResult] | None = await _insert_logs(converted_log_lists)
+    result: list[InsertManyResult | None] | None = await _insert_logs(
+        converted_log_lists
+    )
 
     logger.info(f"Output from db insert: {result}")
 
