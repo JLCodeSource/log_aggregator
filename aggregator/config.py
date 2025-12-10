@@ -11,12 +11,15 @@ import logging
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import BaseSettings  # AnyUrl
+from pydantic_settings import BaseSettings, SettingsConfigDict  # AnyUrl
 
 logger: logging.Logger = logging.getLogger("__name__")
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore"
+    )
     environment: str = "dev"
     testing: bool = False
     connection: str = "mongodb://root:example@localhost:27017/?authMechanism=DEFAULT"
@@ -60,10 +63,6 @@ class Settings(BaseSettings):
 
     def get_log_level(self) -> int:
         return self.log_level
-
-    class Config:
-        env_file: str = ".env"
-        env_file_encoding = "utf-8"
 
 
 @lru_cache()
