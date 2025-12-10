@@ -12,8 +12,7 @@ from random import randrange
 from typing import Any, Generator, Iterator, Union  # Literal
 
 import pytest
-from pytest_mock_resources.fixture.database.generic import Credentials
-from pytest_mock_resources.fixture.database.mongo import create_mongo_fixture
+from pytest_mock_resources import Credentials, create_mongo_fixture
 
 from aggregator import config, convert
 from aggregator.model import JavaLog
