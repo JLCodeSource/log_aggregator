@@ -91,12 +91,12 @@ def gen_log_file(
         message.append(faker.sentence(nb_words=50))
     logs = faker.psv(
         data_columns=(
-            {{levels}},
-            {{jvm}},
-            {{timestamp}},
-            {{source}},
-            {{category}},
-            {{message}},
+            {{levels}},  # type: ignore
+            {{jvm}},  # type: ignore
+            {{timestamp}},  # type: ignore
+            {{source}},  # type: ignore
+            {{category}},  # type: ignore
+            {{message}},  # type: ignore
         ),
         num_rows=1000,
     )
