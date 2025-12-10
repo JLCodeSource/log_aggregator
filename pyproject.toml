@@ -1,4 +1,13 @@
 [tool.pytest.ini_options]
+# Configuration settings from pytest.ini
+asyncio_mode = "strict"
+pythonpath = "aggregator"
+testpaths = "tests"
+
+# Addopts setting (recommended for strict marker checking)
+addopts = "--strict-markers"
+
+# Marker definitions (using TOML array syntax, which is correct here)
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "unit: unit tests",
@@ -7,10 +16,12 @@ markers = [
     "integration: integration tests",
     "mutmut: tests made for mutmut",
 ]
+
 [tool.mypy]
 exclude = [
     ".+site-packages/hypothesis/.+",
 ]
+
 [tool.poetry]
 name = "aggregator"
 version = "0.1.0"
@@ -21,6 +32,7 @@ authors = ["JL"]
 python = "^3.10"
 beanie = "^1.11.6"
 nest-asyncio = "^1.5.5"
+pydantic-settings = "^2.12.0"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^1.6.0"
@@ -40,12 +52,15 @@ poetry = "^1.1.14"
 hammett = "^0.9.3"
 pytest-helpers-namespace = "^2021.12.29"
 pytest-mock-resources = "^2.4.3"
+python-on-whales = "^0.79.0"
 hypothesis = {extras = ["codemods"], version = "^6.54.3"}
-icontract-hypothesis = "^1.1.7"
-mypy = "^0.971"
+mypy = "^1.0"
 motor-stubs = "^1.7.1"
 Faker = "^14.1.0"
-pydantic = {extras = ["dotenv"], version = "^1.10.13"}
+pydantic = {extras = ["dotenv"], version = "^2.0"}
+
+[tool.isort]
+profile = "black"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -93,7 +93,7 @@ async def get_log(
     logger.info(f"Starting get_log coroutine for {log_id} from db: " f"{database}")
     try:
         if log_id is None:
-            raise ValidationError("Cannot get None log", model=JavaLog)
+            raise ValidationError("Cannot get None log", JavaLog)
         result: JavaLog | None = await JavaLog.get(log_id)
         if result:
             logger.info(f"Got {log_id} from db: {database}")

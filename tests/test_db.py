@@ -13,7 +13,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import ValidationError
 from pymongo.errors import InvalidOperation, ServerSelectionTimeoutError
 from pymongo.results import InsertManyResult
-from pytest_mock_resources.fixture.database.mongo import create_mongo_fixture
+from pytest_mock_resources import create_mongo_fixture
 
 from aggregator import convert, db
 from aggregator.model import JavaLog

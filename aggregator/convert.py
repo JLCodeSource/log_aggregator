@@ -116,7 +116,7 @@ async def convert(file: str) -> list[JavaLog]:
 
         d["node"] = node
 
-        if d["message"] is None and d["type"] is None and not d["source"] is None:
+        if d["message"] is None and d["type"] is None and d["source"] is not None:
             d["message"] = d["source"]
             d["source"] = None
 
