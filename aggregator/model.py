@@ -8,7 +8,7 @@ Classes: Log, JavaLog
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import ClassVar, Optional
 
 import pymongo
 from beanie import Document, Indexed
@@ -22,7 +22,7 @@ class Log(Document):
     class Settings:
         name: str = "logs"
         anystr_strip_whitespace: bool = True
-        indexes = [
+        indexes: ClassVar[list[list[tuple[str, str]]]] = [
             [
                 ("node", pymongo.TEXT),
                 ("message", pymongo.TEXT),
@@ -39,7 +39,7 @@ class JavaLog(Log):
     class Settings:
         name: str = "javalogs"
 
-    indexes = [
+    indexes: ClassVar[list[list[tuple[str, str]]]] = [
         [
             ("node", pymongo.TEXT),
             ("message", pymongo.TEXT),
