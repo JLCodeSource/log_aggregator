@@ -32,6 +32,7 @@ authors = ["JL"]
 python = "^3.10"
 beanie = "^1.11.6"
 nest-asyncio = "^1.5.5"
+pydantic-settings = "^2.12.0"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^1.6.0"
@@ -51,11 +52,12 @@ poetry = "^1.1.14"
 hammett = "^0.9.3"
 pytest-helpers-namespace = "^2021.12.29"
 pytest-mock-resources = "^2.4.3"
+python-on-whales = "^0.79.0"
 hypothesis = {extras = ["codemods"], version = "^6.54.3"}
 mypy = "^1.0"
 motor-stubs = "^1.7.1"
 Faker = "^14.1.0"
-pydantic = {extras = ["dotenv"], version = "^1.10.13"}
+pydantic = {extras = ["dotenv"], version = "^2.0"}
 
 [tool.isort]
 profile = "black"
