@@ -1,5 +1,5 @@
 # pull official base image
-FROM python:3.10.4-slim-buster
+FROM python:3.10-slim-bookworm
 
 # set working directory
 RUN mkdir -p /usr/src/app
