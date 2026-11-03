@@ -1,0 +1,36 @@
+src = [
+    ".",
+]
+
+line-length = 88
+target-version = "py310"
+exclude = [
+    ".venv",
+]
+
+[lint]
+# Same coverage as the previous flake8 + isort setup (flake8-bugbear was
+# never installed, so its "B" rules did not run), plus McCabe.
+select = [
+# pycodestyle
+"E", "W",
+# Pyflakes
+"F",
+# Mccabe
+"C90",
+# isort
+"I",
+]
+
+ignore = [
+# Line length is left to the formatter, as with flake8 before
+"E501",
+]
+
+[lint.mccabe]
+max-complexity = 10
+
+[lint.isort]
+known-first-party = [
+    "aggregator",
+]

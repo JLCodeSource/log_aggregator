@@ -35,18 +35,14 @@ nest-asyncio = "^1.5.5"
 pydantic-settings = "^2.12.0"
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "^1.6.0"
 bandit = "^1.7.4"
 beanie = "^1.11.6"
-black = "^26.3.1"
-flake8 = "^4.0.1"
-isort = "^5.13.2"
 pip-chill = "^1.0.1"
-pytest-asyncio = "^0.19.0"
-pytest-bdd = "^6.0.1"
+pytest-asyncio = "^1.4.1"
+pytest-bdd = "^9.0.1"
 pytest-coverage = "^0.0"
-pytest-mccabe = "^2.0"
-pytest = "^7.2.0"
+pytest = "^9.0.3"
+ruff = "^0.17.3"
 mutmut = "^2.4.1"
 poetry = "^2.3.3"
 hammett = "^0.9.3"
@@ -59,8 +55,6 @@ motor-stubs = "^1.7.1"
 Faker = "^14.1.0"
 pydantic = {extras = ["dotenv"], version = "^2.0"}
 
-[tool.isort]
-profile = "black"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
