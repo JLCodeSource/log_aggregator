@@ -11,7 +11,7 @@ install:
 
 ## Test
 test_all: 
-	poetry run pytest --mccabe --cov --cov-report html -vv
+	poetry run pytest --cov --cov-report html -vv
 
 test_unit:
 	poetry run pytest -vv -m "unit and not db"
