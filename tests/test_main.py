@@ -63,9 +63,7 @@ class TestGetSettings:
         connection: str = (
             "mongodb://test:test@mongoserver.domain.tld:28017//?authMechanism=DEFAULT"
         )
-        connection_log: str = (
-            "mongodb://username:password@mongoserver.domain.tld:28017//?authMechanism=DEFAULT"
-        )
+        connection_log: str = "mongodb://username:password@mongoserver.domain.tld:28017//?authMechanism=DEFAULT"
         sourcedir: str = "/tmp/testsource"
         outdir: str = "/tmp/outdir"
         testdatadir: str = "/tmp/testdata"

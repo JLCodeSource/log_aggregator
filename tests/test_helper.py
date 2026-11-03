@@ -9,10 +9,12 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from aggregator import config, helper
-from aggregator.helper import LOG_LOG_TYPE_PATTERN  # noqa
-from aggregator.helper import LOG_NODE_PATTERN  # noqa
-from aggregator.helper import ZIP_LOG_TYPE_PATTERN  # noqa
-from aggregator.helper import ZIP_NODE_PATTERN  # noqa
+from aggregator.helper import (
+    LOG_LOG_TYPE_PATTERN,  # noqa
+    LOG_NODE_PATTERN,  # noqa
+    ZIP_LOG_TYPE_PATTERN,  # noqa
+    ZIP_NODE_PATTERN,  # noqa
+)
 
 PATTERNS: list[Pattern[str]] = [
     ZIP_LOG_TYPE_PATTERN,

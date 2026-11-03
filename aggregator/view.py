@@ -33,7 +33,7 @@ async def display_result(
     num_logs = len(results)
 
     logger.info(
-        f"Started display_results coroutine for {num_logs} logs" f"from db: {database}"
+        f"Started display_results coroutine for {num_logs} logsfrom db: {database}"
     )
     headers = (
         "ObjectId\t\t",

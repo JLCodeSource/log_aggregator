@@ -44,7 +44,7 @@ class Settings(BaseSettings):
         if len(conn_log_split) > 1:
             url_scheme: str = conn_log_split[0].split("//")[0]
             url_address: str = conn_log_split[1]
-            conn_log = f"{url_scheme}//username:password@" f"{url_address}"
+            conn_log = f"{url_scheme}//username:password@{url_address}"
         else:
             return self.connection
         return conn_log

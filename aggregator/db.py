@@ -42,11 +42,11 @@ async def init(
         logger.info(f"Initialized beanie with {database} using {connection}")
     except ServerSelectionTimeoutError as err:
         logger.fatal(
-            "ServerSelectionTimeoutError: Server was unreachable " "within the timeout"
+            "ServerSelectionTimeoutError: Server was unreachable within the timeout"
         )
         raise err
     logger.info(
-        f"Completed initialization of beanie with {database} " f"using {connection}"
+        f"Completed initialization of beanie with {database} using {connection}"
     )
     return client
 
@@ -56,20 +56,20 @@ async def insert_logs(
 ) -> InsertManyResult | None:
     if logs is None:
         logger.warning(
-            f"Started insert_logs coroutine for {logs} logs into db: " f"{database}"
+            f"Started insert_logs coroutine for {logs} logs into db: {database}"
         )
         logger.warning(
-            f"Ending insert_logs coroutine for {logs} logs into db: " f"{database}"
+            f"Ending insert_logs coroutine for {logs} logs into db: {database}"
         )
         return None
     num_logs: int = len(logs)
     logger.info(
-        f"Started insert_logs coroutine for {num_logs} logs into db: " f"{database}"
+        f"Started insert_logs coroutine for {num_logs} logs into db: {database}"
     )
     await asyncio.sleep(0)
     try:
         result: InsertManyResult = await JavaLog.insert_many(logs)
-        logger.info(f"Inserted {num_logs} logs into db: " f"{database}")
+        logger.info(f"Inserted {num_logs} logs into db: {database}")
         for log in logs:
             logger.debug(f"Inserted {log}")
         # TODO: Implement BulkWriteError
@@ -81,7 +81,7 @@ async def insert_logs(
         raise err
     finally:
         logger.info(
-            f"Ending insert_logs coroutine for {num_logs} logs " f"into db: {database}"
+            f"Ending insert_logs coroutine for {num_logs} logs into db: {database}"
         )
 
     return result
@@ -90,7 +90,7 @@ async def insert_logs(
 async def get_log(
     log_id: PydanticObjectId | None, database: str | None = settings.database
 ) -> JavaLog | None:
-    logger.info(f"Starting get_log coroutine for {log_id} from db: " f"{database}")
+    logger.info(f"Starting get_log coroutine for {log_id} from db: {database}")
     try:
         if log_id is None:
             raise ValidationError("Cannot get None log", JavaLog)
@@ -98,7 +98,7 @@ async def get_log(
         if result:
             logger.info(f"Got {log_id} from db: {database}")
         else:
-            logger.info(f"When getting {log_id} from db {database} " f"found {result}")
+            logger.info(f"When getting {log_id} from db {database} found {result}")
     except (ValidationError, ServerSelectionTimeoutError) as err:
         logger.error(
             f"Error: {type(err)} - get_log coroutine for "
@@ -106,7 +106,7 @@ async def get_log(
         )
         raise err
     finally:
-        logger.info(f"Ending get_log coroutine for {log_id} from db: " f"{database}")
+        logger.info(f"Ending get_log coroutine for {log_id} from db: {database}")
     return result
 
 

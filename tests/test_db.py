@@ -80,7 +80,7 @@ async def test_init(
             (
                 module_name,
                 logging.INFO,
-                f"Completed initialization of beanie with {database}" f" using {conn}",
+                f"Completed initialization of beanie with {database} using {conn}",
             ),
         ]
 
@@ -203,13 +203,13 @@ async def test_insert_logs_success(
         assert any((s.startswith("Inserted 2 logs into db:") for s in msgs))
         assert any(
             (
-                s.startswith("Started insert_logs coroutine for 2 logs " "into db:")
+                s.startswith("Started insert_logs coroutine for 2 logs into db:")
                 for s in msgs
             )
         )
         assert any(
             (
-                s.startswith("Ending insert_logs coroutine for 2 logs " "into db:")
+                s.startswith("Ending insert_logs coroutine for 2 logs into db:")
                 for s in msgs
             )
         )
@@ -322,8 +322,7 @@ async def test_insert_logs_invalid_operation_error(
         assert logger.record_tuples[-1] == (
             module_name,
             logging.INFO,
-            f"Ending insert_logs coroutine for {len(logs)} logs into db: "
-            f"{database}",
+            f"Ending insert_logs coroutine for {len(logs)} logs into db: {database}",
         )
 
     finally:
@@ -356,12 +355,12 @@ async def test_insert_logs_none(
         assert logger.record_tuples[-2] == (
             module_name,
             logging.WARNING,
-            "Started insert_logs coroutine for None logs into db: " f"{database}",
+            f"Started insert_logs coroutine for None logs into db: {database}",
         )
         assert logger.record_tuples[-1] == (
             module_name,
             logging.WARNING,
-            f"Ending insert_logs coroutine for None logs into db: " f"{database}",
+            f"Ending insert_logs coroutine for None logs into db: {database}",
         )
 
     finally:
@@ -477,7 +476,7 @@ async def test_get_log_none(
         assert logger.record_tuples[-1] == (
             module_name,
             logging.INFO,
-            f"Ending get_log coroutine for None from db: " f"{database}",
+            f"Ending get_log coroutine for None from db: {database}",
         )
 
     finally:
@@ -504,15 +503,13 @@ async def test_get_log_wrong_id(
         client: AsyncIOMotorClient = await db.init(database, conn)
 
         # When it tries to get the logs with a missing log
-        returned_log: JavaLog | None = await db.get_log(
-            log_id, database
-        )  # type: ignore
+        returned_log: JavaLog | None = await db.get_log(log_id, database)  # type: ignore
 
         # Then the logger logs it
         assert logger.record_tuples[-2][0] == module_name
         assert logger.record_tuples[-2][1] == logging.INFO
         assert logger.record_tuples[-2][2].startswith(
-            f"When getting {log_id} from db {database} found " f"{returned_log}"
+            f"When getting {log_id} from db {database} found {returned_log}"
         )
 
     finally:

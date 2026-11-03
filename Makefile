@@ -11,7 +11,7 @@ install:
 
 ## Test
 test_all: 
-	poetry run pytest --mccabe --cov --cov-report html -vv
+	poetry run pytest --cov --cov-report html -vv
 
 test_unit:
 	poetry run pytest -vv -m "unit and not db"
@@ -22,16 +22,15 @@ test_db:
 
 ## Lint
 lint:
-	poetry run flake8 aggregator tests || exit 1
-	poetry run isort --check-only --diff aggregator tests || exit 1
-	poetry run black --check aggregator tests || exit 1
+	poetry run ruff check aggregator tests || exit 1
+	poetry run ruff format --check --diff aggregator tests || exit 1
 	poetry run dmypy run -- aggregator tests -vv || exit 1
 
 # pydocstyle src tests || exit 1	
 
 format:
-	poetry run isort aggregator tests
-	poetry run black aggregator tests
+	poetry run ruff check --fix aggregator tests
+	poetry run ruff format aggregator tests
 
 ## Build
 # build-package:
