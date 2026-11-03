@@ -111,7 +111,6 @@ async def convert(file: str) -> list[JavaLog]:
     reader: list[dict[str | Any, str | Any]] = _convert_log_to_csv(log_file)
 
     for d in reader:
-
         d = _strip_whitespace(d)
 
         d["node"] = node

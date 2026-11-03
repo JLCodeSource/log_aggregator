@@ -145,7 +145,6 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-
     logs.configure_logging()
     # nest_asyncio.apply()
     asyncio.run(main())  # type: ignore #TODO: Update main startup

@@ -117,7 +117,7 @@ def test_yield_matches_multi_line(
 
     # And the multi-line log is yielded
     assert log_list[1] == (
-        "ERROR | This is an error log; with multiple lines; " "and more lines"
+        "ERROR | This is an error log; with multiple lines; and more lines"
     )
 
     # And the single line log at the end is yielded
@@ -157,7 +157,7 @@ def test_yield_matches_starts_with_whitespace() -> None:
 def test_yield_matches_ignores_empty_lines() -> None:
     # Given a log with whitespace & lines
     log: str = (
-        " INFO | log stuff\n\n\n\n" " WARN | more logs \n\n\n" " INFO | moar logs\n\n\n"
+        " INFO | log stuff\n\n\n\n WARN | more logs \n\n\n INFO | moar logs\n\n\n"
     )
 
     # When it checks for a match
@@ -291,7 +291,7 @@ async def test_convert_success(
                 "Exec proxy",
                 "FileIO",
                 "more messages",
-                "SecondaryMonitor -> {path: /path/secondary, " "number: 2361852362752}",
+                "SecondaryMonitor -> {path: /path/secondary, number: 2361852362752}",
                 "error doing reconnect...; java.io.IOException: org.Exception: "
                 "ErrorCode = Connection for /locks; "
                 "at ttl.test.create(lock.java:2); "
