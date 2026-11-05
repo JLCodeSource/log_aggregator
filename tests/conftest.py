@@ -175,6 +175,7 @@ def mongo():  # type: ignore
     return mongo
 """
 
+
 @pytest.fixture(scope="session")
 def pmr_mongo_config() -> MongoConfig:
     # pytest-mock-resources defaults to mongo:3.6, which current PyMongo (>= MongoDB 4.4) refuses
