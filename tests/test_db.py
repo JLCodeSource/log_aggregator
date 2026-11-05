@@ -469,7 +469,7 @@ async def test_get_log_none(
         assert logger.record_tuples[-2] == (
             module_name,
             logging.ERROR,
-            f"Error: <class 'pydantic.error_wrappers.ValidationError'> "
+            f"Error: <class 'pydantic_core._pydantic_core.ValidationError'> "
             f"- get_log coroutine for None failed for db: "
             f"{database}",
         )

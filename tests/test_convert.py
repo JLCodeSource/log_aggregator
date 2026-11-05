@@ -66,11 +66,10 @@ def test_line_start_match_non_string_arg2(logger: pytest.LogCaptureFixture) -> N
         convert._line_start_match("INFO", 1)  # type: ignore
 
     # And logs a warning
-    assert logger.record_tuples[0] == (
-        module_name,
-        logging.WARNING,
-        "TypeError: expected string or bytes-like object",
-    )
+    # (Python 3.13 appends ", got 'int'" to the message)
+    name, level, message = logger.record_tuples[0]
+    assert (name, level) == (module_name, logging.WARNING)
+    assert message.startswith("TypeError: expected string or bytes-like object")
 
 
 @pytest.mark.unit
@@ -400,7 +399,7 @@ async def test_convert_bad_timestamp(
         assert logger.record_tuples[-2][0] == module_name
         assert logger.record_tuples[-2][1] == logging.ERROR
         assert logger.record_tuples[-2][2].startswith(
-            "Error <class 'pydantic.error_wrappers.ValidationError'> "
+            "Error <class 'pydantic_core._pydantic_core.ValidationError'> "
             "1 validation error for JavaLog"
         )
 
