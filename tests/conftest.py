@@ -9,7 +9,7 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 from random import randrange
-from typing import Any, Generator, Iterator, Union  # Literal
+from typing import Any, Coroutine, Generator, Iterator, Union  # Literal
 
 import pytest
 from pytest_mock_resources import Credentials, MongoConfig, create_mongo_fixture
@@ -209,8 +209,8 @@ def get_datetime() -> datetime:
 
 
 @pytest.fixture()
-async def add_one() -> JavaLog | None:
-    # And adds a log
+def add_one() -> Coroutine[Any, Any, JavaLog | None]:
+    # And adds a log (the test awaits this once beanie is initialised)
     log: JavaLog = JavaLog(
         node="testnode",
         severity="INFO",
@@ -220,14 +220,19 @@ async def add_one() -> JavaLog | None:
         type="fanapiservice",
         message="This is a log",
     )
-    result: JavaLog | None = await JavaLog.insert_one(log)
-    return result
+    return JavaLog.insert_one(log)
 
 
 @pytest.fixture()
-def logger(caplog) -> pytest.LogCaptureFixture:
+def logger(caplog) -> Iterator[pytest.LogCaptureFixture]:
     caplog.set_level(logging.DEBUG)
-    return caplog
+    # PyMongo logs every command and heartbeat at DEBUG; these tests assert on the app's own records
+    # (caplog.set_level would also raise the handler's level, so set the logger directly)
+    pymongo_logger = logging.getLogger("pymongo")
+    previous = pymongo_logger.level
+    pymongo_logger.setLevel(logging.WARNING)
+    yield caplog
+    pymongo_logger.setLevel(previous)
 
 
 @pytest.fixture()

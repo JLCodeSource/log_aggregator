@@ -399,7 +399,7 @@ async def test_convert_bad_timestamp(
         assert logger.record_tuples[-2][0] == module_name
         assert logger.record_tuples[-2][1] == logging.ERROR
         assert logger.record_tuples[-2][2].startswith(
-            "Error <class 'pydantic.error_wrappers.ValidationError'> "
+            "Error <class 'pydantic_core._pydantic_core.ValidationError'> "
             "1 validation error for JavaLog"
         )
 
