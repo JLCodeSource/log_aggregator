@@ -12,7 +12,7 @@ from random import randrange
 from typing import Any, Generator, Iterator, Union  # Literal
 
 import pytest
-from pytest_mock_resources import Credentials, create_mongo_fixture
+from pytest_mock_resources import Credentials, MongoConfig, create_mongo_fixture
 
 from aggregator import config, convert
 from aggregator.model import JavaLog
@@ -174,6 +174,12 @@ def mongo():  # type: ignore
     mongo = create_mongo_fixture(pmr_mongo_config=config)  # type: ignore
     return mongo
 """
+
+@pytest.fixture(scope="session")
+def pmr_mongo_config() -> MongoConfig:
+    # pytest-mock-resources defaults to mongo:3.6, which current PyMongo (>= MongoDB 4.4) refuses
+    return MongoConfig(image="mongo:7.0")
+
 
 mongo = create_mongo_fixture()
 
